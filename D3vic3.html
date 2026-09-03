@@ -1115,98 +1115,6 @@ async function linkNewVaultFile(){
   }
 }
 
-// Creates a genuinely BRAND NEW, empty vault (new master password) written into
-// a newly-picked file — replaces whatever vault/session is currently active.
-// This is the "New Vault" action, matching how KeePass/Bitwarden-style apps work.
-function openCreateNewFileVaultModal(){
-  const modalBg = document.getElementById('modalBg');
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <h2>Tạo kho mới trong file mới</h2>
-    <p class="hint" style="margin-top:-4px;">Sẽ tạo 1 kho hoàn toàn trống, lưu vào file bạn chọn tiếp theo. Nếu đang mở kho khác, phiên hiện tại sẽ đóng lại.</p>
-    <label>Mật khẩu chính cho kho mới</label>
-    <input type="password" id="newFilePw1" placeholder="Ít nhất 6 ký tự">
-    <label>Nhập lại mật khẩu</label>
-    <input type="password" id="newFilePw2" placeholder="Nhập lại để xác nhận">
-    <p class="err" id="newFileErr"></p>
-    <div class="row">
-      <button id="newFileCancelBtn" style="flex:1">Huỷ</button>
-      <button class="primary" id="newFileSubmitBtn" data-primary-action style="flex:1">Chọn file & Tạo</button>
-    </div>
-  `;
-  modalBg.classList.add('show');
-  document.getElementById('newFileCancelBtn').onclick = closeModal;
-  document.getElementById('newFileSubmitBtn').onclick = async () => {
-    const btn = document.getElementById('newFileSubmitBtn');
-    const err = document.getElementById('newFileErr');
-    err.style.display = 'none';
-    const pw1 = document.getElementById('newFilePw1').value;
-    const pw2 = document.getElementById('newFilePw2').value;
-    if(pw1.length < 6){
-      err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.';
-      err.style.display = 'block';
-      return;
-    }
-    if(pw1 !== pw2){
-      err.textContent = 'Hai mật khẩu không khớp nhau.';
-      err.style.display = 'block';
-      return;
-    }
-    if(!fileSystemAccessSupported()){
-      err.textContent = 'Trình duyệt này không hỗ trợ lưu trực tiếp ra file (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad). Hãy dùng "Nhập/Xuất" để sao lưu thủ công thay thế.';
-      err.style.display = 'block';
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = 'Đang tạo...';
-    try{
-      const handle = await window.showSaveFilePicker({
-        suggestedName: backupFileName('json'),
-        types: [{ description: 'Devic3 Vault', accept: { 'application/json': ['.json'] } }]
-      });
-      // start a completely clean vault, wiping any currently-open session first
-      state.key = null;
-      state.entries = [];
-      state.folders = [];
-      state.notes = [];
-      state.fileHandle = null;
-      endSession();
-
-      const saltBuf = crypto.getRandomValues(new Uint8Array(16));
-      const saltB64 = b64(saltBuf);
-      const key = await deriveKey(pw1, saltB64, PBKDF2_ITERATIONS);
-      const verifier = await encryptStr(key, VERIFY_STRING);
-      const configResult = await storageSetWithRetry(STORAGE_CONFIG_KEY, JSON.stringify({ salt: saltB64, verifier, iterations: PBKDF2_ITERATIONS }));
-      if(!configResult) throw new Error('Không thể ghi dữ liệu vào bộ nhớ trình duyệt.');
-
-      state.key = key;
-      state.entries = [];
-      await loadFolders(); // sets the default folders
-      state.notes = [];
-      state.fileHandle = handle;
-      state.fileHandleName = handle.name;
-      await saveEntries();
-      await saveFolders();
-      await saveNotes();
-      startSession();
-      closeModal();
-      renderVault();
-      toast(`Đã tạo kho mới, trống, liên kết với file "${handle.name}"`);
-    }catch(e){
-      if(e.name === 'AbortError'){
-        btn.disabled = false;
-        btn.textContent = 'Chọn file & Tạo';
-        return;
-      }
-      console.error(e);
-      err.textContent = 'Tạo kho mới thất bại: ' + (e.message || 'lỗi không xác định.');
-      err.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Chọn file & Tạo';
-    }
-  };
-}
-
 // Opens an EXISTING vault file and fully loads it — cleanly replacing whatever
 // vault/session is currently active, then always landing on the Unlock screen
 // for that file's password (this used to silently patch localStorage without
@@ -1322,47 +1230,68 @@ function renderFileBackupModal(){
   const linked = !!state.fileHandle;
   modalBody.innerHTML = `
     <h2>Sao lưu / Khôi phục</h2>
+    <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File tải ra được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
 
-    <p class="hint" style="margin-top:-4px; margin-bottom:14px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File .json bên dưới được <b style="color:var(--text);">mã hoá AES-256</b> giống hệt dữ liệu trong app — không lộ nội dung tài khoản dù mở bằng cách nào, khác với file .txt xuất qua "Nhập/Xuất" (dạng chữ thường, đọc được trực tiếp).</p>
+    <button id="fbCreateNewBtn" style="width:100%;">Tạo kho mới</button>
+    <p class="hint" style="margin:4px 0 14px;">Bắt đầu lại từ đầu trên thiết bị này, không giữ dữ liệu cũ</p>
 
-    <label>Dùng chung mọi thiết bị (khuyên dùng — cả Windows lẫn iPhone/Safari)</label>
-    <button id="universalExportBtn" style="width:100%; margin-bottom:8px;" ${state.key ? '' : 'disabled'}><i class="ti ti-download" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Tải file sao lưu mã hoá (.json)</button>
-    <button id="universalImportBtn" style="width:100%;"><i class="ti ti-upload" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập từ file sao lưu (.json)</button>
-    <p class="hint" style="margin:4px 0 16px;">Tải file này trên 1 thiết bị, chuyển sang thiết bị kia (AirDrop, email, Drive...) rồi bấm "Nhập" — dùng đúng mật khẩu chính bạn đã đặt lúc tạo kho để mở lại.</p>
+    <button id="fbOpenSavedBtn" style="width:100%;">Mở file đã lưu</button>
+    <p class="hint" style="margin:4px 0 14px;">Thay dữ liệu hiện tại bằng nội dung trong 1 file sao lưu đã có</p>
 
-    <div style="border-top:0.5px solid var(--border); margin:16px 0;"></div>
+    <button id="fbBackupNowBtn" class="primary" style="width:100%;">Backup dữ liệu hiện tại</button>
+    <p class="hint" style="margin:4px 0 4px;">Tải file — chuyển sang thiết bị khác (AirDrop, email, Drive...) rồi bấm "Mở file đã lưu" để khôi phục, dùng đúng mật khẩu chính hiện tại</p>
 
-    <label>Liên kết file tự động — chỉ Chrome/Edge trên máy tính</label>
-    ${!supported ? `<p class="err" style="display:block;">Trình duyệt hiện tại không hỗ trợ mục này (không dùng được trên Safari/iPad/điện thoại) — dùng phần "Dùng chung mọi thiết bị" ở trên thay thế.</p>` : ''}
-    ${linked ? `
-    <p style="font-size:14px; color:var(--text-2); margin:8px 0 16px;"><i class="ti ti-file-check" style="color:${STATUS_META.active.color}; vertical-align:-2px;"></i> Đang liên kết: <b style="color:var(--text);">${escapeHtml(state.fileHandleName)}</b></p>
-    <div class="row" style="margin-bottom:14px;">
-      <button id="fileSaveNowBtn" style="flex:1">Lưu ngay</button>
-      <button id="fileUnlinkBtn" class="danger" style="flex:1">Bỏ liên kết</button>
+    ${supported ? `
+    <div class="entry-extra-toggle" id="fbAdvancedToggle"><i class="ti ti-chevron-right"></i>Nâng cao: tự động lưu mỗi khi có thay đổi (chỉ Chrome/Edge)</div>
+    <div class="entry-extra" id="fbAdvancedBox">
+      ${linked ? `
+      <p style="font-size:13px; color:var(--text-2); margin:10px 0;"><i class="ti ti-file-check" style="color:${STATUS_META.active.color}; vertical-align:-2px;"></i> Đang liên kết: <b style="color:var(--text);">${escapeHtml(state.fileHandleName)}</b></p>
+      <div class="row" style="margin-bottom:10px;">
+        <button id="fileSaveNowBtn" style="flex:1">Lưu ngay</button>
+        <button id="fileUnlinkBtn" class="danger" style="flex:1">Bỏ liên kết</button>
+      </div>
+      ` : `
+      <button id="fbLinkBtn" style="width:100%; margin-top:10px;">Liên kết 1 file để tự lưu</button>
+      <p class="hint" style="margin:4px 0 10px;">Mỗi thay đổi sẽ tự ghi vào đúng file đó, không cần bấm "Backup" thủ công nữa</p>
+      `}
     </div>
     ` : ''}
-    <button id="fileNewVaultBtn" ${!supported?'disabled':''} style="width:100%; margin-top:8px;">Tạo kho trống</button>
-    <p class="hint" style="margin:4px 0 12px;">Bắt đầu lại từ đầu, không giữ dữ liệu cũ</p>
 
-    <button id="fileOpenSwitchBtn" ${!supported?'disabled':''} style="width:100%;">Mở file khác</button>
-    <p class="hint" style="margin:4px 0 12px;">Thay toàn bộ dữ liệu hiện tại bằng nội dung trong file</p>
-
-    ${state.key ? `
-    <button id="fileMirrorBtn" ${!supported?'disabled':''} style="width:100%;">Liên kết để tự lưu mỗi khi có thay đổi</button>
-    <p class="hint" style="margin:4px 0 12px;">Giữ nguyên dữ liệu đang dùng, chỉ thêm nơi lưu</p>
-    ` : ''}
-    <button id="fileCloseBtn" style="width:100%; margin-top:6px;">Đóng</button>
+    <button id="fileCloseBtn" style="width:100%; margin-top:10px;">Đóng</button>
   `;
-  document.getElementById('universalExportBtn').onclick = exportEncryptedBackupUniversal;
-  document.getElementById('universalImportBtn').onclick = openImportEncryptedBackupUniversal;
   document.getElementById('fileCloseBtn').onclick = closeModal;
-  document.getElementById('fileNewVaultBtn').onclick = openCreateNewFileVaultModal;
-  document.getElementById('fileOpenSwitchBtn').onclick = openExistingVaultFileAndSwitch;
-  const mirrorBtn = document.getElementById('fileMirrorBtn');
-  if(mirrorBtn){
-    mirrorBtn.onclick = async () => {
+
+  document.getElementById('fbCreateNewBtn').onclick = () => {
+    showConfirm(
+      'Tạo kho mới?',
+      'Kho hiện tại trên thiết bị này sẽ được thay bằng 1 kho trống. Nếu chưa sao lưu, hãy bấm "Backup dữ liệu hiện tại" trước khi tiếp tục.',
+      async () => {
+        await deleteEntireVault();
+        closeModal();
+        renderApp();
+      },
+      'Tạo kho mới'
+    );
+  };
+  document.getElementById('fbOpenSavedBtn').onclick = () => {
+    if(supported) openExistingVaultFileAndSwitch();
+    else openImportEncryptedBackupUniversal();
+  };
+  document.getElementById('fbBackupNowBtn').onclick = exportEncryptedBackupUniversal;
+
+  const advToggle = document.getElementById('fbAdvancedToggle');
+  if(advToggle){
+    advToggle.onclick = () => {
+      const box = document.getElementById('fbAdvancedBox');
+      const nowOpen = advToggle.classList.toggle('open');
+      if(box) box.classList.toggle('open', nowOpen);
+    };
+  }
+  const linkBtn = document.getElementById('fbLinkBtn');
+  if(linkBtn){
+    linkBtn.onclick = async () => {
       const ok = await linkNewVaultFile();
-      if(ok) toast('Đã sao lưu kho hiện tại vào file mới');
+      if(ok) toast('Đã liên kết file — từ giờ tự lưu mỗi khi có thay đổi');
       renderFileBackupModal();
     };
   }
@@ -1371,6 +1300,7 @@ function renderFileBackupModal(){
   const unlinkBtn = document.getElementById('fileUnlinkBtn');
   if(unlinkBtn) unlinkBtn.onclick = () => { unlinkVaultFile(); toast('Đã bỏ liên kết file'); renderFileBackupModal(); };
 }
+
 
 // small debounce helper — avoids a full list re-render on every single keystroke
 // while typing in the search box, which was the main source of noticeable lag
