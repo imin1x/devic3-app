@@ -1547,6 +1547,59 @@ async function resolveFolderId(platformId, folderNameStr){
   return f.id;
 }
 
+// Deletes the ENTIRE current vault — config, entries, folders, notes, the
+// "keep session" preference, and any live session key — so the app goes
+// back to the fresh "create a new vault" screen, as if nothing had ever been
+// set up. Irreversible, so it's gated behind a type-to-confirm modal rather
+// than a plain Yes/No, matching how severe this action actually is.
+function openDeleteVaultModal(){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2 style="color:var(--danger-text);">Xoá toàn bộ kho lưu trữ?</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 16px;">
+      Hành động này sẽ xoá <b>vĩnh viễn</b> toàn bộ tài khoản, ghi chú, thư mục đã lưu trên thiết bị này — không thể khôi phục lại được nếu bạn chưa có bản sao lưu.
+      Nếu bạn có file sao lưu (.txt) hoặc file trên ổ cứng, hãy đảm bảo đã lưu lại trước khi tiếp tục.
+    </p>
+    <label>Gõ chữ <code>XOA</code> để xác nhận</label>
+    <input type="text" id="deleteVaultConfirmInput" placeholder="XOA" autocomplete="off" autocapitalize="characters">
+    <div class="row" style="margin-top:6px;">
+      <button id="deleteVaultCancelBtn" style="flex:1">Huỷ</button>
+      <button class="text-btn danger" id="deleteVaultConfirmBtn" style="flex:1; padding:9px 16px;" disabled>Xoá vĩnh viễn</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  const input = document.getElementById('deleteVaultConfirmInput');
+  const confirmBtn = document.getElementById('deleteVaultConfirmBtn');
+  input.oninput = () => {
+    confirmBtn.disabled = input.value.trim().toUpperCase() !== 'XOA';
+  };
+  document.getElementById('deleteVaultCancelBtn').onclick = closeModal;
+  confirmBtn.onclick = async () => {
+    await deleteEntireVault();
+    closeModal();
+    toast('Đã xoá kho lưu trữ');
+    renderApp();
+  };
+}
+async function deleteEntireVault(){
+  try{
+    await window.storage.delete(STORAGE_CONFIG_KEY, false);
+    await window.storage.delete(STORAGE_DATA_KEY, false);
+    await window.storage.delete(STORAGE_FOLDERS_KEY, false);
+    await window.storage.delete(STORAGE_NOTES_KEY, false);
+    await window.storage.delete(STORAGE_KEEP_SESSION_PREF_KEY, false);
+  }catch(e){ console.error(e); }
+  clearPersistedSessionKey();
+  state.key = null;
+  state.entries = [];
+  state.folders = [];
+  state.notes = [];
+  state.fileHandle = null;
+  state.fileHandleName = null;
+  endSession();
+}
+
 function openRestoreModal(){
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
@@ -1655,6 +1708,7 @@ function renderUnlock(config){
         </label>
         <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
         <button class="primary" id="unlockBtn" style="width:100%">${t('btn_unlock')}</button>
+        <button type="button" id="deleteVaultLink" style="width:100%; margin-top:16px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;">Quên mật khẩu? Xoá kho hiện tại và tạo kho mới</button>
       </div>
     </div>
   `;
@@ -1662,6 +1716,7 @@ function renderUnlock(config){
     const cb = document.getElementById('keepSessionCheck');
     if(cb) cb.checked = on;
   });
+  document.getElementById('deleteVaultLink').onclick = openDeleteVaultModal;
   const doUnlock = async () => {
     const btn = document.getElementById('unlockBtn');
     const pw = document.getElementById('pwUnlock').value;
