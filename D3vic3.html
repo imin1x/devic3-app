@@ -1,0 +1,3911 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devic3</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Devic3">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#000000; --card:#111111; --border:#242424; --border-strong:#333333;
+    --text:#d4d4d4; --text-2:#9a9a9a; --text-muted:#6a6a6a;
+    --accent:#4d94ff; --accent-bg:#12233d; --accent-text:#8cbaff;
+    --danger:#e05a5a; --danger-bg:#3a1414; --danger-text:#ff9a9a;
+    --success:#3fbf83; --success-bg:#0e2b1e;
+    --comment:#6a9955;
+    --sidebar-bg:#0a0a0a; --panel-bg:#0a0a0a;
+    --radius:6px;
+    --mono:'JetBrains Mono','Fira Code','Cascadia Code',Consolas,'SF Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh; overflow:hidden;
+  }
+  ::selection{background:var(--accent-bg); color:var(--accent-text);}
+  .code-comment{color:var(--comment);}
+  .wrap{width:100%; max-width:640px;}
+  h1{font-size:20px; font-weight:500; margin:0 0 4px; color:var(--text); text-align:center;}
+  .sub{color:var(--text-2); font-size:14px; margin:0 0 24px; text-align:center;}
+  .card{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:24px;}
+  label{display:block; font-size:13px; color:var(--text-2); margin-bottom:6px; font-weight:500;}
+  input[type=text], input[type=password], textarea, select{
+    width:100%; padding:9px 12px; border-radius:var(--radius); border:0.5px solid var(--border-strong);
+    background:#050505; font-size:14px; color:var(--text); margin-bottom:14px; font-family:inherit;
+  }
+  input:focus, textarea:focus, select:focus{outline:none; box-shadow:0 0 0 2px var(--accent-bg); border-color:var(--accent);}
+  textarea{resize:vertical; min-height:60px;}
+  select{appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:32px;}
+  button{
+    border-radius:var(--radius); border:0.5px solid var(--border-strong); background:#141414;
+    padding:9px 16px; font-size:13px; cursor:pointer; color:var(--text); font-family:inherit;
+  }
+  button:hover{background:#1f1f1f;}
+  button:active{transform:scale(0.98);}
+  button.primary{background:var(--accent); color:#001229; border-color:var(--accent); font-weight:600;}
+  button.primary:hover{background:#69a6ff;}
+  button.danger{color:var(--danger-text); border-color:var(--danger);}
+  button.danger:hover{background:var(--danger-bg);}
+  button:disabled{opacity:0.5; cursor:not-allowed;}
+  .row{display:flex; gap:10px;}
+  .err{color:var(--danger-text); font-size:13px; margin:-6px 0 14px; display:none;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;}
+  .topbar-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  @media (max-width: 640px){
+    .topbar{gap:8px;}
+    .topbar .text-btn span, .topbar .text-btn{font-size:12px;}
+    .topbar-actions .text-btn span, .topbar-actions .text-btn{font-size:12px;}
+  }
+  .folder-panel{border:0.5px solid var(--border); border-radius:12px; margin-bottom:18px; overflow:hidden;}
+  .folder-toggle{width:100%; display:flex; align-items:center; justify-content:space-between; background:transparent; border:none; padding:10px 12px; cursor:pointer; color:var(--text); font-size:13px; font-family:inherit;}
+  .folder-toggle:hover{background:#1f1f1f;}
+  .folder-toggle-right{display:flex; align-items:center; gap:8px;}
+  .folder-toggle-count{font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:999px; padding:1px 8px;}
+  .folder-toggle .ti-chevron-down{transition:transform .15s; font-size:14px; color:var(--text-muted);}
+  .folder-panel.open .folder-toggle .ti-chevron-down{transform:rotate(180deg);}
+  .folder-list{max-height:0; overflow:hidden; transition:max-height .2s ease; display:flex; flex-direction:column; gap:4px;}
+  .folder-panel.open .folder-list{max-height:220px; overflow-y:auto; padding:0 6px 6px; border-top:0.5px solid var(--border); margin-top:2px; padding-top:6px; scrollbar-width:thin;}
+  .folder-list::-webkit-scrollbar{width:5px;}
+  .folder-list::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:999px;}
+  .folder-list::-webkit-scrollbar-track{background:transparent;}
+  .export-platform-list{
+    display:flex; flex-direction:column; gap:4px; max-height:240px; overflow-y:auto;
+    border:0.5px solid var(--border); border-radius:12px; padding:6px; scrollbar-width:thin;
+  }
+  .export-platform-list::-webkit-scrollbar{width:5px;}
+  .export-platform-list::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:999px;}
+  .export-platform-list::-webkit-scrollbar-track{background:transparent;}
+  .platform-bar{display:flex; flex-direction:column; gap:2px;}
+  .platform-chip{flex-shrink:0;}
+  .platform-chip{
+    display:flex; align-items:center; gap:10px; padding:8px 16px; border-radius:0; border:none;
+    border-left:2px solid transparent; background:transparent; font-size:13px; cursor:pointer;
+    color:var(--text-2); white-space:nowrap; width:100%; text-align:left; text-decoration:none; box-sizing:border-box;
+  }
+  .platform-icon{
+    border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    position:relative; overflow:hidden; transition:transform 0.2s;
+    background:linear-gradient(150deg, color-mix(in srgb, var(--pcolor) 100%, white 30%) 0%, var(--pcolor) 55%, color-mix(in srgb, var(--pcolor) 100%, black 25%) 100%);
+    box-shadow:0 2px 5px -1px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .platform-icon svg.pf-svg{position:relative; z-index:1; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.3)); overflow:visible;}
+  .platform-chip .platform-icon svg.pf-svg{width:16px; height:16px;}
+  .platform-bar .platform-icon::after{
+    content:''; position:absolute; top:-60%; left:-70%; width:45%; height:220%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform:rotate(20deg); animation: platformShine 3.4s ease-in-out infinite;
+  }
+  @keyframes platformShine{
+    0%{ left:-70%; }
+    55%{ left:130%; }
+    100%{ left:130%; }
+  }
+  .platform-chip .platform-icon{width:20px; height:20px;}
+  .platform-chip:hover{background:#1a1a1a;}
+  .platform-chip:hover .platform-icon{transform:scale(1.12) rotate(-3deg);}
+  .platform-bar .platform-chip:nth-child(1) .platform-icon::after{animation-delay:0s;}
+  .platform-bar .platform-chip:nth-child(2) .platform-icon::after{animation-delay:0.5s;}
+  .platform-bar .platform-chip:nth-child(3) .platform-icon::after{animation-delay:1.0s;}
+  .platform-bar .platform-chip:nth-child(4) .platform-icon::after{animation-delay:1.5s;}
+  .platform-bar .platform-chip:nth-child(5) .platform-icon::after{animation-delay:2.0s;}
+  .platform-bar .platform-chip:nth-child(6) .platform-icon::after{animation-delay:2.5s;}
+  .platform-chip.active{background:var(--accent-bg); color:var(--accent-text); border-left-color:var(--pcolor, var(--accent)); font-weight:600;}
+  .platform-chip-count{margin-left:auto; font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+  .platform-chip.active .platform-chip-count{color:var(--accent-text);}
+  .folder-chip{padding:8px 12px; border-radius:8px; border:0.5px solid transparent; background:transparent; font-size:13px; cursor:pointer; color:var(--text-2); white-space:nowrap; width:100%; text-align:left; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;}
+  .folder-chip:hover{background:#1f1f1f;}
+  .folder-chip.active{background:#ffffff; color:#000000; border-color:#ffffff; font-weight:500;}
+  .folder-chip:not(.folder-manage-btn) span:last-child{font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:999px; padding:1px 8px; flex-shrink:0; margin-left:8px;}
+  .folder-chip.active:not(.folder-manage-btn) span:last-child{color:#000; background:rgba(0,0,0,0.1);}
+  .folder-manage-btn{padding:8px 12px; border-radius:8px; font-size:13px; color:var(--text); flex-shrink:0; border-style:dashed; border-color:var(--border-strong); justify-content:flex-start; gap:6px;}
+  .folder-manage-btn:hover{background:#1f1f1f; border-color:var(--text-2);}
+  .entry{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px;}
+  .entry-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; cursor:pointer;}
+  .entry-name{font-weight:500; font-size:15px; margin:0 0 2px; color:var(--text); display:flex; align-items:center; gap:6px;}
+  .entry-name i.chevron{font-size:14px; color:var(--text-muted); transition:transform 0.15s;}
+  .entry.expanded .entry-name i.chevron{transform:rotate(90deg);}
+  .entry-details{overflow:hidden; max-height:0; transition:max-height 0.15s ease;}
+  .entry.expanded .entry-details{max-height:1000px;}
+  .entry-id{font-size:13px; color:var(--text-2); margin:0; word-break:break-all;}
+  .totp-code{font-family:var(--font-mono, monospace); color:var(--accent-text); font-weight:600; letter-spacing:1.5px; cursor:pointer; padding:1px 4px; border-radius:4px;}
+  .totp-code:hover{background:var(--accent-bg);}
+  .copy-inline{cursor:pointer; padding:1px 3px; border-radius:4px;}
+  .copy-inline:hover{background:#1f1f1f; color:var(--text) !important;}
+  .status-badge{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap;}
+  .status-filter-bar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .status-filter-chip{
+    display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px;
+    border:0.5px solid var(--sc, var(--border-strong)); background:transparent; color:var(--sc, var(--text-2));
+    font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap;
+  }
+  .status-filter-chip:hover{background:rgba(255,255,255,0.05);}
+  .status-filter-chip .status-filter-count{color:var(--text-muted); font-weight:400;}
+  .status-filter-chip.hidden-state{opacity:0.4; border-style:dashed; text-decoration:line-through;}
+  .status-filter-chip i{font-size:14px;}
+  .entry-meta-row{display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap;}
+  .entry-meta-row .entry-folder{margin-top:0;}
+  .entry-name .platform-icon svg.pf-svg{width:12px; height:12px;}
+  .entry-folder{display:inline-block; font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:5px; padding:2px 7px; margin-top:6px;}
+  .entry-created{display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--text-muted);}
+  .new-badge{display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:700; letter-spacing:0.3px; color:#000; background:#facc15; padding:2px 7px; border-radius:999px; box-shadow:0 0 8px -2px rgba(250,204,21,0.6);}
+  .entry-fieldrow{display:flex; align-items:center; flex-wrap:wrap; font-size:13px; margin-top:5px; row-gap:4px;}
+  .field-chip{cursor:pointer; padding:2px 5px; border-radius:4px; white-space:nowrap; color:var(--text-2); display:inline-flex; align-items:baseline; gap:4px;}
+  .field-chip:hover{background:#1c1c1c; color:var(--text);}
+  .field-chip .field-label{color:var(--text-muted); font-size:11px;}
+  .field-chip .field-val{font-family:var(--mono);}
+  .field-chip.secret .field-val{letter-spacing:2px;}
+  .field-chip.totp .field-val{font-weight:700; letter-spacing:1px; transition:color .3s ease;}
+  .field-sep{color:var(--border-strong); margin:0 2px; user-select:none;}
+  .entry-extra-toggle{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted); cursor:pointer; margin-top:6px; padding:2px 0; width:fit-content;}
+  .entry-extra-toggle:hover{color:var(--text-2);}
+  .entry-extra-toggle i{font-size:12px; transition:transform .15s;}
+  .entry-extra-toggle.open i{transform:rotate(90deg);}
+  .entry-extra{display:none;}
+  .entry-extra.open{display:block;}
+  .entry-actions{display:flex; gap:6px; flex-shrink:0; align-items:center;}
+  .entry-checkbox{width:20px; height:20px; cursor:pointer; accent-color:#ffffff;}
+  .select-bar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; padding:9px 12px; background:var(--card); border:0.5px solid var(--border); border-radius:10px; font-size:13px; color:var(--text-2); flex-wrap:wrap;}
+  .select-bar-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .icon-btn{padding:6px 8px; line-height:1;}
+  .icon-btn i{font-size:15px; vertical-align:-2px;}
+  .text-btn{padding:6px 12px; font-size:13px; line-height:1.2; white-space:nowrap;}
+  .text-btn i{font-size:14px; vertical-align:-2px; margin-right:4px;}
+  .pw-row{display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); font-size:13px;}
+  .pw-val{font-family:var(--font-mono, monospace); color:var(--text-2); letter-spacing:0.5px; flex:1; word-break:break-all;}
+  .tools-card{
+    display:flex; align-items:center; gap:14px; width:100%; text-align:left;
+    background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:16px 18px;
+  }
+  .tools-card:hover{border-color:var(--border-strong); background:#161616;}
+  .tools-card i:first-child{font-size:22px; color:var(--accent-text); flex-shrink:0;}
+  .tools-card-title{font-size:14px; font-weight:600; color:var(--text);}
+  .tools-card-arrow{margin-left:auto; color:var(--text-muted); flex-shrink:0;}
+  .pw-tag{color:var(--text-muted); flex-shrink:0;}
+  .empty{text-align:center; color:var(--text-muted); padding:48px 0; font-size:14px;}
+  .empty .platform-icon svg.pf-svg{width:22px; height:22px;}
+  .lock-wrap{display:flex; flex-direction:column; align-items:center; padding:20px 0;}
+  .lock-icon{width:48px; height:48px; border-radius:50%; background:var(--accent-bg); color:var(--accent-text); display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:16px;}
+  .center-form{max-width:340px; margin:0 auto; width:100%;}
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#ffffff; color:#000000; padding:10px 18px; border-radius:var(--radius); font-size:13px; opacity:0; pointer-events:none; transition:opacity 0.2s; z-index:20;}
+  .toast.show{opacity:1;}
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,0.65); display:none; align-items:center; justify-content:center; padding:16px; z-index:10;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--card); border-radius:12px; padding:24px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; border:0.5px solid var(--border);}
+  .modal h2{font-size:18px; font-weight:500; margin:0 0 16px; color:var(--text);}
+  .hint{font-size:12px; color:var(--text-muted); margin:-10px 0 16px;}
+  .tabs{display:flex; gap:6px; margin-bottom:18px; background:#0a0a0a; border-radius:var(--radius); padding:3px;}
+  .tab-btn{flex:1; border:none; background:transparent; padding:7px 10px; font-size:13px; border-radius:7px; cursor:pointer; color:var(--text-2); font-family:inherit;}
+  .tab-btn.active{background:#2a2a2a; color:var(--text); font-weight:500;}
+  .mono-area{font-family:var(--font-mono, monospace); font-size:13px;}
+  .folder-list-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:0.5px solid var(--border);}
+  .folder-list-row input[type=text]{margin-bottom:0; flex:1;}
+  .folder-list-row:last-child{border-bottom:none;}
+  code{background:#1f1f1f; padding:1px 5px; border-radius:4px; font-size:12px;}
+
+  /* ---------- IDE-STYLE APP SHELL ---------- */
+  .ide-shell{display:flex; flex-direction:column; height:100vh; width:100vw; overflow:hidden;}
+  .ide-titlebar{
+    display:flex; align-items:center; gap:8px; padding:10px 16px; flex-shrink:0;
+    background:#0a0a0a; border-bottom:1px solid var(--border);
+  }
+  .titlebar-clock{display:flex; align-items:baseline; gap:8px; flex-shrink:0; white-space:nowrap;}
+  .titlebar-clock-time{font-size:14px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; letter-spacing:0.5px;}
+  .titlebar-clock-date{font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+  .titlebar-search{flex:1; max-width:380px; margin-left:auto; position:relative; display:flex; align-items:center;}
+  .titlebar-search i{position:absolute; left:10px; color:var(--text-muted); font-size:13px; pointer-events:none;}
+  .titlebar-search input{width:100%; padding:6px 10px 6px 30px; border-radius:6px; border:0.5px solid var(--border-strong); background:#050505; font-size:12px; color:var(--text); font-family:inherit; margin:0;}
+  .titlebar-search input:focus{outline:none; border-color:var(--accent);}
+  .ide-lang-switch{display:flex; align-items:center; gap:2px; background:#141414; border:0.5px solid var(--border-strong); border-radius:6px; padding:2px;}
+  .ide-lang-btn{padding:3px 9px; font-size:11px; font-weight:600; border:none; border-radius:4px; background:transparent; color:var(--text-muted); cursor:pointer; font-family:inherit;}
+  .ide-lang-btn.active{background:var(--accent); color:#001229;}
+  .ide-sidebar-toggle{margin-left:10px; padding:5px 8px; display:none;}
+  .ide-body{display:flex; flex:1; min-height:0;}
+  .ide-sidebar{
+    width:230px; flex-shrink:0; background:var(--sidebar-bg); border-right:1px solid var(--border);
+    overflow-y:auto; padding:14px 0;
+  }
+  .ide-sidebar-label{padding:4px 16px 8px; font-size:11px;}
+  .ide-main{flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden;}
+  .ide-breadcrumb{
+    padding:13px 24px; border-bottom:1px solid var(--border); font-size:12px; color:var(--text-2);
+    flex-shrink:0; display:flex; align-items:center; gap:6px;
+  }
+  .ide-breadcrumb b{color:var(--text); font-weight:600;}
+  .ide-content-wrap{flex:1; overflow-y:auto; padding:22px 24px;}
+  .ide-rightpanel{
+    width:250px; flex-shrink:0; background:var(--panel-bg); border-left:1px solid var(--border);
+    overflow-y:auto; padding:18px 16px;
+  }
+  .ide-statusbar{
+    display:flex; align-items:center; gap:18px; padding:5px 16px; background:#0a0a0a;
+    border-top:1px solid var(--border); font-size:11px; color:var(--text-muted); flex-shrink:0; overflow-x:auto; white-space:nowrap;
+  }
+  .ide-statusbar .sb-dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; flex-shrink:0;}
+  .ide-statusbar .sb-sep{margin-left:auto;}
+  .ide-statusbar .sb-warn{color:#facc15;} .ide-statusbar .sb-err{color:var(--danger-text);}
+  @media (max-width: 860px){
+    .ide-sidebar{position:fixed; top:41px; bottom:0; left:0; z-index:6; transform:translateX(-100%); transition:transform .2s; box-shadow:4px 0 16px rgba(0,0,0,0.5);}
+    .ide-sidebar.open{transform:translateX(0);}
+    .ide-sidebar-toggle{display:block;}
+    .ide-rightpanel{
+      position:fixed; top:41px; bottom:0; right:0; z-index:6; width:250px; display:block;
+      transform:translateX(100%); transition:transform .2s; box-shadow:-4px 0 16px rgba(0,0,0,0.5);
+    }
+    .ide-rightpanel.open{transform:translateX(0);}
+    .ide-rightpanel-toggle{display:block;}
+    .ide-statusbar{font-size:10px; gap:12px;}
+    .titlebar-search{max-width:110px;}
+    .titlebar-clock-date{display:none;}
+  }
+  .ide-rightpanel-toggle{display:none; margin-left:8px; padding:5px 8px;}
+
+  .side-section{padding:10px 0;}
+  .side-section + .side-section{border-top:0.5px solid var(--border); margin-top:10px;}
+  .session-section{display:none;}
+  .session-section.show{display:block;}
+  .session-login{font-size:12px; color:var(--text-2);}
+  .session-active{font-size:16px; font-weight:600; color:var(--text); font-variant-numeric:tabular-nums; margin-top:1px;}
+  .session-hint{font-size:10px; color:var(--text-muted); margin-top:4px;}
+  .clock-time{font-size:20px; font-weight:600; color:var(--text); font-variant-numeric:tabular-nums; letter-spacing:0.5px;}
+  .clock-date{font-size:12px; color:var(--text-2); margin-top:1px;}
+  .clock-total{font-size:11px; color:var(--text-muted); margin-top:5px; display:flex; align-items:center; gap:4px;}
+  .clock-total i{font-size:12px;}
+  .network-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .network-label{font-size:12px; color:var(--text-2); display:flex; align-items:center; gap:5px;}
+  .network-label i{font-size:14px;}
+  .network-ip{font-size:11px; color:var(--text-muted); margin-top:6px; font-variant-numeric:tabular-nums;}
+  .toggle-switch{
+    width:38px; height:22px; border-radius:999px; border:none; position:relative;
+    background:#3d3d3d; cursor:pointer; transition:background .2s; padding:0; flex-shrink:0;
+  }
+  .toggle-switch::after{
+    content:''; position:absolute; top:2px; left:2px; width:18px; height:18px;
+    border-radius:50%; background:#fff; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,0.4);
+  }
+  .toggle-switch.on{ background:#4ade80; }
+  .toggle-switch.on::after{ transform:translateX(16px); }
+  .proxy-alert{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:8;
+    display:none; align-items:center; gap:12px;
+    background:rgba(250,204,21,0.14); border:0.5px solid #facc15; color:#facc15;
+    padding:10px 16px; border-radius:12px; font-size:13px; font-weight:500;
+    box-shadow:0 4px 16px -4px rgba(0,0,0,0.6); max-width:92vw;
+  }
+  .proxy-alert.show{display:flex;}
+  .proxy-alert button{background:transparent; border:none; color:#facc15; font-size:18px; line-height:1; cursor:pointer; padding:0 2px; flex-shrink:0;}
+  .proxy-alert button:hover{opacity:0.7;}
+  @media (max-width: 560px){
+    .proxy-alert{top:8px; font-size:12px; padding:8px 12px;}
+  }
+</style>
+</head>
+<body>
+<div class="ide-shell">
+  <div class="ide-titlebar">
+    <div class="titlebar-clock" id="titlebarClock" title="Giờ hệ thống">
+      <span class="titlebar-clock-time" id="clockTime">--:--:--</span>
+      <span class="titlebar-clock-date" id="clockDate">--/--/----</span>
+    </div>
+    <div class="titlebar-search" id="titlebarSearchWrap" style="display:none;">
+      <i class="ti ti-search"></i>
+      <input type="text" id="globalSearchInput" placeholder="Tìm kiếm...">
+    </div>
+    <div class="ide-lang-switch" id="langSwitch">
+      <button type="button" class="ide-lang-btn" data-lang="vi">VN</button>
+      <button type="button" class="ide-lang-btn" data-lang="en">EN</button>
+    </div>
+    <button type="button" class="ide-sidebar-toggle" id="sidebarToggleBtn" title="Menu"><i class="ti ti-menu-2"></i></button>
+    <button type="button" class="ide-rightpanel-toggle" id="rightPanelToggleBtn" title="System / Time / Network"><i class="ti ti-info-circle"></i></button>
+  </div>
+  <div class="ide-body">
+    <aside class="ide-sidebar" id="platformBar"></aside>
+    <main class="ide-main">
+      <div class="ide-breadcrumb" id="ideBreadcrumb"><i class="ti ti-chevron-right" style="font-size:12px;"></i> <b>Devic3</b></div>
+      <div class="ide-content-wrap">
+        <div id="app"></div>
+      </div>
+    </main>
+    <aside class="ide-rightpanel" id="sidePanel">
+      <div class="side-section session-section" id="sessionClock">
+        <div class="code-comment" style="font-size:11px; margin-bottom:6px;">// System</div>
+        <div class="session-login" id="sessionLogin">Đăng nhập lúc --:--:--</div>
+        <div class="session-active" id="sessionActive">00:00:00</div>
+        <div class="session-hint">Tự đăng xuất sau 30 phút không hoạt động</div>
+      </div>
+      <div class="side-section">
+        <div class="code-comment" style="font-size:11px; margin-bottom:6px;">// Network</div>
+        <div class="network-row">
+          <span class="network-label"><i class="ti ti-wifi"></i> Truy cập mạng</span>
+          <button type="button" class="toggle-switch" id="networkToggleSwitch" role="switch" aria-checked="false" title="Bật/tắt truy cập mạng cho ứng dụng"></button>
+        </div>
+        <div class="network-ip" id="networkIpText">Đang tắt</div>
+      </div>
+    </aside>
+  </div>
+  <div class="ide-statusbar" id="ideStatusBar">
+    <span><span class="sb-dot" style="background:var(--text-muted);"></span>Chưa mở khoá</span>
+  </div>
+</div>
+<div class="proxy-alert" id="proxyAlertBar"></div>
+
+<div id="modalBg" class="modal-bg">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =====================================================================
+   STORAGE SHIM — works both inside Claude and as a standalone file
+   -----------------------------------------------------------------
+   The app is written against a `window.storage` API (get/set/delete/
+   list, all async) normally provided by the Claude.ai artifact host.
+   When this file is downloaded and opened on its own (double-clicked,
+   or served by a local web server), that API does not exist — this
+   shim recreates the same interface using the browser's built-in
+   localStorage, so every storage call in the app works unchanged
+   either way. Keys are namespaced under "devic3:" to avoid clashing
+   with anything else stored in the same browser profile.
+===================================================================== */
+if(!window.storage){
+  const LS_PREFIX = 'devic3:';
+  window.storage = {
+    async get(key, shared){
+      try{
+        const raw = localStorage.getItem(LS_PREFIX + key);
+        return raw === null ? null : { key, value: raw, shared: !!shared };
+      }catch(e){ console.error('storage.get failed', e); return null; }
+    },
+    async set(key, value, shared){
+      try{
+        localStorage.setItem(LS_PREFIX + key, value);
+        return { key, value, shared: !!shared };
+      }catch(e){ console.error('storage.set failed', e); return null; }
+    },
+    async delete(key, shared){
+      try{
+        localStorage.removeItem(LS_PREFIX + key);
+        return { key, deleted: true, shared: !!shared };
+      }catch(e){ console.error('storage.delete failed', e); return null; }
+    },
+    async list(prefix, shared){
+      try{
+        const keys = [];
+        for(let i = 0; i < localStorage.length; i++){
+          const k = localStorage.key(i);
+          if(!k || !k.startsWith(LS_PREFIX)) continue;
+          const bare = k.slice(LS_PREFIX.length);
+          if(!prefix || bare.startsWith(prefix)) keys.push(bare);
+        }
+        return { keys, prefix, shared: !!shared };
+      }catch(e){ console.error('storage.list failed', e); return null; }
+    }
+  };
+}
+/* ===================================================================== */
+
+// ---------- i18n (Vietnamese / English) ----------
+const STORAGE_LANG_KEY = 'devic3-lang';
+const I18N = {
+  // shell / chrome
+  sidebar_platforms:      { vi: '// Nền tảng',              en: '// Platforms' },
+  sidebar_locked:         { vi: 'Chưa mở khoá',              en: 'Locked' },
+  status_locked:          { vi: 'Chưa mở khoá',              en: 'Locked' },
+  status_unlocked:        { vi: 'Đã mở khoá',                en: 'Unlocked' },
+  status_duplicates:      { vi: 'trùng lặp',                 en: 'duplicates' },
+  status_expiring:        { vi: 'sắp hết hạn',                en: 'expiring soon' },
+  status_accounts:        { vi: 'tài khoản',                 en: 'accounts' },
+  comment_system:         { vi: '// System',                 en: '// System' },
+  comment_time:           { vi: '// Time',                   en: '// Time' },
+  comment_network:        { vi: '// Network',                en: '// Network' },
+  session_hint:           { vi: 'Tự đăng xuất sau 30 phút không hoạt động', en: 'Auto-locks after 30 minutes idle' },
+  network_label:          { vi: 'Truy cập mạng',              en: 'Network access' },
+  network_off:            { vi: 'Đang tắt',                   en: 'Off' },
+  network_no_conn:        { vi: 'Không có kết nối mạng',       en: 'No network connection' },
+  network_fetching:       { vi: 'Đang lấy địa chỉ IP...',      en: 'Fetching IP address...' },
+  network_fail:           { vi: 'Không lấy được IP — thử mở file này trực tiếp bằng trình duyệt (ngoài cửa sổ xem trước)', en: "Couldn't get IP — try opening this file directly in a browser (outside the preview window)" },
+  // setup / unlock screens
+  setup_comment:          { vi: '// Tạo kho lưu trữ mới, mã hoá AES-256', en: '// Create a new vault, AES-256 encrypted' },
+  unlock_comment:         { vi: '// Nhập mật khẩu chính để mở khoá', en: '// Enter your master password to unlock' },
+  breadcrumb_setup:       { vi: 'Tạo kho mới',                en: 'Create vault' },
+  breadcrumb_unlock:      { vi: 'Mở khoá',                    en: 'Unlock' },
+  label_create_pw:        { vi: 'Tạo mật khẩu chính',          en: 'Create master password' },
+  label_confirm_pw:       { vi: 'Nhập lại mật khẩu',           en: 'Confirm password' },
+  placeholder_min6:       { vi: 'Ít nhất 6 ký tự',             en: 'At least 6 characters' },
+  placeholder_confirm:    { vi: 'Nhập lại để xác nhận',        en: 'Re-enter to confirm' },
+  hint_pw_not_saved:      { vi: 'Mật khẩu này không được lưu ở đâu cả — nếu quên, dữ liệu đã lưu sẽ không thể khôi phục.', en: "This password isn't stored anywhere — if you forget it, saved data can't be recovered." },
+  btn_create_vault:       { vi: 'Tạo kho lưu trữ',             en: 'Create vault' },
+  btn_open_vault_file:    { vi: 'Mở kho từ file trên ổ cứng (máy khác)', en: 'Open vault from a file on disk (another computer)' },
+  btn_restore_backup:     { vi: 'Đã có kho lưu trữ? Khôi phục từ file sao lưu', en: 'Already have a vault? Restore from a backup file' },
+  label_master_pw:        { vi: 'Mật Khẩu',                    en: 'Password' },
+  placeholder_enter_pw:   { vi: 'Nhập mật khẩu',               en: 'Enter password' },
+  btn_unlock:             { vi: 'Mở khoá',                     en: 'Unlock' },
+  keep_session_label:     { vi: 'Giữ đăng nhập khi tải lại trang (F5)', en: 'Keep me signed in across page reload (F5)' },
+  keep_session_hint:      { vi: 'Chỉ áp dụng cho tab này — tự xoá khi bạn đóng tab hoặc bấm "Khoá". Người dùng chung máy trong lúc bạn chưa khoá vẫn xem được dữ liệu, hãy cân nhắc trước khi bật.', en: 'Only applies to this browser tab — cleared the moment you close the tab or press "Lock". Anyone using this computer before you lock it could still see your data, so consider this before turning it on.' },
+  // main vault topbar
+  comment_input_data:     { vi: '// Nhập dữ liệu',             en: '// Input data' },
+  comment_status:         { vi: '// Trạng thái',               en: '// Status' },
+  comment_account_list:   { vi: '// Danh sách tài khoản',      en: '// Account list' },
+  comment_notes:          { vi: '// Ghi chú',                  en: '// Notes' },
+  placeholder_search:     { vi: 'Tìm theo tên hoặc email',     en: 'Search by name or email' },
+  placeholder_search_notes: { vi: 'Tìm trong ghi chú',          en: 'Search notes' },
+  btn_lock:                { vi: 'Khoá',                        en: 'Lock' },
+  btn_select_many:         { vi: 'Chọn nhiều',                  en: 'Select' },
+  btn_select_done:         { vi: 'Xong',                        en: 'Done' },
+  btn_file_backup:         { vi: 'File ổ cứng',                 en: 'Disk file' },
+  btn_file_linked:         { vi: 'Đã liên kết file',            en: 'File linked' },
+  btn_tools:               { vi: 'Công cụ',                     en: 'Tools' },
+  btn_import_export:       { vi: 'Nhập/Xuất',                   en: 'Import/Export' },
+  btn_add_note:            { vi: 'Ghi chú mới',                 en: 'New note' },
+  btn_export:              { vi: 'Xuất',                        en: 'Export' },
+  // folders
+  folder_all:              { vi: 'Tất cả',                      en: 'All' },
+  folder_uncategorized:    { vi: 'Chưa phân loại',              en: 'Uncategorized' },
+  folder_manage:           { vi: 'Quản lý thư mục',             en: 'Manage folders' },
+  // status filter
+  status_active:            { vi: 'Hoạt động',                    en: 'Active' },
+  status_inactive:          { vi: 'Không hoạt động',              en: 'Inactive' },
+  status_unknown:           { vi: 'Chưa xác định',                en: 'Unknown' },
+  // entry actions
+  btn_check:                { vi: 'Kiểm tra',                     en: 'Check' },
+  btn_edit:                 { vi: 'Sửa',                          en: 'Edit' },
+  btn_delete:               { vi: 'Xoá',                          en: 'Delete' },
+  // common modal buttons
+  btn_close:                { vi: 'Đóng',                         en: 'Close' },
+  btn_cancel:               { vi: 'Huỷ',                          en: 'Cancel' },
+  btn_save:                 { vi: 'Lưu',                          en: 'Save' },
+  select_selected:          { vi: 'Đã chọn',                      en: 'Selected' },
+  select_all:               { vi: 'Chọn tất cả',                  en: 'Select all' },
+  select_clear:             { vi: 'Bỏ chọn',                      en: 'Clear' },
+  select_delete:            { vi: 'Xoá đã chọn',                  en: 'Delete selected' },
+  title_lock:               { vi: 'Khoá lại',                     en: 'Lock' },
+  title_select_many:        { vi: 'Chọn nhiều tài khoản để xoá cùng lúc', en: 'Select multiple accounts to delete at once' },
+  title_file_backup:        { vi: 'Sao lưu vào file trên ổ cứng',   en: 'Back up to a file on disk' },
+  title_tools:              { vi: 'Công cụ: tạo mật khẩu, lấy ID Facebook', en: 'Tools: password generator, Facebook ID lookup' },
+  status_filter_hidden:     { vi: 'Đang ẩn — bấm để hiện lại',      en: 'Hidden — click to show' },
+  status_filter_shown:      { vi: 'Đang hiện — bấm để ẩn',          en: 'Shown — click to hide' },
+  platform_tools:           { vi: 'Công cụ',                       en: 'Tools' },
+  comment_tools:            { vi: '// Công cụ',                    en: '// Tools' },
+  tool_pwgen_title:         { vi: 'Tạo mật khẩu ngẫu nhiên',        en: 'Generate random password' },
+  tool_fbid_title:          { vi: 'Lấy ID Facebook từ link',        en: 'Get Facebook ID from link' },
+  tool_2fa_title:           { vi: 'Giải mã mã 2FA',                 en: 'Decode 2FA code' },
+};
+function t(key){
+  const entry = I18N[key];
+  if(!entry) return key;
+  return entry[state.lang] || entry.vi;
+}
+async function loadLangPref(){
+  try{
+    const res = await window.storage.get(STORAGE_LANG_KEY);
+    if(res && res.value === 'en') return 'en';
+  }catch(e){}
+  return 'vi';
+}
+async function setLangPref(lang){
+  state.lang = lang;
+  try{ await window.storage.set(STORAGE_LANG_KEY, lang); }catch(e){}
+  updateLangSwitchUI();
+  // re-render whatever is currently on screen in the new language
+  if(state.key){
+    renderVault();
+  } else {
+    renderApp();
+  }
+}
+function updateLangSwitchUI(){
+  document.querySelectorAll('.ide-lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === state.lang);
+  });
+}
+
+const STORAGE_CONFIG_KEY = 'fb-vault-config';
+const STORAGE_DATA_KEY = 'fb-vault-entries';
+const STORAGE_FOLDERS_KEY = 'fb-vault-folders';
+const STORAGE_NOTES_KEY = 'fb-vault-notes';
+const VERIFY_STRING = 'vault-ok-v1';
+const NO_FOLDER_ID = '__none__';
+
+// platforms supported
+const PLATFORMS = [
+  { id: 'facebook', name: 'Facebook', color: '#1877F2' },
+  { id: 'gmail',    name: 'Gmail',    color: '#EA4335' },
+  { id: 'hotmail',  name: 'Hotmail',  color: '#0078D4' },
+  { id: 'tiktok',   name: 'TikTok',   color: '#000000' },
+  { id: 'steam',    name: 'Steam',    color: '#171a21' },
+  { id: 'note',     name: 'Note',     color: '#F5A623' },
+  { id: 'phone',    name: 'Phone',    color: '#9C27B0' },
+  { id: 'proxy',    name: 'Proxy',    color: '#14b8a6' },
+  { id: 'other',    name: 'Công cụ',  color: '#6b6b66' },
+];
+// Status filter (Hoạt động / Không hoạt động / Chưa xác định) only makes sense
+// for platforms where "is this account still alive" is a meaningful question.
+const STATUS_FILTER_PLATFORMS = ['facebook', 'gmail', 'hotmail', 'tiktok', 'steam', 'phone'];
+// Reads which platform tab the URL points to (e.g. after Ctrl/Cmd-clicking a
+// sidebar tab opened this as a new browser tab/window) — lets that new
+// window land on the right tab once the vault is unlocked, and also means
+// reloading the page keeps you on whatever tab you were last viewing.
+function getPlatformFromHash(){
+  const m = location.hash.match(/platform=([a-z]+)/i);
+  if(m && PLATFORMS.some(p => p.id === m[1])) return m[1];
+  return null;
+}
+function platformMeta(id){
+  return PLATFORMS.find(p => p.id === id) || PLATFORMS[0];
+}
+
+// inline SVG brand marks (self-contained, no external font dependency so they always render)
+const PLATFORM_SVG_INNER = {
+  facebook: `<path fill="#ffffff" d="M13.5 21v-7.5h2.5l.4-3H13.5V8.5c0-.86.24-1.5 1.5-1.5h1.6V4.3C16.3 4.2 15.4 4 14.4 4 12.2 4 10.6 5.3 10.6 7.7v2.8H8v3h2.6V21h2.9z"/>`,
+  gmail: `<rect x="3.2" y="6" width="17.6" height="12" rx="1.8" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M4 7l8 6 8-6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  tiktok: `<path fill="#ffffff" d="M15.3 3.5c.5 2.1 1.9 3.6 4 3.9v3c-1.5 0-2.9-.4-4-1.2v6.1c0 3-2.4 5.4-5.4 5.4S4.5 17.3 4.5 14.3s2.4-5.4 5.4-5.4c.3 0 .6 0 .9.1v3.1c-.3-.1-.6-.2-.9-.2-1.3 0-2.4 1.1-2.4 2.4s1.1 2.4 2.4 2.4 2.4-1.1 2.4-2.4V3.5h3z"/>`,
+  hotmail: `<rect x="3" y="4" width="8" height="8" fill="#ffffff"/><rect x="12" y="4" width="8" height="8" fill="#ffffff" opacity="0.75"/><rect x="3" y="13" width="8" height="8" fill="#ffffff" opacity="0.75"/><rect x="12" y="13" width="8" height="8" fill="#ffffff" opacity="0.5"/>`,
+  steam: `<circle cx="9" cy="16" r="3.1" fill="none" stroke="#ffffff" stroke-width="1.6"/><circle cx="15.3" cy="8.2" r="3.6" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M10.9 14.1l3-3.1" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>`,
+  other: `<path d="M14.7 6.3a3 3 0 0 1-3.9 3.9L6.4 14.6a1.5 1.5 0 0 1-2.1-2.1l4.4-4.4a3 3 0 0 1 3.9-3.9l-2 2 1.4 1.4 2-2z" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>`,
+  note: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M7 3.5h7l3.5 3.5V20.5H7z"/><path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M14 3.5V7h3.5"/><path fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" d="M9.3 11h5.4M9.3 13.7h5.4M9.3 16.4h3.4"/>`,
+  phone: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" d="M11 18.3h2"/>`,
+  proxy: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 8h13m0 0-3.2-3.2M17 8l-3.2 3.2M20 16H7m0 0 3.2-3.2M7 16l3.2 3.2"/>`,
+};
+
+function platformSvg(id){
+  const inner = PLATFORM_SVG_INNER[id] || PLATFORM_SVG_INNER.other;
+  return `<svg viewBox="0 0 24 24" class="pf-svg">${inner}</svg>`;
+}
+
+// account status: whether the account is currently active/working
+const STATUS_META = {
+  active:   { symbol: '✓', color: '#4ade80', bg: 'rgba(74,222,128,0.14)' },
+  inactive: { symbol: '✕', color: '#f87171', bg: 'rgba(248,113,113,0.14)' },
+  unknown:  { symbol: '?', color: '#9a9a95', bg: 'rgba(154,154,149,0.14)' },
+};
+function statusMeta(status){
+  const key = STATUS_META[status] ? status : 'unknown';
+  return { ...STATUS_META[key], label: t('status_' + key) };
+}
+
+// shared field metadata (icon + input type). Which fields appear, in what order,
+// and under what label depends on the platform — see PLATFORM_FIELDS below.
+const FIELD_META = {
+  fbName:                 { icon: 'ti-user',        kind: 'text' },
+  password:               { icon: 'ti-key',         kind: 'text' },
+  twoFA:                  { icon: 'ti-shield-lock', kind: 'text' },
+  email:                  { icon: 'ti-mail',        kind: 'text' },
+  emailPassword:          { icon: 'ti-mail-opened', kind: 'text' },
+  secondaryEmail:         { icon: 'ti-mail-forward',kind: 'text' },
+  secondaryEmailPassword: { icon: 'ti-mail-opened', kind: 'text' },
+  phone:                  { icon: 'ti-phone',       kind: 'text' },
+  expiryDate:             { icon: 'ti-calendar-due', kind: 'date' },
+  port:                   { icon: 'ti-plug',        kind: 'text' },
+  username:               { icon: 'ti-user',        kind: 'text' },
+  cookie:                 { icon: 'ti-cookie',      kind: 'area' },
+  token:                  { icon: 'ti-key',         kind: 'area' },
+  other:                  { icon: 'ti-dots',        kind: 'area' },
+};
+function fieldMeta(key){
+  return FIELD_META[key] || { icon: 'ti-dots', kind: 'text' };
+}
+
+// Groups a credential account's fields into up to 3 compact, scannable rows:
+//   1) UID/User/Email + Pass + Tên
+//   2) Email + Pass Email (whichever email/password pair actually has data)
+//   3) Proxy + mã 2FA (mã trực tiếp, đã giải — không phải secret thô)
+// Anything left over (secondaryEmail when unused above, cookie, token, khác...)
+// is returned separately so it can go in a small collapsible "extra" section
+// instead of cluttering the main view.
+function buildEntryDisplayRows(e){
+  const rows = [];
+  const used = new Set(['fbName']);
+
+  const row1 = [];
+  row1.push({ label: 'UID', field: 'fbName', value: e.fbName, secret: false });
+  if(e.password){ row1.push({ label: 'Pass', field: 'password', value: e.password, secret: true }); used.add('password'); }
+  if(e.displayName){ row1.push({ label: 'Tên', field: 'displayName', value: e.displayName, secret: false }); used.add('displayName'); }
+  rows.push(row1);
+
+  const row2 = [];
+  if(e.email){
+    row2.push({ label: 'Email', field: 'email', value: e.email, secret: false });
+    used.add('email');
+    if(e.emailPassword){ row2.push({ label: 'Pass Email', field: 'emailPassword', value: e.emailPassword, secret: true }); used.add('emailPassword'); }
+  } else if(e.secondaryEmail){
+    row2.push({ label: 'Email phụ', field: 'secondaryEmail', value: e.secondaryEmail, secret: false });
+    used.add('secondaryEmail');
+    if(e.secondaryEmailPassword){ row2.push({ label: 'Pass', field: 'secondaryEmailPassword', value: e.secondaryEmailPassword, secret: true }); used.add('secondaryEmailPassword'); }
+  }
+  if(row2.length) rows.push(row2);
+
+  const row3 = [];
+  if(e.proxy){ row3.push({ label: 'Proxy', field: 'proxy', value: e.proxy, secret: false }); used.add('proxy'); }
+  if(e.twoFA){ row3.push({ label: '2FA', field: 'twoFA', value: null, secret: false, isTotp: true }); used.add('twoFA'); }
+  if(e.phone){ row3.push({ label: 'SĐT', field: 'phone', value: e.phone, secret: false }); used.add('phone'); }
+  if(row3.length) rows.push(row3);
+
+  return { rows, used };
+}
+
+// per-platform field sets: which fields show up (and their label/order) in the
+// Add/Edit form, the auto-import pipe format, the expanded account details, and exports.
+const PLATFORM_FIELDS = {
+  facebook: [
+    { key: 'fbName',        label: 'UID' },
+    { key: 'password',      label: 'PASS' },
+    { key: 'twoFA',         label: '2FA' },
+    { key: 'email',         label: 'Email' },
+    { key: 'emailPassword', label: 'Pass Email' },
+    { key: 'secondaryEmail',label: 'Email phụ' },
+    { key: 'cookie',        label: 'Cookie' },
+    { key: 'token',         label: 'Token' },
+    { key: 'other',         label: 'Khác' },
+  ],
+  gmail: [
+    { key: 'fbName',                 label: 'Email' },
+    { key: 'password',               label: 'Pass' },
+    { key: 'twoFA',                  label: '2FA' },
+    { key: 'secondaryEmail',         label: 'Email phụ' },
+    { key: 'secondaryEmailPassword', label: 'Pass Email' },
+    { key: 'other',                  label: 'Khác' },
+  ],
+  tiktok: [
+    { key: 'fbName',        label: 'User' },
+    { key: 'password',      label: 'Pass' },
+    { key: 'email',         label: 'Email' },
+    { key: 'emailPassword', label: 'PassEmail' },
+    { key: 'phone',         label: 'SĐT' },
+    { key: 'other',         label: 'Khác' },
+  ],
+  hotmail: [
+    { key: 'fbName',                 label: 'Email' },
+    { key: 'password',               label: 'Pass' },
+    { key: 'secondaryEmail',         label: 'Mail phụ' },
+    { key: 'secondaryEmailPassword', label: 'Pass mail phụ' },
+    { key: 'phone',                  label: 'SĐT' },
+    { key: 'other',                  label: 'Khác' },
+  ],
+  steam: [
+    { key: 'fbName',        label: 'User' },
+    { key: 'password',      label: 'Pass' },
+    { key: 'email',         label: 'Email' },
+    { key: 'emailPassword', label: 'PassEmail' },
+    { key: 'phone',         label: 'SĐT' },
+    { key: 'other',         label: 'Khác' },
+  ],
+  phone: [
+    { key: 'fbName',     label: 'SĐT' },
+    { key: 'expiryDate', label: 'Ngày hết hạn' },
+    { key: 'other',      label: 'Khác' },
+  ],
+  proxy: [
+    { key: 'fbName',     label: 'IP' },
+    { key: 'port',       label: 'Port' },
+    { key: 'username',   label: 'User' },
+    { key: 'password',   label: 'Pass' },
+    { key: 'expiryDate', label: 'Ngày hết hạn' },
+  ],
+};
+// which delimiter this platform's auto-import / export lines use between fields
+function platformDelimiter(platformId){
+  return platformId === 'proxy' ? ':' : '|';
+}
+function platformFormatHint(platformId){
+  const labels = getPlatformFields(platformId).map(f => f.label);
+  const d = platformDelimiter(platformId);
+  return d === ':' ? labels.join(d) : labels.join(d) + '|';
+}
+function getPlatformFields(platformId){
+  return PLATFORM_FIELDS[platformId] || PLATFORM_FIELDS.facebook;
+}
+
+// phone number expiry helper: how many days left until a phone's "Ngày hết hạn" (expiry) date
+// accepts both the native date-picker format (YYYY-MM-DD) and Vietnamese-style DD/MM/YYYY
+// (as typically typed when pasting via the "Tự động" bulk-import tab)
+function parseFlexibleDate(str){
+  if(!str) return null;
+  let m = String(str).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = String(str).trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+// Always show/store dates as dd/mm/yyyy in the UI (Vietnamese convention) — the
+// native <input type="date"> widget renders in the OS/browser locale format
+// (often mm/dd/yyyy) which we can't reliably override, so date fields use a
+// plain text input with this fixed display format instead.
+function formatDateDMY(dateObj){
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const yyyy = dateObj.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+// "MỚI" badge for accounts added less than 24h ago — purely a display check
+// against the stored createdAt timestamp, so it naturally stops showing on
+// its own once 24h have passed (re-evaluated on every render, no timer needed).
+const NEW_BADGE_WINDOW_MS = 24 * 60 * 60 * 1000;
+function isNewEntry(e){
+  if(!e.createdAt) return false;
+  return (Date.now() - e.createdAt) < NEW_BADGE_WINDOW_MS;
+}
+function toDisplayDate(raw){
+  if(!raw) return '';
+  const d = parseFlexibleDate(raw);
+  return d ? formatDateDMY(d) : raw;
+}
+// suggested filename for new vault backup files, e.g. "Backup20-8.json"
+function backupFileName(ext){
+  const now = new Date();
+  return `Backup${now.getDate()}-${now.getMonth() + 1}.${ext}`;
+}
+function phoneExpiryInfo(expiryDateStr){
+  if(!expiryDateStr) return null;
+  const exp = parseFlexibleDate(expiryDateStr);
+  if(!exp) return null;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  exp.setHours(0,0,0,0);
+  const diffDays = Math.round((exp - now) / 86400000);
+  if(diffDays < 0) return { label: `Hết hạn ${Math.abs(diffDays)} ngày trước`, color: '#f87171', bg: 'rgba(248,113,113,0.16)', diffDays };
+  if(diffDays === 0) return { label: 'Hết hạn hôm nay', color: '#f87171', bg: 'rgba(248,113,113,0.16)', diffDays };
+  if(diffDays === 1) return { label: 'Còn 1 ngày', color: '#facc15', bg: 'rgba(250,204,21,0.16)', diffDays };
+  return { label: `Còn ${diffDays} ngày`, color: '#4ade80', bg: 'rgba(74,222,128,0.14)', diffDays };
+}
+function phoneExpiryBadgeHtml(e){
+  if((e.platform !== 'phone' && e.platform !== 'proxy') || !e.expiryDate) return '';
+  const info = phoneExpiryInfo(e.expiryDate);
+  if(!info) return '';
+  return `<span class="status-badge" style="color:${info.color};background:${info.bg};" title="Ngày hết hạn: ${escapeHtml(toDisplayDate(e.expiryDate))}"><i class="ti ti-calendar-due" style="font-size:11px;vertical-align:-1px"></i> ${escapeHtml(info.label)}</span>`;
+}
+
+let state = {
+  key: null,
+  lang: 'vi',
+  entries: [],
+  folders: [], // {id, name}
+  configExists: false,
+  editingId: null,
+  modalTab: 'manual',
+  search: '',
+  activeFolder: 'all', // 'all' | NO_FOLDER_ID | folder id
+  folderPanelOpen: false,
+  selectMode: false,
+  hiddenStatuses: new Set(), // status keys ('active'|'inactive'|'unknown') currently hidden from the list
+  selectedIds: new Set(),
+  activePlatform: getPlatformFromHash() || 'facebook',
+  expandedIds: new Set(),
+  visibleEntries: [],
+  session: { loginTime: null, lastActivity: null },
+  notes: [],
+  activeNoteId: null,
+  phoneNotified: new Set(), // ids of phone entries we've already alerted about this session
+  proxyAlertDismissedIds: new Set(), // ids of proxy entries the person has dismissed the renewal banner for
+  fileHandle: null,     // linked FileSystemFileHandle for on-disk backup, or null
+  fileHandleName: ''    // display name of the linked file
+};
+
+const AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 minutes of inactivity
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function b64(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function unb64(str){
+  const bin = atob(str);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return arr.buffer;
+}
+
+// PBKDF2 iteration count — OWASP's 2023 minimum recommendation for
+// PBKDF2-HMAC-SHA256 is 600,000; new vaults use this. Vaults created before
+// this security upgrade used 250,000 — their own iteration count is stored in
+// their config and honored on unlock so existing vaults keep working exactly
+// as before (no forced re-encryption, no risk of locking anyone out).
+const PBKDF2_ITERATIONS = 600000;
+const PBKDF2_ITERATIONS_LEGACY = 250000;
+
+async function deriveKey(password, saltB64, iterations){
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt: unb64(saltB64), iterations: iterations || PBKDF2_ITERATIONS, hash:'SHA-256' },
+    baseKey,
+    { name:'AES-GCM', length:256 },
+    true, // extractable — required so the optional "keep session across F5" feature can persist the derived key
+    ['encrypt','decrypt']
+  );
+}
+
+// ---------- OPTIONAL: keep session across page reload (F5) ----------
+// Off by default. The derived AES key never touches localStorage/disk — it's
+// exported to sessionStorage only, which the browser wipes the moment the tab
+// is actually closed (unlike localStorage, which survives indefinitely).
+// This trades a bit of security for convenience: while the key sits in
+// sessionStorage, anyone with access to this exact browser tab (devtools, a
+// malicious extension, someone sitting at an unlocked/unattended computer)
+// could read it and unlock the vault without the password. Locking (manually
+// or via the 30-minute idle timeout) always wipes it immediately, so a proper
+// "Khoá" still really locks things even with this feature turned on.
+const STORAGE_KEEP_SESSION_PREF_KEY = 'devic3-keep-session';
+const SESSION_KEY_STORAGE_KEY = 'devic3-session-key';
+
+async function getKeepSessionPref(){
+  try{
+    const res = await window.storage.get(STORAGE_KEEP_SESSION_PREF_KEY, false);
+    return !!(res && res.value === '1');
+  }catch(e){ return false; }
+}
+async function setKeepSessionPref(on){
+  try{ await window.storage.set(STORAGE_KEEP_SESSION_PREF_KEY, on ? '1' : '0', false); }catch(e){}
+}
+async function persistSessionKey(key, saltB64){
+  try{
+    const raw = await crypto.subtle.exportKey('raw', key);
+    sessionStorage.setItem(SESSION_KEY_STORAGE_KEY, JSON.stringify({ key: b64(new Uint8Array(raw)), salt: saltB64 }));
+  }catch(e){ console.error(e); }
+}
+function clearPersistedSessionKey(){
+  try{ sessionStorage.removeItem(SESSION_KEY_STORAGE_KEY); }catch(e){}
+}
+async function tryRestoreSessionKey(expectedSaltB64){
+  try{
+    const raw = sessionStorage.getItem(SESSION_KEY_STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(parsed.salt !== expectedSaltB64) return null; // belongs to a different vault — don't reuse
+    const keyBytes = unb64(parsed.key);
+    return await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+  }catch(e){ return null; }
+}
+
+async function encryptStr(key, plaintext){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const cipher = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext));
+  return { iv: b64(iv), data: b64(cipher) };
+}
+async function decryptStr(key, blob){
+  const dec = new TextDecoder();
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(blob.iv)}, key, unb64(blob.data));
+  return dec.decode(plain);
+}
+
+async function loadConfig(){
+  try{
+    const res = await window.storage.get(STORAGE_CONFIG_KEY);
+    if(res && res.value){
+      state.configExists = true;
+      return JSON.parse(res.value);
+    }
+  }catch(e){}
+  state.configExists = false;
+  return null;
+}
+
+async function saveEntries(){
+  const json = JSON.stringify(state.entries);
+  const blob = await encryptStr(state.key, json);
+  try{
+    const result = await window.storage.set(STORAGE_DATA_KEY, JSON.stringify(blob));
+    if(!result){
+      toast('⚠ Lưu dữ liệu thất bại, thử lại');
+      return false;
+    }
+    if(state.fileHandle) writeVaultFile();
+    return true;
+  }catch(e){
+    toast('⚠ Lưu dữ liệu thất bại, thử lại');
+    return false;
+  }
+}
+
+async function loadEntries(){
+  try{
+    const res = await window.storage.get(STORAGE_DATA_KEY);
+    if(res && res.value){
+      const blob = JSON.parse(res.value);
+      const json = await decryptStr(state.key, blob);
+      state.entries = JSON.parse(json);
+      state.entries.forEach(e => { if(!e.platform) e.platform = 'facebook'; });
+      // one-time migration: accounts saved before "ngày nhập tài khoản" existed
+      // don't have a createdAt — best available fallback is their updatedAt
+      // (or now, if even that's missing), so the date shown is never blank.
+      let migratedDates = false;
+      state.entries.forEach(e => {
+        if(!e.createdAt){ e.createdAt = e.updatedAt || Date.now(); migratedDates = true; }
+      });
+      // one-time auto-repair: fix Facebook accounts whose Email field actually
+      // holds a cookie/token dump (or an email/2FA/UID that landed in the wrong
+      // column) from a previous bad paste, so old broken entries self-heal too.
+      let repaired = false;
+      state.entries.forEach(e => {
+        if(e.platform !== 'facebook') return;
+        const before = JSON.stringify([e.fbName, e.twoFA, e.email, e.secondaryEmail, e.cookie]);
+        Object.assign(e, smartCorrectFacebookFields(e));
+        const after = JSON.stringify([e.fbName, e.twoFA, e.email, e.secondaryEmail, e.cookie]);
+        if(before !== after) repaired = true;
+      });
+      // one-time auto-repair: Gmail didn't have a dedicated 2FA field until
+      // now — anyone who pasted a 2FA secret before this update had it land
+      // in "Email phụ" instead (the next column over). If that field holds
+      // something 2FA-secret-shaped rather than a real email, move it over.
+      let gmailRepaired = false;
+      state.entries.forEach(e => {
+        if(e.platform !== 'gmail') return;
+        if(!e.twoFA && e.secondaryEmail && !looksLikeEmail(e.secondaryEmail) && looksLike2FASecret(e.secondaryEmail)){
+          e.twoFA = e.secondaryEmail;
+          e.secondaryEmail = '';
+          gmailRepaired = true;
+        }
+      });
+      if(repaired || gmailRepaired || migratedDates){
+        await saveEntries();
+        const repairMsgs = [];
+        if(repaired) repairMsgs.push('dữ liệu bị lệch cột (email/cookie)');
+        if(gmailRepaired) repairMsgs.push('mã 2FA Gmail bị lệch ô');
+        if(repairMsgs.length) toast('Đã tự động sửa: ' + repairMsgs.join(', '));
+      }
+      return;
+    }
+  }catch(e){}
+  state.entries = [];
+}
+
+async function saveFolders(){
+  const json = JSON.stringify(state.folders);
+  const blob = await encryptStr(state.key, json);
+  try{
+    const result = await window.storage.set(STORAGE_FOLDERS_KEY, JSON.stringify(blob));
+    if(!result){
+      toast('⚠ Lưu thư mục thất bại, thử lại');
+      return false;
+    }
+    if(state.fileHandle) writeVaultFile();
+    return true;
+  }catch(e){
+    toast('⚠ Lưu thư mục thất bại, thử lại');
+    return false;
+  }
+}
+
+async function loadFolders(){
+  try{
+    const res = await window.storage.get(STORAGE_FOLDERS_KEY);
+    if(res && res.value){
+      const blob = JSON.parse(res.value);
+      const json = await decryptStr(state.key, blob);
+      state.folders = JSON.parse(json);
+      // migrate old folders that have no platformId (were shared) -> assign to facebook
+      state.folders.forEach(f => { if(!f.platformId) f.platformId = 'facebook'; });
+      return;
+    }
+  }catch(e){}
+  // default folders on first run (belong to Facebook only)
+  state.folders = [
+    { id: uid(), name: 'Tài khoản mới', platformId: 'facebook' },
+    { id: uid(), name: 'Tài khoản cũ', platformId: 'facebook' }
+  ];
+}
+
+async function saveNotes(){
+  const json = JSON.stringify(state.notes);
+  const blob = await encryptStr(state.key, json);
+  try{
+    const result = await window.storage.set(STORAGE_NOTES_KEY, JSON.stringify(blob));
+    if(!result){
+      toast('⚠ Lưu ghi chú thất bại, thử lại');
+      return false;
+    }
+    if(state.fileHandle) writeVaultFile();
+    return true;
+  }catch(e){
+    toast('⚠ Lưu ghi chú thất bại, thử lại');
+    return false;
+  }
+}
+
+async function loadNotes(){
+  try{
+    const res = await window.storage.get(STORAGE_NOTES_KEY);
+    if(res && res.value){
+      const blob = JSON.parse(res.value);
+      const json = await decryptStr(state.key, blob);
+      state.notes = JSON.parse(json);
+      return;
+    }
+  }catch(e){}
+  state.notes = [];
+}
+
+// ---------- ON-DISK FILE BACKUP (File System Access API — Chrome/Edge) ----------
+// Lets the vault live in one file the person picks on their own hard drive, instead
+// of only inside the browser's storage. That file can be copied to a USB drive,
+// synced folder, or opened directly on a different computer to log back in —
+// so a Windows reinstall / cleared browser data doesn't mean losing everything.
+function fileSystemAccessSupported(){
+  return typeof window.showSaveFilePicker === 'function' && typeof window.showOpenFilePicker === 'function';
+}
+
+async function assembleVaultBundle(){
+  const configRes = await window.storage.get(STORAGE_CONFIG_KEY);
+  const entriesRes = await window.storage.get(STORAGE_DATA_KEY);
+  const foldersRes = await window.storage.get(STORAGE_FOLDERS_KEY);
+  const notesRes = await window.storage.get(STORAGE_NOTES_KEY);
+  return {
+    app: 'devic3',
+    version: 2,
+    savedAt: Date.now(),
+    config: configRes && configRes.value ? JSON.parse(configRes.value) : null,
+    entries: entriesRes && entriesRes.value ? JSON.parse(entriesRes.value) : null,
+    folders: foldersRes && foldersRes.value ? JSON.parse(foldersRes.value) : null,
+    notes: notesRes && notesRes.value ? JSON.parse(notesRes.value) : null,
+  };
+}
+
+async function writeVaultFile(){
+  if(!state.fileHandle) return;
+  try{
+    const bundle = await assembleVaultBundle();
+    const writable = await state.fileHandle.createWritable();
+    await writable.write(JSON.stringify(bundle, null, 2));
+    await writable.close();
+  }catch(e){
+    console.error(e);
+    toast('⚠ Không ghi được vào file trên ổ cứng — dữ liệu vẫn an toàn trong trình duyệt');
+  }
+}
+
+// Links a NEW file to mirror whatever vault is *currently open* (does not
+// touch the vault's data or password — for someone who just wants an existing
+// vault to also start writing to a file going forward).
+async function linkNewVaultFile(){
+  if(!fileSystemAccessSupported()){
+    toast('Trình duyệt này không hỗ trợ lưu trực tiếp ra file (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad). Hãy dùng "Nhập/Xuất" để sao lưu thủ công thay thế.');
+    return false;
+  }
+  try{
+    const handle = await window.showSaveFilePicker({
+      suggestedName: backupFileName('json'),
+      types: [{ description: 'Devic3 Vault', accept: { 'application/json': ['.json'] } }]
+    });
+    state.fileHandle = handle;
+    state.fileHandleName = handle.name;
+    await writeVaultFile();
+    return true;
+  }catch(e){
+    if(e.name !== 'AbortError'){ console.error(e); toast('Không thể tạo file'); }
+    return false;
+  }
+}
+
+// Creates a genuinely BRAND NEW, empty vault (new master password) written into
+// a newly-picked file — replaces whatever vault/session is currently active.
+// This is the "New Vault" action, matching how KeePass/Bitwarden-style apps work.
+function openCreateNewFileVaultModal(){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>Tạo kho mới trong file mới</h2>
+    <p class="hint" style="margin-top:-4px;">Sẽ tạo 1 kho hoàn toàn trống, lưu vào file bạn chọn tiếp theo. Nếu đang mở kho khác, phiên hiện tại sẽ đóng lại.</p>
+    <label>Mật khẩu chính cho kho mới</label>
+    <input type="password" id="newFilePw1" placeholder="Ít nhất 6 ký tự">
+    <label>Nhập lại mật khẩu</label>
+    <input type="password" id="newFilePw2" placeholder="Nhập lại để xác nhận">
+    <p class="err" id="newFileErr"></p>
+    <div class="row">
+      <button id="newFileCancelBtn" style="flex:1">Huỷ</button>
+      <button class="primary" id="newFileSubmitBtn" data-primary-action style="flex:1">Chọn file & Tạo</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('newFileCancelBtn').onclick = closeModal;
+  document.getElementById('newFileSubmitBtn').onclick = async () => {
+    const btn = document.getElementById('newFileSubmitBtn');
+    const err = document.getElementById('newFileErr');
+    err.style.display = 'none';
+    const pw1 = document.getElementById('newFilePw1').value;
+    const pw2 = document.getElementById('newFilePw2').value;
+    if(pw1.length < 6){
+      err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.';
+      err.style.display = 'block';
+      return;
+    }
+    if(pw1 !== pw2){
+      err.textContent = 'Hai mật khẩu không khớp nhau.';
+      err.style.display = 'block';
+      return;
+    }
+    if(!fileSystemAccessSupported()){
+      err.textContent = 'Trình duyệt này không hỗ trợ lưu trực tiếp ra file (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad). Hãy dùng "Nhập/Xuất" để sao lưu thủ công thay thế.';
+      err.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Đang tạo...';
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: backupFileName('json'),
+        types: [{ description: 'Devic3 Vault', accept: { 'application/json': ['.json'] } }]
+      });
+      // start a completely clean vault, wiping any currently-open session first
+      state.key = null;
+      state.entries = [];
+      state.folders = [];
+      state.notes = [];
+      state.fileHandle = null;
+      endSession();
+
+      const saltBuf = crypto.getRandomValues(new Uint8Array(16));
+      const saltB64 = b64(saltBuf);
+      const key = await deriveKey(pw1, saltB64, PBKDF2_ITERATIONS);
+      const verifier = await encryptStr(key, VERIFY_STRING);
+      const configResult = await storageSetWithRetry(STORAGE_CONFIG_KEY, JSON.stringify({ salt: saltB64, verifier, iterations: PBKDF2_ITERATIONS }));
+      if(!configResult) throw new Error('Không thể ghi dữ liệu vào bộ nhớ trình duyệt.');
+
+      state.key = key;
+      state.entries = [];
+      await loadFolders(); // sets the default folders
+      state.notes = [];
+      state.fileHandle = handle;
+      state.fileHandleName = handle.name;
+      await saveEntries();
+      await saveFolders();
+      await saveNotes();
+      startSession();
+      closeModal();
+      renderVault();
+      toast(`Đã tạo kho mới, trống, liên kết với file "${handle.name}"`);
+    }catch(e){
+      if(e.name === 'AbortError'){
+        btn.disabled = false;
+        btn.textContent = 'Chọn file & Tạo';
+        return;
+      }
+      console.error(e);
+      err.textContent = 'Tạo kho mới thất bại: ' + (e.message || 'lỗi không xác định.');
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Chọn file & Tạo';
+    }
+  };
+}
+
+// Opens an EXISTING vault file and fully loads it — cleanly replacing whatever
+// vault/session is currently active, then always landing on the Unlock screen
+// for that file's password (this used to silently patch localStorage without
+// updating what was on screen, which looked like "nothing happened").
+async function openExistingVaultFileAndSwitch(){
+  if(!fileSystemAccessSupported()){
+    toast('Trình duyệt này không hỗ trợ mở file trực tiếp (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad). Hãy dùng "Đã có kho lưu trữ? Khôi phục từ file sao lưu" thay thế.');
+    return;
+  }
+  try{
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'Devic3 Vault', accept: { 'application/json': ['.json'] } }]
+    });
+    const file = await handle.getFile();
+    const text = await file.text();
+    const bundle = JSON.parse(text);
+    if(!bundle || bundle.app !== 'devic3' || !bundle.config){
+      toast('File không đúng định dạng kho Devic3');
+      return;
+    }
+    // cleanly tear down whatever session is currently open before switching
+    state.key = null;
+    state.entries = [];
+    state.folders = [];
+    state.notes = [];
+    endSession();
+
+    state.fileHandle = handle;
+    state.fileHandleName = handle.name;
+    await window.storage.set(STORAGE_CONFIG_KEY, JSON.stringify(bundle.config));
+    await window.storage.set(STORAGE_DATA_KEY, JSON.stringify(bundle.entries || null));
+    await window.storage.set(STORAGE_FOLDERS_KEY, JSON.stringify(bundle.folders || null));
+    await window.storage.set(STORAGE_NOTES_KEY, JSON.stringify(bundle.notes || null));
+
+    closeModal();
+    toast(`Đã mở file "${handle.name}" — nhập mật khẩu chính để mở khoá`);
+    renderUnlock(bundle.config);
+  }catch(e){
+    if(e.name !== 'AbortError'){ console.error(e); toast('Không thể mở file — kiểm tra lại đúng file kho chưa'); }
+  }
+}
+
+function unlinkVaultFile(){
+  state.fileHandle = null;
+  state.fileHandleName = '';
+}
+
+function openFileBackupModal(){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderFileBackupModal();
+}
+
+function renderFileBackupModal(){
+  const modalBody = document.getElementById('modalBody');
+  const supported = fileSystemAccessSupported();
+  const linked = !!state.fileHandle;
+  modalBody.innerHTML = `
+    <h2>File sao lưu trên ổ cứng</h2>
+    <p class="hint" style="margin-top:-4px;">Lưu toàn bộ kho vào 1 file cố định trên máy bạn (hoặc USB, thư mục đồng bộ...). Mở đúng file này trên máy khác để đăng nhập lại, kể cả khi trình duyệt/Windows bị lỗi phải cài lại.</p>
+    ${!supported ? `<p class="err" style="display:block;">Trình duyệt hiện tại không hỗ trợ tính năng này (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad hay điện thoại). Hãy dùng nút "Nhập/Xuất" ở màn hình chính để sao lưu/khôi phục thủ công thay thế.</p>` : ''}
+    ${linked ? `
+    <p style="font-size:14px; color:var(--text-2); margin:0 0 16px;"><i class="ti ti-file-check" style="color:${STATUS_META.active.color}; vertical-align:-2px;"></i> Đang liên kết: <b style="color:var(--text);">${escapeHtml(state.fileHandleName)}</b></p>
+    <div class="row" style="margin-bottom:14px;">
+      <button id="fileSaveNowBtn" style="flex:1">Lưu ngay</button>
+      <button id="fileUnlinkBtn" class="danger" style="flex:1">Bỏ liên kết</button>
+    </div>
+    ` : ''}
+    <label>Kho mới</label>
+    <button id="fileNewVaultBtn" ${!supported?'disabled':''} style="width:100%;">Tạo kho trống</button>
+    <p class="hint" style="margin:4px 0 12px;">Bắt đầu lại từ đầu, không giữ dữ liệu cũ</p>
+
+    <label>Kho đã có</label>
+    <button id="fileOpenSwitchBtn" ${!supported?'disabled':''} style="width:100%;">Mở file khác</button>
+    <p class="hint" style="margin:4px 0 12px;">Thay toàn bộ dữ liệu hiện tại bằng nội dung trong file</p>
+
+    ${state.key ? `
+    <label>Kho đang mở</label>
+    <button id="fileMirrorBtn" ${!supported?'disabled':''} style="width:100%;">Sao lưu ra file mới</button>
+    <p class="hint" style="margin:4px 0 12px;">Giữ nguyên dữ liệu đang dùng, chỉ thêm nơi lưu</p>
+    ` : ''}
+    <button id="fileCloseBtn" style="width:100%; margin-top:6px;">Đóng</button>
+  `;
+  document.getElementById('fileCloseBtn').onclick = closeModal;
+  document.getElementById('fileNewVaultBtn').onclick = openCreateNewFileVaultModal;
+  document.getElementById('fileOpenSwitchBtn').onclick = openExistingVaultFileAndSwitch;
+  const mirrorBtn = document.getElementById('fileMirrorBtn');
+  if(mirrorBtn){
+    mirrorBtn.onclick = async () => {
+      const ok = await linkNewVaultFile();
+      if(ok) toast('Đã sao lưu kho hiện tại vào file mới');
+      renderFileBackupModal();
+    };
+  }
+  const saveNowBtn = document.getElementById('fileSaveNowBtn');
+  if(saveNowBtn) saveNowBtn.onclick = async () => { await writeVaultFile(); toast('Đã lưu vào file'); };
+  const unlinkBtn = document.getElementById('fileUnlinkBtn');
+  if(unlinkBtn) unlinkBtn.onclick = () => { unlinkVaultFile(); toast('Đã bỏ liên kết file'); renderFileBackupModal(); };
+}
+
+// small debounce helper — avoids a full list re-render on every single keystroke
+// while typing in the search box, which was the main source of noticeable lag
+// on accounts with a large number of entries.
+function debounce(fn, wait){
+  let t = null;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+// The search box lives permanently in the title bar now (not inside #app),
+// so it survives every re-render untouched — no more losing focus/cursor
+// position on each keystroke like when it used to get destroyed and
+// recreated inside the scrollable content area. `context` is 'accounts',
+// 'notes', or null (hides the box entirely — locked screens, Tools tab).
+function syncGlobalSearchBar(context){
+  const wrap = document.getElementById('titlebarSearchWrap');
+  const input = document.getElementById('globalSearchInput');
+  if(!wrap || !input) return;
+  if(!context){
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'flex';
+  input.placeholder = context === 'notes' ? t('placeholder_search_notes') : t('placeholder_search');
+  if(document.activeElement !== input && input.value !== state.search) input.value = state.search;
+  input.oninput = debounce((e) => {
+    state.search = e.target.value;
+    if(context === 'notes') renderNotesVault();
+    else renderVault();
+  }, 180);
+}
+
+// small retry helper — storage.set can occasionally fail transiently (e.g. a
+// brief hiccup in the host's storage backend); retries once after a short
+// delay before giving up, since a single retry resolves most transient blips
+// without making the user re-type their password.
+async function storageSetWithRetry(key, value){
+  try{
+    const result = await window.storage.set(key, value);
+    if(result) return result;
+  }catch(e){}
+  await new Promise(r => setTimeout(r, 400));
+  return window.storage.set(key, value);
+}
+
+function uid(){
+  return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+// ---------- RENDER: SETUP ----------
+// Updates the breadcrumb + bottom status bar with real, live info (current tab,
+// duplicate-account count, accounts nearing expiry) — not just decorative text.
+function updateIdeChrome(){
+  const breadcrumb = document.getElementById('ideBreadcrumb');
+  if(breadcrumb){
+    const label = state.activePlatform === 'other' ? t('platform_tools') : platformMeta(state.activePlatform).name;
+    breadcrumb.innerHTML = `<i class="ti ti-chevron-right" style="font-size:12px;"></i> <b>Devic3</b> <span style="color:var(--text-muted);">/</span> ${escapeHtml(label)}`;
+  }
+  const bar = document.getElementById('ideStatusBar');
+  if(!bar) return;
+  if(!state.key){
+    bar.innerHTML = `<span><span class="sb-dot" style="background:var(--text-muted);"></span>${t('status_locked')}</span><span class="sb-sep">AES-256-GCM · PBKDF2</span>`;
+    return;
+  }
+  // Everything below is scoped to the CURRENT tab only — switching tabs shows
+  // that tab's own numbers, not a running total across the whole vault.
+  const isNote = state.activePlatform === 'note';
+  const isTools = state.activePlatform === 'other';
+  const platformEntries = isNote || isTools ? [] : state.entries.filter(e => e.platform === state.activePlatform);
+
+  let dupCount = 0;
+  if(!isNote && !isTools){
+    dupCount = findAllDuplicateGroups(state.activePlatform).reduce((s, g) => s + (g.list.length - 1), 0);
+  }
+  let expiringCount = 0;
+  platformEntries.forEach(e => {
+    if((e.platform === 'phone' || e.platform === 'proxy') && e.expiryDate){
+      const info = phoneExpiryInfo(e.expiryDate);
+      if(info && info.diffDays >= 0 && info.diffDays <= 1) expiringCount++;
+    }
+  });
+  const countLabel = isNote ? state.notes.length + ' ' + t('comment_notes').replace('// ', '')
+    : isTools ? ''
+    : `${platformEntries.length} ${t('status_accounts')}`;
+
+  bar.innerHTML = `
+    <span><span class="sb-dot" style="background:#4ade80;"></span>${t('status_unlocked')}</span>
+    <span>~/devic3/${escapeHtml(state.activePlatform)}</span>
+    ${!isNote && !isTools ? `<span class="${dupCount>0?'sb-err':''}"><i class="ti ti-copy-check" style="font-size:11px;vertical-align:-1px;"></i> ${dupCount} ${t('status_duplicates')}</span>` : ''}
+    ${!isNote && !isTools ? `<span class="${expiringCount>0?'sb-warn':''}"><i class="ti ti-clock-exclamation" style="font-size:11px;vertical-align:-1px;"></i> ${expiringCount} ${t('status_expiring')}</span>` : ''}
+    <span class="sb-sep">${countLabel}${countLabel ? ' · ' : ''}AES-256</span>
+  `;
+}
+
+function renderLockedShellChrome(mode){
+  const breadcrumb = document.getElementById('ideBreadcrumb');
+  if(breadcrumb) breadcrumb.innerHTML = `<i class="ti ti-chevron-right" style="font-size:12px;"></i> <b>Devic3</b> <span style="color:var(--text-muted);">/</span> ${mode === 'setup' ? t('breadcrumb_setup') : t('breadcrumb_unlock')}`;
+  const sidebar = document.getElementById('platformBar');
+  if(sidebar) sidebar.innerHTML = `<div class="ide-sidebar-label code-comment">${t('comment_status')}</div><div style="padding:8px 16px; font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:8px;"><i class="ti ti-lock"></i>${t('sidebar_locked')}</div>`;
+  const statusBar = document.getElementById('ideStatusBar');
+  if(statusBar) statusBar.innerHTML = `<span><span class="sb-dot" style="background:var(--text-muted);"></span>${t('status_locked')}</span><span class="sb-sep">AES-256-GCM · PBKDF2</span>`;
+  syncGlobalSearchBar(null);
+}
+
+function renderSetup(){
+  renderLockedShellChrome('setup');
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="lock-wrap">
+      <div class="lock-icon"><i class="ti ti-shield-lock"></i></div>
+      <div class="code-comment" style="font-size:12px; margin-bottom:14px;">${t('setup_comment')}</div>
+      <div class="center-form">
+        <label>${t('label_create_pw')}</label>
+        <input type="password" id="pw1" placeholder="${t('placeholder_min6')}">
+        <label>${t('label_confirm_pw')}</label>
+        <input type="password" id="pw2" placeholder="${t('placeholder_confirm')}">
+        <p class="err" id="setupErr"></p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:400; margin:-4px 0 4px;">
+          <input type="checkbox" id="keepSessionCheckSetup">
+          <span>${t('keep_session_label')}</span>
+        </label>
+        <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
+        <p class="hint"><i class="ti ti-info-circle" style="vertical-align:-2px;font-size:14px"></i> ${t('hint_pw_not_saved')}</p>
+        <button class="primary" id="setupBtn" style="width:100%">${t('btn_create_vault')}</button>
+        <button id="openVaultFileBtn" style="width:100%; margin-top:10px;"><i class="ti ti-device-floppy" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_open_vault_file')}</button>
+        <button id="restoreBtn" style="width:100%; margin-top:10px;"><i class="ti ti-upload" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_restore_backup')}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('restoreBtn').onclick = openRestoreModal;
+  document.getElementById('openVaultFileBtn').onclick = openExistingVaultFileAndSwitch;
+  document.getElementById('setupBtn').onclick = async () => {
+    const btn = document.getElementById('setupBtn');
+    const pw1 = document.getElementById('pw1').value;
+    const pw2 = document.getElementById('pw2').value;
+    const err = document.getElementById('setupErr');
+    err.style.display = 'none';
+    if(pw1.length < 6){
+      err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.';
+      err.style.display = 'block';
+      return;
+    }
+    if(pw1 !== pw2){
+      err.textContent = 'Hai mật khẩu không khớp nhau.';
+      err.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Đang tạo...';
+    try{
+      if(!window.storage || typeof window.storage.set !== 'function'){
+        throw new Error('Không tìm thấy bộ nhớ lưu trữ (window.storage). Hãy thử mở lại file này bằng trình duyệt, hoặc tải lại trang.');
+      }
+      const saltBuf = crypto.getRandomValues(new Uint8Array(16));
+      const saltB64 = b64(saltBuf);
+      const key = await deriveKey(pw1, saltB64, PBKDF2_ITERATIONS);
+      const verifier = await encryptStr(key, VERIFY_STRING);
+      const configResult = await storageSetWithRetry(STORAGE_CONFIG_KEY, JSON.stringify({salt: saltB64, verifier, iterations: PBKDF2_ITERATIONS}));
+      if(!configResult){
+        throw new Error('Không thể ghi dữ liệu vào bộ nhớ trình duyệt. Có thể trình duyệt đang ở chế độ ẩn danh, hoặc đã chặn lưu trữ cục bộ — hãy thử mở bằng cửa sổ thường, hoặc dùng trình duyệt khác.');
+      }
+      state.key = key;
+      const keepChecked = !!(document.getElementById('keepSessionCheckSetup') || {}).checked;
+      await setKeepSessionPref(keepChecked);
+      if(keepChecked) await persistSessionKey(key, saltB64);
+      state.entries = [];
+      await loadFolders(); // sets defaults
+      state.notes = [];
+      await saveEntries();
+      await saveFolders();
+      await saveNotes();
+      startSession();
+      renderVault();
+    }catch(e){
+      console.error(e);
+      err.textContent = 'Tạo kho lưu trữ thất bại: ' + (e.message || 'lỗi không xác định.');
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Tạo kho lưu trữ';
+    }
+  };
+}
+
+// ---------- RESTORE FROM EXPORTED BACKUP TEXT ----------
+// Parses the .txt produced by "Xuất" (buildExportContent) back into entries/folders.
+// Lets someone whose local storage looks empty (new device, fresh download, cleared
+// browser data...) get back into a vault they already have a backup file for.
+function parseBackupLine(line, platformId){
+  const fields = getPlatformFields(platformId);
+  const delim = platformDelimiter(platformId);
+  let baseFields, suffixParts;
+  if(delim === '|'){
+    const parts = line.split('|');
+    baseFields = parts.slice(0, fields.length);
+    suffixParts = parts.slice(fields.length);
+  } else {
+    const pipeParts = line.split('|');
+    baseFields = (pipeParts[0] || '').split(delim);
+    suffixParts = pipeParts.slice(1);
+  }
+  const obj = {};
+  fields.forEach((f, i) => { obj[f.key] = (baseFields[i] || '').trim(); });
+  obj.__folderName = (suffixParts[0] || '').trim();
+  obj.displayName = (suffixParts[1] || '').trim();
+  obj.proxy = (suffixParts[2] || '').trim();
+  return obj;
+}
+
+function parseBackupText(text){
+  const platformNameToId = {};
+  PLATFORMS.forEach(p => { platformNameToId[p.name] = p.id; });
+  let currentPlatformId = null;
+  const results = [];
+  text.split('\n').forEach(raw => {
+    const line = raw.trim();
+    if(!line) return;
+    if(line.startsWith('##')){
+      const m = line.match(/^##\s*([^(]+)/);
+      currentPlatformId = m ? (platformNameToId[m[1].trim()] || null) : null;
+      return;
+    }
+    if(line.startsWith('#')) return;
+    if(!currentPlatformId) return;
+    const parsed = parseBackupLine(line, currentPlatformId);
+    if(parsed.fbName || parsed.email){
+      results.push({ platformId: currentPlatformId, fields: parsed });
+    }
+  });
+  return results;
+}
+
+async function resolveFolderId(platformId, folderNameStr){
+  if(!folderNameStr) return '';
+  let f = state.folders.find(x => x.platformId === platformId && x.name === folderNameStr);
+  if(!f){
+    f = { id: uid(), name: folderNameStr, platformId };
+    state.folders.push(f);
+  }
+  return f.id;
+}
+
+function openRestoreModal(){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>Khôi phục từ file sao lưu</h2>
+    <p class="hint" style="margin-top:-4px;">Mở file <code>.txt</code> đã tải khi bấm "Xuất" trước đây, copy toàn bộ nội dung và dán vào đây.</p>
+    <label>Nội dung file sao lưu</label>
+    <textarea id="restoreText" class="mono-area" style="min-height:180px" placeholder="# Devic3 - Sao lưu tài khoản..."></textarea>
+    <label>Đặt mật khẩu chính mới cho kho khôi phục</label>
+    <input type="password" id="restorePw1" placeholder="Ít nhất 6 ký tự">
+    <label>Nhập lại mật khẩu</label>
+    <input type="password" id="restorePw2" placeholder="Nhập lại để xác nhận">
+    <p class="err" id="restoreErr"></p>
+    <div class="row">
+      <button id="restoreCancelBtn" style="flex:1">Huỷ</button>
+      <button class="primary" id="restoreSubmitBtn" data-primary-action style="flex:1">Khôi phục</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('restoreCancelBtn').onclick = closeModal;
+  document.getElementById('restoreSubmitBtn').onclick = async () => {
+    const btn = document.getElementById('restoreSubmitBtn');
+    const err = document.getElementById('restoreErr');
+    err.style.display = 'none';
+    const text = document.getElementById('restoreText').value;
+    const pw1 = document.getElementById('restorePw1').value;
+    const pw2 = document.getElementById('restorePw2').value;
+    if(!text.trim()){
+      err.textContent = 'Dán nội dung file sao lưu vào ô trên.';
+      err.style.display = 'block';
+      return;
+    }
+    if(pw1.length < 6){
+      err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.';
+      err.style.display = 'block';
+      return;
+    }
+    if(pw1 !== pw2){
+      err.textContent = 'Hai mật khẩu không khớp nhau.';
+      err.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Đang khôi phục...';
+    try{
+      if(!window.storage || typeof window.storage.set !== 'function'){
+        throw new Error('Không tìm thấy bộ nhớ lưu trữ (window.storage) trong trình duyệt này.');
+      }
+      const parsedList = parseBackupText(text);
+      if(parsedList.length === 0){
+        throw new Error('Không đọc được tài khoản nào từ nội dung đã dán. Kiểm tra lại đã copy đủ nội dung file chưa.');
+      }
+      const saltBuf = crypto.getRandomValues(new Uint8Array(16));
+      const saltB64 = b64(saltBuf);
+      const key = await deriveKey(pw1, saltB64, PBKDF2_ITERATIONS);
+      const verifier = await encryptStr(key, VERIFY_STRING);
+      const configResult = await storageSetWithRetry(STORAGE_CONFIG_KEY, JSON.stringify({salt: saltB64, verifier, iterations: PBKDF2_ITERATIONS}));
+      if(!configResult) throw new Error('Không thể ghi dữ liệu vào bộ nhớ trình duyệt.');
+
+      state.key = key;
+      state.folders = [];
+      state.notes = [];
+      state.entries = [];
+      for(const item of parsedList){
+        const folderId = await resolveFolderId(item.platformId, item.fields.__folderName);
+        const fields = { ...item.fields };
+        delete fields.__folderName;
+        fields.platform = item.platformId;
+        fields.folderId = folderId;
+        fields.updatedAt = Date.now();
+        fields.createdAt = Date.now();
+        state.entries.push({ id: uid(), ...fields });
+      }
+      await saveEntries();
+      await saveFolders();
+      await saveNotes();
+      startSession();
+      closeModal();
+      renderVault();
+      toast(`Đã khôi phục ${parsedList.length} tài khoản từ bản sao lưu`);
+    }catch(e){
+      console.error(e);
+      err.textContent = 'Khôi phục thất bại: ' + (e.message || 'lỗi không xác định.');
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Khôi phục';
+    }
+  };
+}
+
+// ---------- RENDER: UNLOCK ----------
+function renderUnlock(config){
+  renderLockedShellChrome('unlock');
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="lock-wrap">
+      <div class="lock-icon"><i class="ti ti-lock"></i></div>
+      <div class="code-comment" style="font-size:12px; margin-bottom:14px;">${t('unlock_comment')}</div>
+      <div class="center-form">
+        <label>${t('label_master_pw')}</label>
+        <input type="password" id="pwUnlock" placeholder="${t('placeholder_enter_pw')}">
+        <p class="err" id="unlockErr"></p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:400; margin:-4px 0 4px;">
+          <input type="checkbox" id="keepSessionCheck">
+          <span>${t('keep_session_label')}</span>
+        </label>
+        <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
+        <button class="primary" id="unlockBtn" style="width:100%">${t('btn_unlock')}</button>
+      </div>
+    </div>
+  `;
+  getKeepSessionPref().then(on => {
+    const cb = document.getElementById('keepSessionCheck');
+    if(cb) cb.checked = on;
+  });
+  const doUnlock = async () => {
+    const btn = document.getElementById('unlockBtn');
+    const pw = document.getElementById('pwUnlock').value;
+    const err = document.getElementById('unlockErr');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Đang mở...';
+    let key;
+    try{
+      // honor the vault's own stored iteration count — older vaults (created
+      // before the PBKDF2 security upgrade) still used a lower count, and
+      // must keep using it or the derived key won't match at all
+      key = await deriveKey(pw, config.salt, config.iterations || PBKDF2_ITERATIONS_LEGACY);
+      const check = await decryptStr(key, config.verifier);
+      if(check !== VERIFY_STRING) throw new Error('WRONG_PASSWORD');
+    }catch(e){
+      err.textContent = 'Sai mật khẩu, thử lại.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Mở khoá';
+      return;
+    }
+    try{
+      state.key = key;
+      const keepChecked = !!(document.getElementById('keepSessionCheck') || {}).checked;
+      await setKeepSessionPref(keepChecked);
+      if(keepChecked) await persistSessionKey(key, config.salt);
+      else clearPersistedSessionKey();
+      await loadEntries();
+      await loadFolders();
+      await loadNotes();
+      startSession();
+      renderVault();
+    }catch(e){
+      console.error(e);
+      state.key = null;
+      err.textContent = 'Mở khoá thất bại: ' + (e.message || 'không đọc được dữ liệu đã lưu.');
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Mở khoá';
+    }
+  };
+  document.getElementById('unlockBtn').onclick = doUnlock;
+  document.getElementById('pwUnlock').addEventListener('keydown', e => { if(e.key === 'Enter') doUnlock(); });
+}
+
+function folderName(id){
+  if(!id) return null;
+  const f = state.folders.find(x => x.id === id);
+  return f ? f.name : null;
+}
+
+// ---------- RENDER: VAULT ----------
+function renderVault(){
+  updateTotalBadge();
+  if(state.activePlatform === 'note'){
+    renderNotesVault();
+    return;
+  }
+  if(state.activePlatform === 'other'){
+    renderToolsVault();
+    return;
+  }
+  const app = document.getElementById('app');
+  const platformEntries = state.entries.filter(e => e.platform === state.activePlatform);
+  const filtered = platformEntries.filter(e => {
+    if(state.activeFolder === NO_FOLDER_ID && e.folderId) return false;
+    if(state.activeFolder !== 'all' && state.activeFolder !== NO_FOLDER_ID && e.folderId !== state.activeFolder) return false;
+    if(state.hiddenStatuses.has(e.status || 'unknown')) return false;
+    const q = state.search.toLowerCase();
+    if(!q) return true;
+    return (e.fbName||'').toLowerCase().includes(q) || (e.email||'').toLowerCase().includes(q) || (e.displayName||'').toLowerCase().includes(q);
+  });
+
+  app.innerHTML = `
+    <div class="code-comment" style="font-size:12px; margin-bottom:8px;">${t('comment_input_data')}</div>
+    <div class="topbar-actions">
+      <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
+      <button class="text-btn ${state.selectMode ? 'primary' : ''}" id="selectModeBtn" title="${t('title_select_many')}"><i class="ti ti-checkbox"></i>${state.selectMode ? t('btn_select_done') : t('btn_select_many')}</button>
+      <button class="text-btn" id="fileBackupBtn" title="${t('title_file_backup')}"><i class="ti ti-device-floppy"></i>${state.fileHandle ? t('btn_file_linked') : t('btn_file_backup')}</button>
+      <button class="text-btn" id="toolsBtn" title="${t('title_tools')}"><i class="ti ti-tool"></i>${t('btn_tools')}</button>
+      <button class="primary" id="importExportBtn"><i class="ti ti-arrows-exchange" style="vertical-align:-2px;font-size:15px"></i> ${t('btn_import_export')}</button>
+    </div>
+    <div class="folder-panel" id="folderBar"></div>
+    ${STATUS_FILTER_PLATFORMS.includes(state.activePlatform) ? `
+    <div class="code-comment" style="font-size:12px; margin:14px 0 8px;">${t('comment_status')}</div>
+    <div class="status-filter-bar" id="statusFilterBar"></div>` : ''}
+    ${state.selectMode ? `
+    <div class="select-bar" id="selectBar">
+      <span id="selectCountText">${t('select_selected')} 0</span>
+      <div class="select-bar-actions">
+        <button class="text-btn" id="selectAllBtn">${t('select_all')}</button>
+        <button class="text-btn" id="clearSelectBtn">${t('select_clear')}</button>
+        <button class="text-btn danger" id="deleteSelectedBtn" disabled>${t('select_delete')}</button>
+      </div>
+    </div>` : ''}
+    <div class="code-comment" style="font-size:12px; margin:14px 0 8px;">${t('comment_account_list')}</div>
+    <div id="list"></div>
+  `;
+
+  renderPlatformBar();
+  updateIdeChrome();
+
+  document.getElementById('importExportBtn').onclick = openImportExportModal;
+  document.getElementById('fileBackupBtn').onclick = openFileBackupModal;
+  document.getElementById('toolsBtn').onclick = openToolsModal;
+  syncGlobalSearchBar('accounts');
+  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  document.getElementById('selectModeBtn').onclick = () => {
+    state.selectMode = !state.selectMode;
+    if(!state.selectMode) state.selectedIds = new Set();
+    renderVault();
+  };
+
+  if(state.selectMode){
+    document.getElementById('selectAllBtn').onclick = () => { selectAllVisibleEntries(); };
+    document.getElementById('clearSelectBtn').onclick = () => { clearEntrySelection(); };
+    document.getElementById('deleteSelectedBtn').onclick = () => { confirmDeleteSelected(); };
+  }
+
+  renderFolderBar();
+  renderStatusFilterBar();
+
+  const list = document.getElementById('list');
+  if(filtered.length === 0){
+    state.visibleEntries = [];
+    list.innerHTML = `<div class="empty"><span class="platform-icon" style="width:40px;height:40px;margin:0 auto 8px;--pcolor:${platformMeta(state.activePlatform).color};">${platformSvg(state.activePlatform)}</span>${platformEntries.length===0 ? `Chưa có tài khoản ${platformMeta(state.activePlatform).name} nào. Nhấn "Thêm" để lưu tài khoản đầu tiên.` : 'Không tìm thấy kết quả phù hợp.'}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(e => {
+    const isPhoneOrProxy = e.platform === 'phone' || e.platform === 'proxy';
+    const display = isPhoneOrProxy ? null : buildEntryDisplayRows(e);
+    const extraFields = isPhoneOrProxy ? [] : getPlatformFields(e.platform).filter(f => {
+      if(f.key === 'fbName' || display.used.has(f.key)) return false;
+      return !!e[f.key];
+    });
+    return `
+    <div class="entry ${state.expandedIds.has(e.id) ? 'expanded' : ''}" data-id="${e.id}">
+      <div class="entry-top" data-act="toggle-expand">
+        <div>
+          <p class="entry-name"><i class="ti ti-chevron-right chevron"></i><span class="platform-icon" style="width:20px;height:20px;--pcolor:${platformMeta(e.platform).color};">${platformSvg(e.platform)}</span><span class="copy-inline" data-copy-field="fbName" title="Bấm để sao chép ${e.platform==='phone'?'SĐT':(e.platform==='proxy'?'IP':'UID')}">${escapeHtml(e.fbName || '(Chưa đặt tên)')}</span>${e.displayName ? ` <span style="color:var(--text-muted);">|</span> <span class="copy-inline" data-copy-field="displayName" style="color:var(--text-muted);font-weight:400;" title="Bấm để sao chép tên">${escapeHtml(e.displayName)}</span>` : ''}</p>
+          ${e.platform === 'phone'
+            ? (e.expiryDate ? `<p class="entry-id"><i class="ti ti-calendar-due" style="font-size:13px;vertical-align:-1px"></i> Ngày hết hạn: <span class="copy-inline" data-copy-field="expiryDate" title="Bấm để sao chép">${escapeHtml(toDisplayDate(e.expiryDate))}</span></p>` : '')
+            : e.platform === 'proxy'
+            ? `<p class="entry-id"><i class="ti ti-plug" style="font-size:13px;vertical-align:-1px"></i> Port: <span class="copy-inline" data-copy-field="port" title="Bấm để sao chép port">${escapeHtml(e.port || '—')}</span>${e.username ? ` <span style="color:var(--text-muted);">| User:</span> <span class="copy-inline" data-copy-field="username" title="Bấm để sao chép user">${escapeHtml(e.username)}</span>` : ''}${e.password ? ` <span style="color:var(--text-muted);">| Pass:</span> <span class="copy-inline" data-copy-field="password" style="font-family:var(--mono); letter-spacing:2px;" title="Bấm để sao chép mật khẩu">••••••••</span>` : ''}</p>`
+            : ''}
+          <div class="entry-meta-row">
+            ${folderName(e.folderId) ? `<span class="entry-folder"><i class="ti ti-folder" style="font-size:11px;vertical-align:-1px"></i> ${escapeHtml(folderName(e.folderId))}</span>` : ''}
+            ${isPhoneOrProxy ? phoneExpiryBadgeHtml(e) : `<span class="status-badge" style="color:${statusMeta(e.status).color};background:${statusMeta(e.status).bg};" title="Trạng thái: ${statusMeta(e.status).label}">${statusMeta(e.status).symbol} ${statusMeta(e.status).label}</span>`}
+            ${isNewEntry(e) ? `<span class="new-badge" title="Tài khoản mới thêm — tự ẩn sau 24 giờ"><i class="ti ti-sparkles" style="font-size:10px;"></i> MỚI</span>` : ''}
+            ${e.platform !== 'phone' ? `<span class="entry-created" title="Ngày nhập tài khoản"><i class="ti ti-calendar-plus" style="font-size:11px;vertical-align:-1px"></i> ${formatDateDMY(new Date(e.createdAt || Date.now()))}</span>` : ''}
+          </div>
+        </div>
+        <div class="entry-actions">
+          ${state.selectMode
+            ? `<input type="checkbox" class="entry-checkbox" data-select-id="${e.id}" ${state.selectedIds.has(e.id) ? 'checked' : ''}>`
+            : `${e.platform === 'facebook' && e.fbName ? `<button class="text-btn" data-act="check" title="Open profile to check activity"><i class="ti ti-external-link"></i>${t('btn_check')}</button>` : ''}
+          <button class="text-btn" data-act="edit" title="${t('btn_edit')}"><i class="ti ti-edit"></i>${t('btn_edit')}</button>
+          <button class="text-btn danger" data-act="delete" title="${t('btn_delete')}"><i class="ti ti-trash"></i>${t('btn_delete')}</button>`}
+        </div>
+      </div>
+      <div class="entry-details">
+        ${isPhoneOrProxy ? '' : display.rows.map(row => `
+        <div class="entry-fieldrow">${row.map((f, i) => {
+          const sep = i > 0 ? `<span class="field-sep">|</span>` : '';
+          if(f.isTotp){
+            return `${sep}<span class="field-chip totp" id="totp-${e.id}" title="Mã 2FA hiện tại — bấm để sao chép"><span class="field-label">2FA:</span><span class="field-val" data-totp-val id="totp-val-${e.id}">------</span></span>`;
+          }
+          const shownVal = f.secret ? '••••••••' : escapeHtml(String(f.value));
+          return `${sep}<span class="field-chip ${f.secret?'secret':''}" data-copy-field="${f.field}" title="Bấm để sao chép ${f.label}"><span class="field-label">${f.label}:</span><span class="field-val">${shownVal}</span></span>`;
+        }).join('')}</div>`).join('')}
+        ${extraFields.length > 0 ? `
+        <div class="entry-extra-toggle" data-act="toggle-extra"><i class="ti ti-chevron-right"></i>Xem thêm (${extraFields.length})</div>
+        <div class="entry-extra">
+          ${extraFields.map(f => `
+          <div class="pw-row">
+            <i class="ti ${fieldMeta(f.key).icon}" style="color:var(--text-muted);font-size:15px"></i>
+            <span class="pw-tag">${f.label}:</span>
+            <span class="pw-val" data-pwmask="1" data-field="${f.key}">••••••••</span>
+            <button class="text-btn" data-act="toggle-pw" data-field="${f.key}" title="Hiện/ẩn"><i class="ti ti-eye"></i>Hiện</button>
+            <button class="text-btn" data-act="copy" data-field="${f.key}" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+  }).join('');
+
+  list.querySelectorAll('.entry').forEach(card => {
+    const id = card.dataset.id;
+    const entry = state.entries.find(x => x.id === id);
+    card.querySelector('[data-act=toggle-expand]').onclick = (ev) => {
+      if(ev.target.closest('[data-act=edit]') || ev.target.closest('[data-act=delete]') || ev.target.closest('[data-act=check]') || ev.target.closest('.entry-checkbox')) return;
+      // toggle just this one card's class instead of rebuilding the whole list —
+      // expand/collapse is the single most frequent interaction on a long list,
+      // so re-rendering everything on each click was the main source of lag.
+      if(state.expandedIds.has(id)) state.expandedIds.delete(id);
+      else state.expandedIds.add(id);
+      card.classList.toggle('expanded');
+    };
+    const editBtn = card.querySelector('[data-act=edit]');
+    if(editBtn) editBtn.onclick = () => openModal(entry);
+    const deleteBtn = card.querySelector('[data-act=delete]');
+    if(deleteBtn) deleteBtn.onclick = () => confirmDeleteEntry(id, entry.fbName || entry.email || '(chưa đặt tên)');
+    const checkBtn = card.querySelector('[data-act=check]');
+    if(checkBtn) checkBtn.onclick = () => checkAccountStatus(entry);
+    const selectCb = card.querySelector('.entry-checkbox');
+    if(selectCb){
+      selectCb.onclick = (ev) => ev.stopPropagation();
+      selectCb.onchange = () => {
+        if(selectCb.checked) state.selectedIds.add(id);
+        else state.selectedIds.delete(id);
+        updateSelectionBar();
+      };
+    }
+
+    card.querySelectorAll('[data-act=copy]').forEach(btn => {
+      btn.onclick = () => {
+        const field = btn.dataset.field;
+        const meta = getPlatformFields(entry.platform).find(f => f.key === field);
+        copyText(entry[field], `Đã sao chép ${meta ? meta.label.toLowerCase() : 'nội dung'}`, true);
+      };
+    });
+
+    card.querySelectorAll('[data-act=toggle-pw]').forEach(btn => {
+      const field = btn.dataset.field;
+      const span = card.querySelector(`[data-pwmask][data-field="${field}"]`);
+      let shown = false;
+      btn.onclick = () => {
+        shown = !shown;
+        span.textContent = shown ? (entry[field] || '') : '••••••••';
+        btn.querySelector('i').className = shown ? 'ti ti-eye-off' : 'ti ti-eye';
+        btn.lastChild.textContent = shown ? 'Ẩn' : 'Hiện';
+      };
+    });
+
+    if(entry.twoFA){
+      const totpSpan = card.querySelector(`#totp-${id}`);
+      if(totpSpan){
+        totpSpan.onclick = (ev) => {
+          ev.stopPropagation();
+          copyText(totpCodeCache[id], 'Đã sao chép mã 2FA', true);
+        };
+      }
+    }
+
+    card.querySelectorAll('[data-copy-field]').forEach(span => {
+      span.onclick = (ev) => {
+        ev.stopPropagation();
+        const field = span.dataset.copyField;
+        const labels = {
+          fbName: 'UID', displayName: 'tên', email: 'email', proxy: 'proxy', expiryDate: 'ngày hết hạn',
+          port: 'port', username: 'user', password: 'mật khẩu', emailPassword: 'mật khẩu email',
+          secondaryEmail: 'email phụ', secondaryEmailPassword: 'mật khẩu email phụ', phone: 'số điện thoại',
+        };
+        const sensitiveFields = new Set(['password', 'emailPassword', 'secondaryEmailPassword']);
+        const value = field === 'expiryDate' ? toDisplayDate(entry[field]) : entry[field];
+        copyText(value, `Đã sao chép ${labels[field] || 'nội dung'}`, sensitiveFields.has(field));
+      };
+    });
+
+    const extraToggle = card.querySelector('[data-act=toggle-extra]');
+    if(extraToggle){
+      extraToggle.onclick = (ev) => {
+        ev.stopPropagation();
+        const extraBox = card.querySelector('.entry-extra');
+        const nowOpen = extraToggle.classList.toggle('open');
+        if(extraBox) extraBox.classList.toggle('open', nowOpen);
+      };
+    }
+  });
+
+  state.visibleEntries = filtered;
+  refreshTotpCodes();
+}
+
+function renderPlatformBar(){
+  const bar = document.getElementById('platformBar');
+  bar.innerHTML = `<div class="ide-sidebar-label code-comment">${t('sidebar_platforms')}</div>` + PLATFORMS.map(p => {
+    const isTools = p.id === 'other';
+    const c = p.id === 'note' ? state.notes.length : isTools ? null : state.entries.filter(e => e.platform === p.id).length;
+    const label = isTools ? t('platform_tools') : escapeHtml(p.name);
+    // Real <a href> (not a <button>) so Ctrl/Cmd-click, middle-click, and
+    // "open in new tab" all work exactly like a normal browser link — the
+    // browser handles that natively, we only intercept a plain left-click.
+    return `<a href="#platform=${p.id}" class="platform-chip ${state.activePlatform===p.id?'active':''}" data-platform="${p.id}" style="--pcolor:${p.color};"><span class="platform-icon">${platformSvg(p.id)}</span>${label}${c === null ? '' : `<span class="platform-chip-count">${c}</span>`}</a>`;
+  }).join('');
+  bar.querySelectorAll('[data-platform]').forEach(link => {
+    link.onclick = (ev) => {
+      // Ctrl/Cmd/middle-click/shift-click: let the browser open it in a new
+      // tab/window on its own — don't intercept, don't switch the tab here.
+      if(ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button === 1) return;
+      ev.preventDefault();
+      state.activePlatform = link.dataset.platform;
+      if(location.hash !== `#platform=${link.dataset.platform}`) location.hash = `platform=${link.dataset.platform}`;
+      state.activeFolder = 'all';
+      state.selectMode = false;
+      state.selectedIds = new Set();
+      renderVault();
+      bar.classList.remove('open'); // close the mobile sidebar drawer after picking a tab
+    };
+  });
+}
+
+function renderStatusFilterBar(){
+  const wrap = document.getElementById('statusFilterBar');
+  if(!wrap) return;
+  const platformEntries = state.entries.filter(e => e.platform === state.activePlatform);
+  const counts = { active: 0, inactive: 0, unknown: 0 };
+  platformEntries.forEach(e => { counts[e.status || 'unknown'] = (counts[e.status || 'unknown'] || 0) + 1; });
+
+  const statusKeys = ['active', 'inactive', 'unknown'];
+  wrap.innerHTML = statusKeys.map(key => {
+    const meta = statusMeta(key);
+    const hidden = state.hiddenStatuses.has(key);
+    return `<button type="button" class="status-filter-chip ${hidden ? 'hidden-state' : ''}" data-status-key="${key}" style="--sc:${meta.color};" title="${hidden ? t('status_filter_hidden') : t('status_filter_shown')}">
+      <i class="ti ${hidden ? 'ti-eye-off' : 'ti-eye'}"></i>
+      <span>${meta.symbol} ${meta.label}</span>
+      <span class="status-filter-count">${counts[key] || 0}</span>
+    </button>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-status-key]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.statusKey;
+      if(state.hiddenStatuses.has(key)) state.hiddenStatuses.delete(key);
+      else state.hiddenStatuses.add(key);
+      renderVault();
+    };
+  });
+}
+
+function renderFolderBar(){
+  const wrap = document.getElementById('folderBar');
+  const platformEntries = state.entries.filter(e => e.platform === state.activePlatform);
+  const platformFolders = state.folders.filter(f => f.platformId === state.activePlatform);
+  const countAll = platformEntries.length;
+  const countNone = platformEntries.filter(e => !e.folderId).length;
+
+  const activeLabel = state.activeFolder === 'all'
+    ? t('folder_all')
+    : state.activeFolder === NO_FOLDER_ID
+    ? t('folder_uncategorized')
+    : (folderName(state.activeFolder) || t('folder_all'));
+  const activeCount = state.activeFolder === 'all'
+    ? countAll
+    : state.activeFolder === NO_FOLDER_ID
+    ? countNone
+    : platformEntries.filter(e => e.folderId === state.activeFolder).length;
+
+  let listHtml = `<button type="button" class="folder-chip ${state.activeFolder==='all'?'active':''}" data-folder="all"><span>${t('folder_all')}</span><span>${countAll}</span></button>`;
+  platformFolders.forEach(f => {
+    const c = platformEntries.filter(e => e.folderId === f.id).length;
+    listHtml += `<button type="button" class="folder-chip ${state.activeFolder===f.id?'active':''}" data-folder="${f.id}"><span>${escapeHtml(f.name)}</span><span>${c}</span></button>`;
+  });
+  listHtml += `<button type="button" class="folder-chip ${state.activeFolder===NO_FOLDER_ID?'active':''}" data-folder="${NO_FOLDER_ID}"><span>${t('folder_uncategorized')}</span><span>${countNone}</span></button>`;
+  listHtml += `<button type="button" class="folder-chip folder-manage-btn" id="manageFoldersBtn" title="${t('folder_manage')}"><span><i class="ti ti-settings" style="font-size:13px;vertical-align:-1px"></i> ${t('folder_manage')}</span></button>`;
+
+  wrap.className = `folder-panel ${state.folderPanelOpen ? 'open' : ''}`;
+  wrap.innerHTML = `
+    <button type="button" class="folder-toggle" id="folderToggleBtn">
+      <span><i class="ti ti-folder" style="font-size:14px;vertical-align:-2px;margin-right:6px;"></i>${escapeHtml(activeLabel)}</span>
+      <span class="folder-toggle-right"><span class="folder-toggle-count">${activeCount}</span><i class="ti ti-chevron-down"></i></span>
+    </button>
+    <div class="folder-list" id="folderList">${listHtml}</div>
+  `;
+
+  document.getElementById('folderToggleBtn').onclick = () => {
+    state.folderPanelOpen = !state.folderPanelOpen;
+    renderFolderBar();
+  };
+
+  const bar = document.getElementById('folderList');
+  bar.querySelectorAll('[data-folder]').forEach(btn => {
+    btn.onclick = () => { state.activeFolder = btn.dataset.folder; renderVault(); };
+  });
+  document.getElementById('manageFoldersBtn').onclick = openFolderManager;
+}
+
+// ---------- NOTES (free-form documents, like Word notes) ----------
+function renderNotesVault(){
+  const app = document.getElementById('app');
+  const q = state.search.toLowerCase();
+  const filtered = state.notes
+    .filter(n => !q || (n.title||'').toLowerCase().includes(q) || (n.content||'').toLowerCase().includes(q))
+    .sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+
+  app.innerHTML = `
+    <div class="code-comment" style="font-size:12px; margin-bottom:8px;">${t('comment_notes')}</div>
+    <div class="topbar">
+      <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
+      <button class="text-btn" id="toolsBtn" title="${t('title_tools')}"><i class="ti ti-tool"></i>${t('btn_tools')}</button>
+      <button class="text-btn" id="exportAllNotesBtn" title="Export all notes"><i class="ti ti-download"></i>${t('btn_export')}</button>
+      <button class="primary" id="addNoteBtn"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px"></i> ${t('btn_add_note')}</button>
+    </div>
+    <div id="list"></div>
+  `;
+
+  renderPlatformBar();
+  updateIdeChrome();
+  document.getElementById('toolsBtn').onclick = openToolsModal;
+  syncGlobalSearchBar('notes');
+  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  document.getElementById('exportAllNotesBtn').onclick = exportAllNotes;
+  document.getElementById('addNoteBtn').onclick = () => openNoteModal(null);
+
+  const list = document.getElementById('list');
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="empty"><span class="platform-icon" style="width:40px;height:40px;margin:0 auto 8px;--pcolor:${platformMeta('note').color};">${platformSvg('note')}</span>${state.notes.length===0 ? 'Chưa có ghi chú nào. Nhấn "Ghi chú mới" để bắt đầu.' : 'Không tìm thấy kết quả phù hợp.'}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(n => {
+    const preview = (n.content || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+    const dt = n.updatedAt ? new Date(n.updatedAt) : null;
+    const dtStr = dt ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` : '';
+    return `
+    <div class="entry" data-id="${n.id}">
+      <div class="entry-top" data-act="open-note" style="cursor:pointer;">
+        <div>
+          <p class="entry-name"><span class="platform-icon" style="width:20px;height:20px;--pcolor:${platformMeta('note').color};">${platformSvg('note')}</span>${escapeHtml(n.title || '(Chưa có tiêu đề)')}</p>
+          <p class="entry-id">${escapeHtml(preview)}${(n.content||'').length > 140 ? '…' : ''}</p>
+          ${dtStr ? `<span class="entry-folder"><i class="ti ti-clock" style="font-size:11px;vertical-align:-1px"></i> ${dtStr}</span>` : ''}
+        </div>
+        <div class="entry-actions">
+          <button class="text-btn" data-act="export-note" title="Xuất ghi chú này"><i class="ti ti-download"></i>Xuất</button>
+          <button class="text-btn" data-act="edit-note" title="${t('btn_edit')}"><i class="ti ti-edit"></i>${t('btn_edit')}</button>
+          <button class="text-btn danger" data-act="delete-note" title="${t('btn_delete')}"><i class="ti ti-trash"></i>${t('btn_delete')}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.entry').forEach(card => {
+    const id = card.dataset.id;
+    const note = state.notes.find(x => x.id === id);
+    card.querySelector('[data-act=open-note]').onclick = (ev) => {
+      if(ev.target.closest('[data-act=export-note]') || ev.target.closest('[data-act=edit-note]') || ev.target.closest('[data-act=delete-note]')) return;
+      openNoteModal(note);
+    };
+    card.querySelector('[data-act=edit-note]').onclick = () => openNoteModal(note);
+    card.querySelector('[data-act=export-note]').onclick = () => exportSingleNote(note);
+    card.querySelector('[data-act=delete-note]').onclick = () => confirmDeleteNote(note);
+  });
+}
+
+function openNoteModal(note){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>${note ? 'Sửa ghi chú' : 'Ghi chú mới'}</h2>
+    <label>Tiêu đề</label>
+    <input type="text" id="noteTitle" placeholder="Tiêu đề ghi chú" value="${escapeAttr(note ? note.title : '')}">
+    <label>Nội dung</label>
+    <textarea id="noteContent" style="min-height:280px; font-family:inherit; line-height:1.6;" placeholder="Nhập nội dung...">${escapeHtml(note ? note.content : '')}</textarea>
+    <p class="err" id="noteErr"></p>
+    <div class="row">
+      <button id="noteCancelBtn" style="flex:1">Huỷ</button>
+      <button class="primary" id="noteSaveBtn" data-primary-action style="flex:1">Lưu</button>
+    </div>
+  `;
+  document.getElementById('noteCancelBtn').onclick = closeModal;
+  document.getElementById('noteSaveBtn').onclick = async () => {
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteContent').value;
+    const err = document.getElementById('noteErr');
+    err.style.display = 'none';
+    if(!title && !content.trim()){
+      err.textContent = 'Nhập ít nhất tiêu đề hoặc nội dung.';
+      err.style.display = 'block';
+      return;
+    }
+    if(note){
+      note.title = title;
+      note.content = content;
+      note.updatedAt = Date.now();
+    } else {
+      state.notes.push({ id: uid(), title, content, updatedAt: Date.now() });
+    }
+    await saveNotes();
+    closeModal();
+    renderVault();
+    toast('Đã lưu ghi chú');
+  };
+}
+
+function confirmDeleteNote(note){
+  showConfirm(
+    'Xoá ghi chú?',
+    `Bạn có chắc chắn muốn xoá ghi chú "${note.title || '(chưa có tiêu đề)'}"? Hành động này không thể hoàn tác.`,
+    async () => {
+      state.notes = state.notes.filter(n => n.id !== note.id);
+      await saveNotes();
+      renderVault();
+      toast('Đã xoá ghi chú');
+    }
+  );
+}
+
+function exportSingleNote(note){
+  showConfirm(
+    'Xuất ghi chú này?',
+    `Tải ghi chú "${note.title || '(chưa có tiêu đề)'}" ra file văn bản.`,
+    () => {
+      const content = `${note.title || '(Chưa có tiêu đề)'}\n${'='.repeat(30)}\n\n${note.content || ''}`;
+      const safeName = (note.title || 'ghi-chu').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40) || 'ghi-chu';
+      downloadTextFile(content, `devic3-note-${safeName}.txt`);
+      toast('Đã xuất ghi chú');
+    },
+    'Xuất file',
+    false
+  );
+}
+
+function exportAllNotes(){
+  if(state.notes.length === 0){
+    toast('Chưa có ghi chú nào để xuất');
+    return;
+  }
+  showConfirm(
+    'Xuất toàn bộ ghi chú?',
+    `File xuất ra sẽ chứa toàn bộ ${state.notes.length} ghi chú.`,
+    () => {
+      const lines = [`# Devic3 - Ghi chú`, `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`, ''];
+      state.notes.slice().sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0)).forEach(n => {
+        lines.push(`## ${n.title || '(Chưa có tiêu đề)'}`);
+        lines.push(n.content || '');
+        lines.push('');
+        lines.push('---');
+        lines.push('');
+      });
+      const date = new Date();
+      const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+      downloadTextFile(lines.join('\n'), `devic3-notes-${ds}.txt`);
+      toast('Đã xuất toàn bộ ghi chú');
+    },
+    'Xuất file',
+    false
+  );
+}
+
+
+// SECURITY: auto-clears the clipboard a short while after copying sensitive
+// data (passwords, cookies, tokens, 2FA codes) — a copied secret doesn't
+// linger on the clipboard indefinitely where another app or a shared/public
+// computer's next user could accidentally paste it somewhere. Only clears if
+// the clipboard still holds exactly what we copied (so it never wipes
+// something else the person copied afterwards).
+const CLIPBOARD_AUTOCLEAR_MS = 20000;
+function scheduleClipboardAutoClear(text){
+  if(!(navigator.clipboard && navigator.clipboard.readText && navigator.clipboard.writeText && window.isSecureContext)) return;
+  setTimeout(async () => {
+    try{
+      const current = await navigator.clipboard.readText();
+      if(current === text){
+        await navigator.clipboard.writeText('');
+      }
+    }catch(e){
+      // clipboard read can be denied/unavailable (e.g. tab lost focus) — nothing to do
+    }
+  }, CLIPBOARD_AUTOCLEAR_MS);
+}
+
+function copyText(text, msg, sensitive){
+  if(!text){ toast('Không có nội dung để sao chép'); return; }
+
+  const fallbackCopy = () => {
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      ta.style.left = '-9999px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if(ok){
+        toast(sensitive ? `${msg} (tự xoá khỏi clipboard sau 20s)` : msg);
+        if(sensitive) scheduleClipboardAutoClear(text);
+      } else {
+        toast('Không thể sao chép tự động — hãy bôi đen và copy thủ công (Ctrl+C)');
+      }
+    }catch(err){
+      toast('Không thể sao chép tự động — hãy bôi đen và copy thủ công (Ctrl+C)');
+    }
+  };
+
+  if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(() => {
+      toast(sensitive ? `${msg} (tự xoá khỏi clipboard sau 20s)` : msg);
+      if(sensitive) scheduleClipboardAutoClear(text);
+    }).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+}
+
+// ---------- EXPORT ----------
+function downloadTextFile(content, filename){
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function buildEntryLine(e){
+  const base = getPlatformFields(e.platform).map(f => {
+    if(fieldMeta(f.key).kind === 'date') return toDisplayDate(e[f.key]) || '';
+    return e[f.key] || '';
+  }).join(platformDelimiter(e.platform));
+  const folder = folderName(e.folderId) || '';
+  return `${base}|${folder}|${e.displayName || ''}|${e.proxy || ''}`;
+}
+
+function buildExportContent(){
+  const lines = [
+    `# Devic3 - Sao lưu tài khoản`,
+    `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,
+    `# Mỗi nền tảng có định dạng cột riêng, xem dòng "Định dạng:" ngay trên từng nhóm bên dưới.`,
+    ``
+  ];
+  PLATFORMS.forEach(p => {
+    const list = state.entries.filter(e => e.platform === p.id);
+    if(list.length === 0) return;
+    const fmt = platformFormatHint(p.id) + '|Thư mục|Tên|Proxy';
+    lines.push(`## ${p.name} (${list.length}) — Định dạng: ${fmt}`);
+    list.forEach(e => lines.push(buildEntryLine(e)));
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function exportAccounts(){
+  if(state.entries.length === 0){
+    toast('Chưa có tài khoản nào để xuất');
+    return;
+  }
+  showConfirm(
+    'Xuất tài khoản?',
+    `File xuất ra sẽ chứa toàn bộ ${state.entries.length} tài khoản (UID, mật khẩu, 2FA, cookie, token...) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn và không chia sẻ cho người khác.`,
+    () => {
+      const content = buildExportContent();
+      const date = new Date();
+      const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+      downloadTextFile(content, `devic3-accounts-${ds}.txt`);
+      closeModal();
+      toast('Đã xuất file tài khoản');
+    },
+    'Xuất file',
+    false
+  );
+}
+
+function exportPlatformAccounts(platformId){
+  const list = state.entries.filter(e => e.platform === platformId);
+  const meta = platformMeta(platformId);
+  if(list.length === 0){
+    toast(`Chưa có tài khoản ${meta.name} nào để xuất`);
+    return;
+  }
+  showConfirm(
+    `Xuất tài khoản ${meta.name}?`,
+    `File xuất ra sẽ chứa ${list.length} tài khoản ${meta.name} (mật khẩu, cookie, token...) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn.`,
+    () => {
+      const fmt = platformFormatHint(platformId) + '|Thư mục|Tên|Proxy';
+      const lines = [
+        `# Devic3 - Sao lưu tài khoản ${meta.name}`,
+        `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,
+        `# Định dạng: ${fmt}`,
+        ``,
+        `## ${meta.name} (${list.length})`,
+      ];
+      list.forEach(e => lines.push(buildEntryLine(e)));
+      const date = new Date();
+      const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+      downloadTextFile(lines.join('\n'), `devic3-${platformId}-${ds}.txt`);
+      closeModal();
+      toast(`Đã xuất ${list.length} tài khoản ${meta.name}`);
+    },
+    'Xuất file',
+    false
+  );
+}
+
+function openImportExportModal(){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderImportExportModal();
+}
+
+function renderImportExportModal(){
+  const modalBody = document.getElementById('modalBody');
+  const exportablePlatforms = PLATFORMS.filter(p => p.id !== 'note');
+  modalBody.innerHTML = `
+    <h2>Nhập / Xuất</h2>
+    <button type="button" id="ieAddBtn" class="primary" style="width:100%; margin-bottom:12px; justify-content:center;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập tài khoản mới</button>
+    ${(state.activePlatform !== 'note' && state.activePlatform !== 'other' && state.activePlatform !== 'phone') ? `<button type="button" id="ieDupScanBtn" style="width:100%; margin-bottom:18px;"><i class="ti ti-copy-check" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Quét tài khoản trùng lặp (${platformMeta(state.activePlatform).name})</button>` : ''}
+    <label>Xuất theo từng nền tảng</label>
+    <div class="export-platform-list">
+      ${exportablePlatforms.map(p => {
+        const c = state.entries.filter(e => e.platform === p.id).length;
+        return `<button type="button" class="folder-chip" data-export-platform="${p.id}"><span>${escapeHtml(p.name)}</span><span>${c}</span></button>`;
+      }).join('')}
+    </div>
+    <button type="button" id="ieExportAllBtn" style="width:100%; margin-top:12px;">Xuất tất cả nền tảng (${state.entries.length})</button>
+    <button id="ieCloseBtn" style="width:100%; margin-top:10px;">Đóng</button>
+  `;
+  document.getElementById('ieCloseBtn').onclick = closeModal;
+  document.getElementById('ieAddBtn').onclick = () => {
+    closeModal();
+    // Phone only has 2 meaningful fields (SĐT + Ngày hết hạn), so jump straight
+    // to the bulk-paste "Tự động" tab instead of the manual form — that's the
+    // fastest way to add phone numbers in bulk.
+    state.modalTab = state.activePlatform === 'phone' ? 'auto' : 'manual';
+    openModal(null);
+  };
+  document.getElementById('ieExportAllBtn').onclick = exportAccounts;
+  const dupScanBtn = document.getElementById('ieDupScanBtn');
+  if(dupScanBtn) dupScanBtn.onclick = openDuplicateScanModal;
+  modalBody.querySelectorAll('[data-export-platform]').forEach(btn => {
+    btn.onclick = () => exportPlatformAccounts(btn.dataset.exportPlatform);
+  });
+}
+
+// ---------- TOOLS: password generator + Facebook ID extractor ----------
+// ---------- TOOLS TAB PAGE (the renamed "Khác" platform) ----------
+// A dedicated landing page for the tools, instead of a generic account list —
+// each card opens the same underlying tool already built for the topbar
+// "Công cụ" modal, so there's a single source of truth for the tool logic.
+function renderToolsVault(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="code-comment" style="font-size:12px; margin-bottom:8px;">${t('comment_tools')}</div>
+    <div class="topbar">
+      <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; max-width:560px;">
+      <button type="button" class="tools-card" id="toolsPageFbIdBtn">
+        <i class="ti ti-id"></i>
+        <div>
+          <div class="tools-card-title">${t('tool_fbid_title')}</div>
+        </div>
+        <i class="ti ti-chevron-right tools-card-arrow"></i>
+      </button>
+      <button type="button" class="tools-card" id="toolsPage2faBtn">
+        <i class="ti ti-shield-lock"></i>
+        <div>
+          <div class="tools-card-title">${t('tool_2fa_title')}</div>
+        </div>
+        <i class="ti ti-chevron-right tools-card-arrow"></i>
+      </button>
+      <button type="button" class="tools-card" id="toolsPagePwGenBtn">
+        <i class="ti ti-key"></i>
+        <div>
+          <div class="tools-card-title">${t('tool_pwgen_title')}</div>
+        </div>
+        <i class="ti ti-chevron-right tools-card-arrow"></i>
+      </button>
+    </div>
+  `;
+  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  syncGlobalSearchBar(null);
+  const openTool = (renderFn) => {
+    document.getElementById('modalBg').classList.add('show');
+    renderFn();
+  };
+  document.getElementById('toolsPageFbIdBtn').onclick = () => openTool(renderFacebookIdTool);
+  document.getElementById('toolsPage2faBtn').onclick = () => openTool(renderTotpDecoderTool);
+  document.getElementById('toolsPagePwGenBtn').onclick = () => openTool(renderPasswordGeneratorTool);
+}
+
+function openToolsModal(){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderToolsChooser();
+}
+
+function renderToolsChooser(){
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>${t('btn_tools')}</h2>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+      <button type="button" id="toolPwGenBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-key" style="margin-right:8px;"></i>${t('tool_pwgen_title')}</button>
+      <button type="button" id="toolFbIdBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-id" style="margin-right:8px;"></i>${t('tool_fbid_title')}</button>
+      <button type="button" id="tool2faBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-shield-lock" style="margin-right:8px;"></i>${t('tool_2fa_title')}</button>
+    </div>
+    <button id="toolsCloseBtn" style="width:100%;">${t('btn_close')}</button>
+  `;
+  document.getElementById('toolsCloseBtn').onclick = closeModal;
+  document.getElementById('toolPwGenBtn').onclick = renderPasswordGeneratorTool;
+  document.getElementById('toolFbIdBtn').onclick = renderFacebookIdTool;
+  document.getElementById('tool2faBtn').onclick = renderTotpDecoderTool;
+}
+
+// --- secure random password generator (crypto.getRandomValues, not Math.random) ---
+function secureRandomInt(max){
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] % max;
+}
+
+const PW_POOLS = {
+  upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  lower: 'abcdefghijklmnopqrstuvwxyz',
+  digits: '0123456789',
+  symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
+};
+
+function generateSecurePassword(length, sets){
+  const pools = Object.keys(PW_POOLS).filter(k => sets[k]).map(k => PW_POOLS[k]);
+  if(pools.length === 0) pools.push(PW_POOLS.lower);
+  const combined = pools.join('');
+  const chars = [];
+  // guarantee at least one char from every selected set
+  pools.forEach(pool => chars.push(pool[secureRandomInt(pool.length)]));
+  while(chars.length < length){
+    chars.push(combined[secureRandomInt(combined.length)]);
+  }
+  // Fisher-Yates shuffle using the same secure randomness source
+  for(let i = chars.length - 1; i > 0; i--){
+    const j = secureRandomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.slice(0, length).join('');
+}
+
+function estimatePasswordStrength(length, sets){
+  let poolSize = 0;
+  if(sets.upper) poolSize += 26;
+  if(sets.lower) poolSize += 26;
+  if(sets.digits) poolSize += 10;
+  if(sets.symbols) poolSize += PW_POOLS.symbols.length;
+  if(poolSize === 0) poolSize = 26;
+  const bits = Math.round(Math.log2(poolSize) * length);
+  if(bits >= 100) return { label: 'Rất mạnh', color: '#4ade80', bits };
+  if(bits >= 70) return { label: 'Mạnh', color: '#4ade80', bits };
+  if(bits >= 50) return { label: 'Khá', color: '#facc15', bits };
+  return { label: 'Yếu — nên tăng độ dài hoặc thêm loại ký tự', color: '#f87171', bits };
+}
+
+function renderPasswordGeneratorTool(){
+  const modalBody = document.getElementById('modalBody');
+  const state_ = { length: 20, upper: true, lower: true, digits: true, symbols: true, current: '' };
+  state_.current = generateSecurePassword(state_.length, state_);
+
+  const draw = () => {
+    const strength = estimatePasswordStrength(state_.length, state_);
+    modalBody.innerHTML = `
+      <h2>Tạo mật khẩu ngẫu nhiên</h2>
+      <p class="hint" style="margin-top:-4px;">Dùng bộ sinh số ngẫu nhiên mật mã học của trình duyệt (Web Crypto API) — không dùng Math.random() vốn không đủ an toàn cho mật khẩu.</p>
+      <div class="pw-row" style="margin-bottom:14px;">
+        <span class="pw-val" id="pwGenResult" style="font-family:monospace; font-size:16px; letter-spacing:0.5px; color:#facc15; font-weight:600;">${escapeHtml(state_.current)}</span>
+        <button class="text-btn" id="pwCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
+      </div>
+      <p style="font-size:12px; color:${strength.color}; margin:-8px 0 16px; font-weight:500;">Độ mạnh: ${strength.label} (~${strength.bits} bit)</p>
+      <label>Độ dài: <span id="pwLenValue">${state_.length}</span> ký tự</label>
+      <input type="range" id="pwLenSlider" min="8" max="64" value="${state_.length}" style="width:100%; margin-bottom:16px;">
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px; font-size:14px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pwUpper" ${state_.upper?'checked':''}> Chữ hoa (A-Z)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pwLower" ${state_.lower?'checked':''}> Chữ thường (a-z)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pwDigits" ${state_.digits?'checked':''}> Số (0-9)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pwSymbols" ${state_.symbols?'checked':''}> Ký tự đặc biệt (!@#$...)</label>
+      </div>
+      <div class="row">
+        <button id="pwBackBtn" style="flex:1">Quay lại</button>
+        <button class="primary" id="pwRegenBtn" data-primary-action style="flex:1">Tạo mã mới</button>
+      </div>
+    `;
+    document.getElementById('pwBackBtn').onclick = renderToolsChooser;
+    document.getElementById('pwCopyBtn').onclick = () => copyText(state_.current, 'Đã sao chép mật khẩu', true);
+    document.getElementById('pwLenSlider').oninput = (e) => {
+      state_.length = parseInt(e.target.value, 10);
+      document.getElementById('pwLenValue').textContent = state_.length;
+    };
+    ['upper','lower','digits','symbols'].forEach(key => {
+      document.getElementById('pw' + key[0].toUpperCase() + key.slice(1)).onchange = (e) => {
+        state_[key] = e.target.checked;
+      };
+    });
+    document.getElementById('pwRegenBtn').onclick = () => {
+      if(!state_.upper && !state_.lower && !state_.digits && !state_.symbols){
+        toast('Chọn ít nhất 1 loại ký tự');
+        return;
+      }
+      state_.current = generateSecurePassword(state_.length, state_);
+      draw();
+    };
+  };
+  draw();
+}
+
+// --- Facebook ID extractor: 100% client-side URL parsing, no network requests ---
+function extractFacebookId(input){
+  const raw = (input || '').trim();
+  if(!raw) return null;
+  if(/^\d{5,20}$/.test(raw)) return raw; // already a raw numeric UID
+  let m = raw.match(/[?&]id=(\d{5,20})/);
+  if(m) return m[1]; // profile.php?id=...
+  m = raw.match(/facebook\.com\/(\d{5,20})(?:[/?]|$)/i);
+  if(m) return m[1]; // facebook.com/100012345678
+  return null; // vanity username link — can't be resolved without contacting Facebook's servers
+}
+
+function renderFacebookIdTool(){
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>Lấy ID Facebook từ link</h2>
+    <p class="hint" style="margin-top:-4px;">Xử lý hoàn toàn trong trình duyệt của bạn — không gửi link đi đâu cả.</p>
+    <label>Dán link hoặc UID</label>
+    <input type="text" id="fbLinkInput" placeholder="https://www.facebook.com/profile.php?id=100012345678">
+    <div class="pw-row" id="fbIdResultRow" style="display:none; margin-bottom:14px;">
+      <span class="pw-val" id="fbIdResult" style="font-family:monospace; font-size:16px; font-weight:600; color:#facc15;"></span>
+      <button class="text-btn" id="fbIdCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
+    </div>
+    <p class="err" id="fbIdErr"></p>
+    <button id="fbIdExtractBtn" class="primary" data-primary-action style="width:100%; margin-bottom:10px;">Trích xuất ID</button>
+    <button id="fbIdBackBtn" style="width:100%; margin-bottom:14px;">Quay lại</button>
+    <p class="hint">Chỉ lấy được ID trực tiếp nếu link có dạng <code>profile.php?id=...</code> hoặc đường dẫn toàn số (VD: <code>facebook.com/100012345678</code>). Với link dạng tên riêng (VD: facebook.com/nguyenvana), trình duyệt không thể tự tra cứu được vì bị chặn truy cập chéo domain (CORS) — hãy mở link đó, bấm chuột phải → "Xem mã nguồn trang" (View Page Source), tìm chữ "profile_id" hoặc "userID" trong đó.</p>
+  `;
+  document.getElementById('fbIdBackBtn').onclick = renderToolsChooser;
+  const doExtract = () => {
+    const err = document.getElementById('fbIdErr');
+    const resultRow = document.getElementById('fbIdResultRow');
+    err.style.display = 'none';
+    resultRow.style.display = 'none';
+    const input = document.getElementById('fbLinkInput').value;
+    const id = extractFacebookId(input);
+    if(id){
+      document.getElementById('fbIdResult').textContent = id;
+      resultRow.style.display = 'flex';
+      document.getElementById('fbIdCopyBtn').onclick = () => copyText(id, 'Đã sao chép ID Facebook');
+    } else {
+      err.textContent = 'Không tìm thấy ID trực tiếp trong link này — xem gợi ý bên dưới.';
+      err.style.display = 'block';
+    }
+  };
+  document.getElementById('fbIdExtractBtn').onclick = doExtract;
+  document.getElementById('fbLinkInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') doExtract(); });
+}
+
+// --- 2FA decoder: paste a base32 TOTP secret, get the live 6-digit code ---
+// (reuses the same computeTotp/base32Decode already used for saved accounts)
+function renderTotpDecoderTool(){
+  if(totpToolInterval){ clearInterval(totpToolInterval); totpToolInterval = null; }
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>${t('tool_2fa_title')}</h2>
+    <p class="hint" style="margin-top:-4px;">Dán mã bí mật 2FA (Base32, dạng chữ hoa A-Z và số 2-7) để xem ngay mã 6 số hiện tại — xử lý hoàn toàn trong trình duyệt, không gửi đi đâu cả.</p>
+    <label>Mã bí mật 2FA</label>
+    <input type="text" id="totpSecretInput" placeholder="VD: GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" style="font-family:var(--mono);" autocomplete="off">
+    <p class="err" id="totpErr"></p>
+    <div class="pw-row" id="totpResultRow" style="display:none; margin-bottom:10px;">
+      <span class="pw-val" id="totpResultCode" data-totp-val style="font-family:var(--mono); font-size:26px; letter-spacing:4px; font-weight:700; color:#facc15; transition:color .3s ease;"></span>
+      <button class="text-btn" id="totpCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
+    </div>
+    <div id="totpCountdownWrap" style="display:none; margin-bottom:16px;">
+      <div style="height:4px; background:#1f1f1f; border-radius:999px; overflow:hidden;">
+        <div id="totpCountdownBar" style="height:100%; background:var(--accent); width:100%;"></div>
+      </div>
+    </div>
+    <button id="totp2faBackBtn" style="width:100%;">Quay lại</button>
+  `;
+  document.getElementById('totp2faBackBtn').onclick = () => {
+    if(totpToolInterval){ clearInterval(totpToolInterval); totpToolInterval = null; }
+    renderToolsChooser();
+  };
+
+  const input = document.getElementById('totpSecretInput');
+  const err = document.getElementById('totpErr');
+  const resultRow = document.getElementById('totpResultRow');
+  const codeSpan = document.getElementById('totpResultCode');
+  const countdownWrap = document.getElementById('totpCountdownWrap');
+  const countdownBar = document.getElementById('totpCountdownBar');
+  let lastCode = '';
+
+  const refresh = async () => {
+    const secret = input.value.trim();
+    if(!secret){
+      err.style.display = 'none';
+      resultRow.style.display = 'none';
+      countdownWrap.style.display = 'none';
+      return;
+    }
+    const code = await computeTotp(secret);
+    if(!code){
+      err.textContent = 'Mã bí mật không hợp lệ — chỉ chấp nhận ký tự Base32 (chữ A-Z và số 2-7).';
+      err.style.display = 'block';
+      resultRow.style.display = 'none';
+      countdownWrap.style.display = 'none';
+      return;
+    }
+    err.style.display = 'none';
+    lastCode = code;
+    codeSpan.textContent = code;
+    resultRow.style.display = 'flex';
+    countdownWrap.style.display = 'block';
+    const secsLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
+    const totpColor = totpColorForSecondsLeft(secsLeft);
+    if(countdownBar){ countdownBar.style.width = (secsLeft / 30 * 100) + '%'; countdownBar.style.background = totpColor; }
+    codeSpan.style.color = totpColor;
+  };
+
+  document.getElementById('totpCopyBtn').onclick = () => { if(lastCode) copyText(lastCode, 'Đã sao chép mã 2FA', true); };
+  input.oninput = refresh;
+  refresh();
+  totpToolInterval = setInterval(refresh, 1000);
+}
+
+function exportSingleEntry(entry){
+  const label = entry.fbName || entry.displayName || entry.email || 'account';
+  showConfirm(
+    'Xuất tài khoản này?',
+    `File xuất ra sẽ chứa thông tin đầy đủ của tài khoản "${label}" (mật khẩu, 2FA, cookie, token...) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn.`,
+    () => {
+      const content = buildEntryLine(entry);
+      const safeName = (entry.fbName || entry.email || 'account').replace(/[^a-zA-Z0-9]/g, '_');
+      downloadTextFile(content, `devic3-${safeName}.txt`);
+      toast('Đã xuất tài khoản');
+    },
+    'Xuất file',
+    false
+  );
+}
+
+async function deleteEntry(id){
+  state.entries = state.entries.filter(e => e.id !== id);
+  state.expandedIds.delete(id);
+  await saveEntries();
+  renderVault();
+  toast('Đã xoá tài khoản');
+}
+
+function confirmDeleteEntry(id, name){
+  showConfirm(
+    'Xoá tài khoản?',
+    `Bạn có chắc chắn muốn xoá tài khoản "${name}"? Hành động này không thể hoàn tác.`,
+    () => deleteEntry(id)
+  );
+}
+
+// ---------- MULTI-SELECT DELETE ----------
+function updateSelectionBar(){
+  const countText = document.getElementById('selectCountText');
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  if(countText) countText.textContent = `${t('select_selected')} ${state.selectedIds.size}`;
+  if(deleteBtn) deleteBtn.disabled = state.selectedIds.size === 0;
+}
+
+function selectAllVisibleEntries(){
+  state.visibleEntries.forEach(e => state.selectedIds.add(e.id));
+  renderVault();
+}
+
+function clearEntrySelection(){
+  state.selectedIds = new Set();
+  renderVault();
+}
+
+function confirmDeleteSelected(){
+  const count = state.selectedIds.size;
+  if(count === 0) return;
+  showConfirm(
+    'Xoá các tài khoản đã chọn?',
+    `Bạn có chắc chắn muốn xoá ${count} tài khoản đã chọn? Hành động này không thể hoàn tác.`,
+    async () => {
+      state.entries = state.entries.filter(e => !state.selectedIds.has(e.id));
+      state.selectedIds = new Set();
+      state.selectMode = false;
+      await saveEntries();
+      renderVault();
+      toast(`Đã xoá ${count} tài khoản`);
+    }
+  );
+}
+
+function showConfirm(title, message, onConfirm, confirmLabel, danger = true){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>${escapeHtml(title)}</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">${escapeHtml(message)}</p>
+    <div class="row">
+      <button id="confirmCancelBtn" style="flex:1">${t('btn_cancel')}</button>
+      <button class="text-btn ${danger ? 'danger' : 'primary'}" id="confirmOkBtn" data-primary-action style="flex:1; padding:9px 16px;">${escapeHtml(confirmLabel || t('btn_delete'))}</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('confirmCancelBtn').onclick = closeModal;
+  document.getElementById('confirmOkBtn').onclick = () => {
+    closeModal();
+    onConfirm();
+  };
+}
+
+// ---------- ACCOUNT STATUS CHECK (opens the public profile URL, user visually confirms) ----------
+function checkAccountStatus(entry){
+  if(!entry.fbName){
+    toast('Tài khoản chưa có UID để kiểm tra');
+    return;
+  }
+  const url = `https://www.facebook.com/${encodeURIComponent(entry.fbName)}`;
+  // Open the public profile page in a new tab — this is the same as a person manually
+  // browsing to the profile in their browser. No login, no scraping, no automation of
+  // Facebook itself happens here; the user then visually confirms what they saw.
+  window.open(url, '_blank', 'noopener,noreferrer');
+  showStatusPicker(entry, url);
+}
+
+function showStatusPicker(entry, url){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  const label = entry.displayName || entry.fbName;
+  modalBody.innerHTML = `
+    <h2>Kiểm tra trạng thái tài khoản</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 6px;">Đã mở trang cá nhân của "${escapeHtml(label)}" trong tab mới:</p>
+    <p style="font-size:13px; color:var(--accent-text); word-break:break-all; margin:0 0 16px;">${escapeHtml(url)}</p>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">
+      Nếu trang báo <b>"This content isn't available right now"</b> hoặc không hiện được nội dung → tài khoản <b>không hoạt động</b>.<br>
+      Nếu trang cá nhân hiện bình thường (có ảnh đại diện, bài viết...) → tài khoản <b>đang hoạt động</b>.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button type="button" id="statusActiveBtn" class="text-btn" style="width:100%; justify-content:center; color:${STATUS_META.active.color}; border-color:${STATUS_META.active.color};">✓ Trang hoạt động bình thường</button>
+      <button type="button" id="statusInactiveBtn" class="text-btn danger" style="width:100%; justify-content:center;">✕ Trang báo lỗi / không tồn tại</button>
+      <button type="button" id="statusSkipBtn" style="width:100%;">Bỏ qua, kiểm tra sau</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('statusActiveBtn').onclick = () => setEntryStatus(entry, 'active');
+  document.getElementById('statusInactiveBtn').onclick = () => setEntryStatus(entry, 'inactive');
+  document.getElementById('statusSkipBtn').onclick = closeModal;
+}
+
+async function setEntryStatus(entry, status){
+  entry.status = status;
+  entry.updatedAt = Date.now();
+  await saveEntries();
+  closeModal();
+  renderVault();
+  toast(`Đã đánh dấu: ${statusMeta(status).label}`);
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+// ---------- AUTO-PARSE ----------
+// format: UID|PASS|2FA|Email|Passemail|Email phụ|Cookie|Token|Khác|
+// ---------- SMART FIELD DETECTION (auto-import) ----------
+// Content-pattern checks used to catch and auto-correct common column-order mistakes
+// when pasting bulk data — e.g. an email accidentally landing in the "2FA" slot.
+function looksLikeUid(s){
+  return /^\d{5,20}$/.test((s || '').trim());
+}
+// A real email address can never legally exceed 254 characters total, 64 in the
+// local-part before "@" (RFC 5321/5322) — and it never contains ";" or spaces.
+// Facebook cookie strings, by contrast, are long semicolon-separated key=value
+// pairs (c_user=...;xs=...;datr=...) that can easily run past 300+ characters.
+// Checking both shape AND length lets us tell a real email apart from a cookie
+// blob that got pasted into the wrong column.
+const EMAIL_MAX_TOTAL = 254;
+const EMAIL_MAX_LOCAL = 64;
+function looksLikeEmail(s){
+  const v = (s || '').trim();
+  if(!v || v.length > EMAIL_MAX_TOTAL) return false;
+  if(v.includes(';') || v.includes(' ')) return false;
+  const at = v.indexOf('@');
+  if(at <= 0 || at !== v.lastIndexOf('@')) return false;
+  if(v.slice(0, at).length > EMAIL_MAX_LOCAL) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+function looksLike2FASecret(s){
+  const t = (s || '').replace(/\s+/g, '');
+  return t.length >= 16 && /^[A-Za-z2-7]+$/.test(t) && !t.includes('@');
+}
+// Cookie/token dumps are long and, for cookies specifically, made of several
+// "key=value;" pairs — a shape a real email address never has.
+// A browser cookie header has a very rigid, checkable shape: two or more
+// "key=value" pairs joined by semicolons (that's literally the HTTP Cookie
+// header format — e.g. "c_user=123;xs=abc;datr=xyz;"). Checking for THIS
+// specific structure — rather than just "is it long" — is what actually
+// separates a cookie from a token: plenty of real tokens (JWTs, Microsoft
+// MSA artifacts, OAuth opaque tokens) are just as long as a cookie dump but
+// don't have the "k=v;k=v" shape, so treating "long" alone as "must be a
+// cookie" is exactly what was causing Cookie and Token to get mixed up.
+function looksLikeCookieHeader(s){
+  const v = (s || '').trim();
+  if(v.length <= 20) return false;
+  const kvPairs = v.split(';').map(p => p.trim()).filter(p => p.includes('=') && !p.includes(' ')).length;
+  return kvPairs >= 2;
+}
+// Anything else long and opaque that ISN'T a cookie header and ISN'T a
+// Facebook "EAA..." access token still behaves like a token/session blob —
+// this is the fallback for token formats without a fixed prefix (JWTs, MSA
+// artifacts, generic OAuth tokens). The 100-char floor keeps this from
+// mistaking an unusually long but genuine PASSWORD for a token.
+function looksLikeOpaqueTokenBlob(s){
+  const v = (s || '').trim();
+  if(v.length <= 100) return false;
+  if(looksLikeCookieHeader(v)) return false; // cookie shape takes priority
+  return true;
+}
+
+// Facebook's format has fields with very distinctive, checkable shapes
+// (UID = digits only, 2FA = long base32 secret, Email = short and RFC-valid,
+// Cookie = long "key=value;" dump, Token = Facebook access token "EAA..."
+// prefix). Real-world pasted data doesn't always follow our exact column
+// order — some sources list Cookie/Token before Email, for example — so
+// instead of only checking one pair at a time, this classifies EVERY
+// flexible field by its actual content shape and reassigns all of them
+// together. Anything left over that doesn't fit a known slot is appended to
+// "Khác" rather than silently dropped, so no data is ever lost.
+function looksLikeFacebookToken(s){
+  return /^EAA[A-Za-z0-9]{15,}$/.test((s || '').trim());
+}
+function classifyFacebookValue(v){
+  if(!v) return 'empty';
+  if(looksLikeFacebookToken(v)) return 'token';
+  if(looksLikeCookieHeader(v)) return 'cookie';
+  if(looksLike2FASecret(v)) return 'twofa';
+  if(looksLikeEmail(v)) return 'email';
+  if(looksLikeOpaqueTokenBlob(v)) return 'token';
+  return 'unknown';
+}
+function smartCorrectFacebookFields(fields){
+  const f = { ...fields };
+
+  // UID vs Email — kept separate since fbName has its own dedicated,
+  // very reliable digits-only check (not part of the pool below).
+  if(f.fbName && f.email && !looksLikeUid(f.fbName) && looksLikeEmail(f.fbName) && looksLikeUid(f.email) && !looksLikeEmail(f.email)){
+    [f.fbName, f.email] = [f.email, f.fbName];
+  }
+
+  const slotOrder = ['twoFA', 'email', 'emailPassword', 'secondaryEmail', 'cookie', 'token'];
+  const typeOf = {};
+  slotOrder.forEach(k => { typeOf[k] = classifyFacebookValue(f[k]); });
+
+  // Only step in when something is CLEARLY misplaced — stays a no-op on data
+  // that's already fine, exactly like before.
+  const emailSlotWrong = f.email && typeOf.email !== 'email';
+  const cookieSlotWrong = f.cookie && typeOf.cookie !== 'cookie' && typeOf.cookie !== 'unknown';
+  const tokenSlotWrong = f.token && typeOf.token !== 'token' && typeOf.token !== 'unknown';
+  const cookieHidingElsewhere = ['twoFA', 'emailPassword', 'secondaryEmail', 'token'].some(k => typeOf[k] === 'cookie');
+  const tokenHidingElsewhere = ['twoFA', 'email', 'emailPassword', 'secondaryEmail', 'cookie'].some(k => typeOf[k] === 'token');
+  const twofaHidingElsewhere = ['email', 'emailPassword', 'secondaryEmail', 'cookie', 'token'].some(k => typeOf[k] === 'twofa');
+
+  const needsReassignment = emailSlotWrong || cookieSlotWrong || tokenSlotWrong || cookieHidingElsewhere || tokenHidingElsewhere || twofaHidingElsewhere;
+
+  if(needsReassignment){
+    const pool = { twofa: [], cookie: [], token: [], email: [], unknown: [] };
+    slotOrder.forEach(k => {
+      const v = f[k];
+      if(!v) return;
+      const type = typeOf[k];
+      pool[type === 'empty' ? 'unknown' : type].push(v);
+    });
+    const take = (arr) => arr.length ? arr.shift() : '';
+
+    f.twoFA = take(pool.twofa);
+    f.cookie = take(pool.cookie);
+    f.token = take(pool.token);
+    f.email = take(pool.email);
+    f.secondaryEmail = take(pool.email); // a second email, if there were two
+    f.emailPassword = take(pool.unknown);
+
+    // safety net: anything left over across every category goes into "Khác"
+    // instead of vanishing, even if we couldn't place it perfectly
+    const leftovers = [...pool.twofa, ...pool.cookie, ...pool.token, ...pool.email, ...pool.unknown];
+    if(leftovers.length){
+      f.other = [f.other, ...leftovers].filter(Boolean).join(' | ');
+    }
+  }
+
+  return f;
+}
+
+function parseAutoLine(line, platformId){
+  const parts = line.split(platformDelimiter(platformId)).map(p => p.trim());
+  const obj = {};
+  getPlatformFields(platformId).forEach((f, i) => { obj[f.key] = parts[i] || ''; });
+  if(platformId === 'facebook'){
+    return smartCorrectFacebookFields(obj);
+  }
+  return obj;
+}
+
+// ---------- FOLDER MANAGER MODAL ----------
+function openFolderManager(){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderFolderManagerBody();
+}
+
+function renderFolderManagerBody(){
+  const modalBody = document.getElementById('modalBody');
+  const platformName = platformMeta(state.activePlatform).name;
+  modalBody.innerHTML = `
+    <h2>Quản lý thư mục — ${escapeHtml(platformName)}</h2>
+    <div id="folderRows"></div>
+    <div class="row" style="margin-top:14px;">
+      <input type="text" id="newFolderName" placeholder="Tên thư mục mới" style="margin-bottom:0;">
+      <button class="primary" id="addFolderBtn" style="flex-shrink:0;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Thêm</button>
+    </div>
+    <p class="err" id="folderErr"></p>
+    <div class="row" style="margin-top:18px;">
+      <button id="closeFolderBtn" style="flex:1">Xong</button>
+    </div>
+  `;
+  renderFolderRows();
+  document.getElementById('addFolderBtn').onclick = addFolder;
+  document.getElementById('newFolderName').addEventListener('keydown', e => { if(e.key === 'Enter') addFolder(); });
+  document.getElementById('closeFolderBtn').onclick = () => { closeModal(); renderVault(); };
+}
+
+function renderFolderRows(){
+  const wrap = document.getElementById('folderRows');
+  const platformFolders = state.folders.filter(f => f.platformId === state.activePlatform);
+  if(platformFolders.length === 0){
+    wrap.innerHTML = `<p class="hint" style="margin-top:0;">Chưa có thư mục nào cho nền tảng này.</p>`;
+    return;
+  }
+  wrap.innerHTML = platformFolders.map(f => `
+    <div class="folder-list-row" data-id="${f.id}">
+      <i class="ti ti-folder" style="color:var(--text-muted);font-size:16px"></i>
+      <input type="text" value="${escapeAttr(f.name)}" data-rename="${f.id}">
+      <button class="text-btn danger" data-delfolder="${f.id}" title="Delete folder"><i class="ti ti-trash"></i>${t('btn_delete')}</button>
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('[data-rename]').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const f = state.folders.find(x => x.id === inp.dataset.rename);
+      const newName = inp.value.trim();
+      if(!newName){ inp.value = f.name; return; }
+      f.name = newName;
+      await saveFolders();
+      toast('Đã đổi tên thư mục');
+    });
+  });
+
+  wrap.querySelectorAll('[data-delfolder]').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.delfolder;
+      const f = state.folders.find(x => x.id === id);
+      showConfirm(
+        'Xoá thư mục?',
+        `Bạn có chắc chắn muốn xoá thư mục "${f ? f.name : ''}"? Các tài khoản trong thư mục này sẽ chuyển về "Chưa phân loại", không bị xoá.`,
+        async () => {
+          state.folders = state.folders.filter(x => x.id !== id);
+          state.entries.forEach(e => { if(e.folderId === id) e.folderId = ''; });
+          if(state.activeFolder === id) state.activeFolder = 'all';
+          await saveFolders();
+          await saveEntries();
+          openFolderManager();
+          toast('Đã xoá thư mục');
+        }
+      );
+    };
+  });
+}
+
+async function addFolder(){
+  const input = document.getElementById('newFolderName');
+  const name = input.value.trim();
+  const err = document.getElementById('folderErr');
+  err.style.display = 'none';
+  if(!name){
+    err.textContent = 'Nhập tên thư mục.';
+    err.style.display = 'block';
+    return;
+  }
+  state.folders.push({ id: uid(), name, platformId: state.activePlatform });
+  await saveFolders();
+  input.value = '';
+  renderFolderRows();
+}
+
+// ---------- ACCOUNT MODAL ----------
+function openModal(entry){
+  state.editingId = entry ? entry.id : null;
+  // editing always forced to manual; adding a new account keeps whatever tab
+  // the caller pre-selected (e.g. the Phone quick-import jumps straight to
+  // "Tự động"), defaulting to manual if nothing was set
+  if(entry || !state.modalTab) state.modalTab = 'manual';
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderModalBody(entry);
+}
+
+function folderOptionsHtml(selectedId, platformId){
+  let html = `<option value="">Chưa phân loại</option>`;
+  state.folders.filter(f => f.platformId === platformId).forEach(f => {
+    html += `<option value="${f.id}" ${selectedId===f.id?'selected':''}>${escapeHtml(f.name)}</option>`;
+  });
+  return html;
+}
+
+function platformOptionsHtml(selectedId){
+  return PLATFORMS.map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+}
+
+// renders just the platform-specific input/textarea fields (the part that changes when
+// the platform dropdown changes), given already-typed values to preserve where possible
+function dynamicFieldsHtml(platformId, valuesObj){
+  return getPlatformFields(platformId).map(f => {
+    const meta = fieldMeta(f.key);
+    const val = (valuesObj && valuesObj[f.key]) || '';
+    if(meta.kind === 'area'){
+      return `<label>${f.label}</label><textarea id="f_${f.key}" placeholder="Không bắt buộc">${escapeHtml(val)}</textarea>`;
+    }
+    if(meta.kind === 'date'){
+      return `<label>${f.label}</label><input type="text" id="f_${f.key}" placeholder="dd/mm/yyyy" value="${escapeAttr(toDisplayDate(val))}">`;
+    }
+    return `<label>${f.label}</label><input type="text" id="f_${f.key}" placeholder="Không bắt buộc" value="${escapeAttr(val)}">`;
+  }).join('');
+}
+
+function manualFieldsHtml(entry){
+  const currentPlatform = entry ? entry.platform : state.activePlatform;
+  const platformSelect = `<label>Nền tảng</label><select id="f_platform">${platformOptionsHtml(currentPlatform)}</select>`;
+  const folderSelect = `<label>Thư mục</label><select id="f_folderId">${folderOptionsHtml(entry ? entry.folderId : '', currentPlatform)}</select>`;
+  // "Tên" (display name/nickname) can only be set while editing an existing account
+  const nameField = entry ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
+  // "Proxy" also only settable while editing — lets you type freely OR quickly
+  // pick from the list of IPs already saved in the Proxy tab
+  const savedProxies = state.entries.filter(e => e.platform === 'proxy' && e.fbName);
+  const proxyDatalistOptions = savedProxies.map(e =>
+    `<option value="${escapeAttr(e.fbName)}">${escapeAttr(e.fbName)}${e.username ? ' — ' + escapeAttr(e.username) : ''}</option>`
+  ).join('');
+  const proxyField = entry ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
+  // "Trạng thái" also only settable while editing
+  const currentStatus = entry ? (entry.status || 'unknown') : 'unknown';
+  const statusField = entry ? `<label>Trạng thái tài khoản</label><select id="f_status">
+      <option value="unknown" ${currentStatus==='unknown'?'selected':''}>? Chưa xác định</option>
+      <option value="active" ${currentStatus==='active'?'selected':''}>✓ Hoạt động</option>
+      <option value="inactive" ${currentStatus==='inactive'?'selected':''}>✕ Không hoạt động</option>
+    </select>` : '';
+  const dynamicWrap = `<div id="dynamicFieldsWrap">${dynamicFieldsHtml(currentPlatform, entry || {})}</div>`;
+  return platformSelect + folderSelect + nameField + proxyField + statusField + dynamicWrap;
+}
+
+function buildAutoFormatHintHtml(platformId){
+  const fmt = platformFormatHint(platformId);
+  const dateHint = getPlatformFields(platformId).some(f => fieldMeta(f.key).kind === 'date')
+    ? `<br>Ngày viết theo dạng <code>dd/mm/yyyy</code> — VD: <code>${escapeHtml((() => { const d = new Date(); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); })())}</code>.`
+    : '';
+  return `Định dạng: <code id="autoFormatCode">${escapeHtml(fmt)}</code> — dán nhiều dòng để thêm hàng loạt tài khoản cùng lúc. Tất cả sẽ được gán vào thư mục chọn ở trên.<br>Nếu tài khoản thiếu trường nào thì cứ để trống phần đó (giữa 2 dấu <code id="autoFormatDelim">${platformDelimiter(platformId)}</code>), phần mềm sẽ tự bỏ qua và không hiển thị mục đó.${dateHint}`;
+}
+
+function renderModalBody(entry){
+  const modalBody = document.getElementById('modalBody');
+  const showAutoTab = !entry; // only offer bulk/auto import when adding a new account, not when editing
+  const autoPlatform = state.activePlatform;
+  const autoExampleFormat = platformFormatHint(autoPlatform);
+  modalBody.innerHTML = `
+    <h2>${entry ? 'Sửa tài khoản' : 'Thêm tài khoản'}</h2>
+    ${entry ? `<div class="row" style="margin:-6px 0 16px;"><button type="button" class="text-btn" id="exportEntryBtn" style="flex:1;"><i class="ti ti-download"></i>Xuất tài khoản này</button></div>` : ''}
+    ${showAutoTab ? `
+    <div class="tabs">
+      <button type="button" class="tab-btn ${state.modalTab==='manual'?'active':''}" id="tabManual">Thủ công</button>
+      <button type="button" class="tab-btn ${state.modalTab==='auto'?'active':''}" id="tabAuto">Tự động</button>
+    </div>` : ''}
+    <div id="manualPane" style="display:${state.modalTab==='manual'||!showAutoTab?'block':'none'}">
+      ${manualFieldsHtml(entry)}
+    </div>
+    ${showAutoTab ? `
+    <div id="autoPane" style="display:${state.modalTab==='auto'?'block':'none'}">
+      <label>Nền tảng</label>
+      <select id="f_auto_platform">${platformOptionsHtml(autoPlatform)}</select>
+      <label>Thư mục</label>
+      <select id="f_auto_folderId">${folderOptionsHtml('', autoPlatform)}</select>
+      <label>Dán dữ liệu theo định dạng (mỗi dòng 1 tài khoản)</label>
+      <textarea id="fAuto" class="mono-area" style="min-height:180px" placeholder="${escapeAttr(autoExampleFormat)}
+${escapeAttr(autoExampleFormat)}
+${escapeAttr(autoExampleFormat)}"></textarea>
+      <p class="hint" id="autoFormatHint">${buildAutoFormatHintHtml(autoPlatform)}</p>
+    </div>` : ''}
+    <p class="err" id="modalErr"></p>
+    <div class="row">
+      <button id="cancelBtn" style="flex:1">Huỷ</button>
+      <button class="primary" id="saveBtn" data-primary-action style="flex:1">Lưu</button>
+    </div>
+  `;
+  if(showAutoTab){
+    document.getElementById('tabManual').onclick = () => { state.modalTab = 'manual'; renderModalBody(entry); };
+    document.getElementById('tabAuto').onclick = () => { state.modalTab = 'auto'; renderModalBody(entry); };
+  }
+  document.getElementById('cancelBtn').onclick = closeModal;
+  document.getElementById('saveBtn').onclick = () => saveModal(entry);
+  const exportEntryBtn = document.getElementById('exportEntryBtn');
+  if(exportEntryBtn) exportEntryBtn.onclick = () => exportSingleEntry(entry);
+
+  const platformSel = document.getElementById('f_platform');
+  if(platformSel){
+    platformSel.onchange = () => {
+      const newPlatform = platformSel.value;
+      // preserve whatever the person already typed for fields that still apply under the new platform
+      const captured = {};
+      document.querySelectorAll('#dynamicFieldsWrap [id^="f_"]').forEach(el => { captured[el.id.slice(2)] = el.value; });
+      const wrap = document.getElementById('dynamicFieldsWrap');
+      if(wrap) wrap.innerHTML = dynamicFieldsHtml(newPlatform, captured);
+      const folderSel = document.getElementById('f_folderId');
+      if(folderSel) folderSel.innerHTML = folderOptionsHtml('', newPlatform);
+    };
+  }
+  const autoPlatformSel = document.getElementById('f_auto_platform');
+  if(autoPlatformSel){
+    autoPlatformSel.onchange = () => {
+      const folderSel = document.getElementById('f_auto_folderId');
+      folderSel.innerHTML = folderOptionsHtml('', autoPlatformSel.value);
+      const fmt = platformFormatHint(autoPlatformSel.value);
+      const hintEl = document.getElementById('autoFormatHint');
+      if(hintEl) hintEl.innerHTML = buildAutoFormatHintHtml(autoPlatformSel.value);
+      const ta = document.getElementById('fAuto');
+      if(ta) ta.placeholder = `${fmt}\n${fmt}\n${fmt}`;
+    };
+  }
+}
+
+let totpToolInterval = null; // tracks the live-refresh timer used by the 2FA decoder tool
+function closeModal(){
+  document.getElementById('modalBg').classList.remove('show');
+  if(totpToolInterval){ clearInterval(totpToolInterval); totpToolInterval = null; }
+}
+
+// finds an existing entry on the same platform with the same primary identifier (fbName),
+// excluding the entry currently being edited (if any)
+function findDuplicateEntry(platform, fbNameValue, excludeId){
+  if(!fbNameValue) return null;
+  return state.entries.find(e => e.platform === platform && e.fbName === fbNameValue && e.id !== excludeId) || null;
+}
+
+// Scans every entry in the current platform and groups any that share the same
+// primary identifier (UID/Email/User...) — lets someone find and clean up
+// duplicates left over from past bulk-imports, instead of stumbling into them
+// one at a time while editing.
+function findAllDuplicateGroups(platformId){
+  const byName = {};
+  state.entries.filter(e => e.platform === platformId && e.fbName).forEach(e => {
+    if(!byName[e.fbName]) byName[e.fbName] = [];
+    byName[e.fbName].push(e);
+  });
+  return Object.entries(byName).filter(([, list]) => list.length > 1).map(([name, list]) => ({ name, list }));
+}
+
+function openDuplicateScanModal(){
+  const modalBg = document.getElementById('modalBg');
+  modalBg.classList.add('show');
+  renderDuplicateScanModal();
+}
+
+function renderDuplicateScanModal(){
+  const modalBody = document.getElementById('modalBody');
+  const meta = platformMeta(state.activePlatform);
+  const groups = findAllDuplicateGroups(state.activePlatform);
+  modalBody.innerHTML = `
+    <h2>Quét trùng lặp — ${escapeHtml(meta.name)}</h2>
+    ${groups.length === 0
+      ? `<p style="font-size:14px; color:var(--text-2);">Không tìm thấy tài khoản nào bị trùng định danh trong ${escapeHtml(meta.name)}.</p>`
+      : `<p class="hint" style="margin-top:-4px;">Tìm thấy ${groups.length} định danh bị trùng (tổng ${groups.reduce((s,g)=>s+g.list.length,0)} bản ghi). Chọn bản ghi muốn giữ lại — các bản còn lại trong cùng nhóm sẽ bị xoá.</p>
+      <div style="display:flex; flex-direction:column; gap:12px; max-height:360px; overflow-y:auto;">
+        ${groups.map((g, gi) => `
+          <div style="border:0.5px solid var(--border); border-radius:10px; padding:10px 12px;">
+            <div style="font-size:13px; color:var(--text-2); margin-bottom:8px;">Trùng "<b style="color:var(--text);">${escapeHtml(g.name)}</b>" (${g.list.length} bản ghi)</div>
+            ${g.list.map((e, ei) => `
+              <label style="display:flex; align-items:center; gap:8px; padding:4px 0; font-size:13px; cursor:pointer;">
+                <input type="radio" name="dupgroup-${gi}" value="${e.id}" ${ei===0?'checked':''}>
+                <span>${escapeHtml(e.displayName || '(chưa có tên)')} — ${e.updatedAt ? new Date(e.updatedAt).toLocaleString('vi-VN') : 'không rõ thời gian sửa'}</span>
+              </label>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+      <button id="dupScanCleanBtn" class="danger" style="width:100%; margin-top:14px;">Xoá các bản trùng, chỉ giữ bản đã chọn</button>
+      `}
+    <button id="dupScanCloseBtn" style="width:100%; margin-top:10px;">Đóng</button>
+  `;
+  document.getElementById('dupScanCloseBtn').onclick = closeModal;
+  const cleanBtn = document.getElementById('dupScanCleanBtn');
+  if(cleanBtn){
+    cleanBtn.onclick = () => {
+      const keepIds = new Set();
+      groups.forEach((g, gi) => {
+        const checked = modalBody.querySelector(`input[name="dupgroup-${gi}"]:checked`);
+        keepIds.add(checked ? checked.value : g.list[0].id);
+      });
+      const idsToDelete = new Set();
+      groups.forEach(g => g.list.forEach(e => { if(!keepIds.has(e.id)) idsToDelete.add(e.id); }));
+      showConfirm(
+        'Xoá các bản trùng?',
+        `Sẽ xoá ${idsToDelete.size} bản ghi trùng lặp, chỉ giữ lại 1 bản cho mỗi định danh đã chọn. Hành động này không thể hoàn tác.`,
+        async () => {
+          state.entries = state.entries.filter(e => !idsToDelete.has(e.id));
+          await saveEntries();
+          closeModal();
+          renderVault();
+          toast(`Đã xoá ${idsToDelete.size} tài khoản trùng lặp`);
+        }
+      );
+    };
+  }
+}
+
+function showDuplicateChoice(label, onOverwrite, onSkip){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>Tài khoản đã tồn tại</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">Đã có tài khoản với định danh "<b style="color:var(--text);">${escapeHtml(label)}</b>" trong hệ thống. Bạn muốn làm gì?</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button type="button" id="dupOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè tài khoản cũ</button>
+      <button type="button" id="dupSkipBtn" style="width:100%; justify-content:center;">Bỏ qua (không nhập)</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('dupOverwriteBtn').onclick = onOverwrite;
+  document.getElementById('dupSkipBtn').onclick = onSkip;
+}
+
+function showBulkDuplicateChoice(count, onChoice){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <h2>Phát hiện tài khoản trùng</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">${count} tài khoản trong danh sách vừa dán đã tồn tại sẵn trong hệ thống (trùng định danh). Bạn muốn xử lý các tài khoản trùng này như thế nào? Những tài khoản mới, không trùng vẫn được thêm bình thường.</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè tất cả (${count})</button>
+      <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Bỏ qua tất cả, không nhập</button>
+    </div>
+  `;
+  modalBg.classList.add('show');
+  document.getElementById('bulkOverwriteBtn').onclick = () => onChoice(true);
+  document.getElementById('bulkSkipBtn').onclick = () => onChoice(false);
+}
+
+async function saveModal(entry){
+  const err = document.getElementById('modalErr');
+  err.style.display = 'none';
+
+  if(state.modalTab === 'manual'){
+    const platform = document.getElementById('f_platform').value;
+    const fields = {};
+    getPlatformFields(platform).forEach(f => {
+      const el = document.getElementById('f_' + f.key);
+      if(el) fields[f.key] = el.value.trim();
+    });
+    fields.folderId = document.getElementById('f_folderId').value;
+    fields.platform = platform;
+    const displayNameInput = document.getElementById('f_displayName');
+    if(displayNameInput) fields.displayName = displayNameInput.value.trim();
+    const proxyInput = document.getElementById('f_proxy');
+    if(proxyInput) fields.proxy = proxyInput.value.trim();
+    const statusInput = document.getElementById('f_status');
+    if(statusInput) fields.status = statusInput.value;
+    if(!fields.fbName && !fields.email){
+      err.textContent = 'Nhập ít nhất UID hoặc Email.';
+      err.style.display = 'block';
+      return;
+    }
+    fields.updatedAt = Date.now();
+
+    const commitManual = async () => {
+      if(state.editingId){
+        const e = state.entries.find(x => x.id === state.editingId);
+        Object.assign(e, fields);
+      } else {
+        state.entries.push({ id: uid(), createdAt: Date.now(), ...fields });
+      }
+      await saveEntries();
+      closeModal();
+      renderVault();
+      toast('Đã lưu');
+    };
+
+    const dup = findDuplicateEntry(platform, fields.fbName, state.editingId);
+    if(dup){
+      showDuplicateChoice(
+        dup.fbName,
+        async () => { Object.assign(dup, fields); await saveEntries(); closeModal(); renderVault(); toast('Đã ghi đè tài khoản'); },
+        () => { closeModal(); toast('Đã bỏ qua, không nhập tài khoản trùng'); }
+      );
+      return;
+    }
+    await commitManual();
+  } else {
+    const folderId = document.getElementById('f_auto_folderId').value;
+    const platform = document.getElementById('f_auto_platform').value;
+    const raw = document.getElementById('fAuto').value;
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if(lines.length === 0){
+      err.textContent = `Dán nội dung theo định dạng ${platformFormatHint(platform)}`;
+      err.style.display = 'block';
+      return;
+    }
+    if(state.editingId){
+      const fields = parseAutoLine(lines[0], platform);
+      if(!fields.fbName && !fields.email){
+        err.textContent = 'Không đọc được trường định danh chính từ dữ liệu dán vào.';
+        err.style.display = 'block';
+        return;
+      }
+      fields.folderId = folderId;
+      fields.platform = platform;
+      fields.updatedAt = Date.now();
+
+      const dup = findDuplicateEntry(platform, fields.fbName, state.editingId);
+      if(dup){
+        showDuplicateChoice(
+          dup.fbName,
+          async () => { Object.assign(dup, fields); await saveEntries(); closeModal(); renderVault(); toast('Đã ghi đè tài khoản'); },
+          () => { closeModal(); toast('Đã bỏ qua, không nhập tài khoản trùng'); }
+        );
+        return;
+      }
+      const e = state.entries.find(x => x.id === state.editingId);
+      Object.assign(e, fields);
+      await saveEntries();
+      closeModal();
+      renderVault();
+      toast('Đã lưu');
+    } else {
+      const parsedLines = lines.map(line => parseAutoLine(line, platform)).filter(f => f.fbName || f.email);
+      const skippedCount = lines.length - parsedLines.length;
+      if(parsedLines.length === 0){
+        err.textContent = 'Không đọc được dữ liệu hợp lệ. Kiểm tra lại định dạng.';
+        err.style.display = 'block';
+        return;
+      }
+
+      const newOnes = [];
+      const dupPairs = [];
+      parsedLines.forEach(fields => {
+        const existing = findDuplicateEntry(platform, fields.fbName, null);
+        if(existing){
+          dupPairs.push({ fields, existing });
+        } else {
+          newOnes.push(fields);
+        }
+      });
+
+      newOnes.forEach(fields => {
+        fields.folderId = folderId;
+        fields.platform = platform;
+        fields.updatedAt = Date.now();
+        state.entries.push({ id: uid(), createdAt: Date.now(), ...fields });
+      });
+
+      const finishBulk = async (overwrittenCount) => {
+        await saveEntries();
+        closeModal();
+        renderVault();
+        const parts = [];
+        if(newOnes.length > 0) parts.push(`thêm ${newOnes.length} tài khoản mới`);
+        if(overwrittenCount) parts.push(`ghi đè ${overwrittenCount} tài khoản trùng`);
+        if(dupPairs.length && !overwrittenCount) parts.push(`bỏ qua ${dupPairs.length} tài khoản trùng`);
+        if(skippedCount > 0) parts.push(`bỏ qua ${skippedCount} dòng không hợp lệ`);
+        toast(`Đã ${parts.join(', ')}`);
+      };
+
+      if(dupPairs.length === 0){
+        await finishBulk(0);
+        return;
+      }
+
+      showBulkDuplicateChoice(dupPairs.length, async (overwriteAll) => {
+        if(overwriteAll){
+          dupPairs.forEach(({ fields, existing }) => {
+            fields.folderId = folderId;
+            fields.platform = platform;
+            fields.updatedAt = Date.now();
+            Object.assign(existing, fields);
+          });
+        }
+        await finishBulk(overwriteAll ? dupPairs.length : 0);
+      });
+    }
+  }
+}
+
+document.getElementById('modalBg').addEventListener('click', (e) => {
+  if(e.target.id === 'modalBg') closeModal();
+});
+
+// Enter key confirms the modal's primary action, wherever focus is inside it —
+// except inside a <textarea>, where Enter should just insert a new line as usual.
+document.getElementById('modalBg').addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  if(e.target.tagName === 'TEXTAREA') return;
+  const primaryBtn = document.querySelector('#modalBody [data-primary-action]');
+  if(primaryBtn && !primaryBtn.disabled){
+    e.preventDefault();
+    primaryBtn.click();
+  }
+});
+
+// ---------- TOTP (Google Authenticator style 2FA code generator) ----------
+let totpLastWindow = -1;
+let lastExpiryCheckMinute = -1;
+const totpCodeCache = {};
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Decode(input){
+  const clean = (input || '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+  let bits = '';
+  for(const c of clean){
+    const idx = BASE32_ALPHABET.indexOf(c);
+    if(idx === -1) continue;
+    bits += idx.toString(2).padStart(5, '0');
+  }
+  const byteCount = Math.floor(bits.length / 8);
+  const bytes = new Uint8Array(byteCount);
+  for(let i = 0; i < byteCount; i++){
+    bytes[i] = parseInt(bits.substr(i * 8, 8), 2);
+  }
+  return bytes;
+}
+
+async function computeTotp(secretRaw, period = 30, digits = 6){
+  try{
+    const keyBytes = base32Decode(secretRaw);
+    if(keyBytes.length === 0) return null;
+    const counter = Math.floor(Date.now() / 1000 / period);
+    const counterBuf = new ArrayBuffer(8);
+    const view = new DataView(counterBuf);
+    view.setUint32(0, 0);
+    view.setUint32(4, counter);
+    const cryptoKey = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', cryptoKey, counterBuf);
+    const hmac = new Uint8Array(sig);
+    const offset = hmac[hmac.length - 1] & 0x0f;
+    const binCode = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | (hmac[offset + 3] & 0xff);
+    return (binCode % (10 ** digits)).toString().padStart(digits, '0');
+  }catch(e){
+    return null;
+  }
+}
+
+// A live TOTP code is only valid for 30 seconds, so its color counts down
+// with it — plenty of time (blue) → still fine (green) → running low
+// (yellow) → about to expire, copy now (red). One shared helper used by
+// every place in the app that shows a live 2FA code, so they all behave
+// exactly the same way.
+function totpColorForSecondsLeft(secsLeft){
+  if(secsLeft > 22) return '#60a5fa'; // blue — just refreshed
+  if(secsLeft > 15) return '#4ade80'; // green — plenty of time
+  if(secsLeft > 7) return '#facc15';  // yellow — starting to run low
+  return '#f87171';                    // red — about to expire
+}
+function currentTotpSecondsLeft(){
+  return 30 - (Math.floor(Date.now() / 1000) % 30);
+}
+// Recolors every visible live 2FA code (entry list chips, the standalone
+// decoder tool, anywhere else) to match how much time is left in the
+// current 30-second window. Cheap enough to run every second — it never
+// recomputes the code itself, just the color.
+function updateTotpColors(){
+  const color = totpColorForSecondsLeft(currentTotpSecondsLeft());
+  document.querySelectorAll('[data-totp-val]').forEach(span => {
+    span.style.color = color;
+  });
+}
+
+async function refreshTotpCodes(){
+  const list = (state.visibleEntries || []).filter(e => e.twoFA);
+  await Promise.all(list.map(async (entry) => {
+    const span = document.getElementById(`totp-val-${entry.id}`);
+    if(!span) return;
+    const code = await computeTotp(entry.twoFA);
+    if(code){
+      totpCodeCache[entry.id] = code;
+      span.textContent = code;
+    } else {
+      span.textContent = 'Lỗi mã';
+    }
+  }));
+  updateTotpColors();
+}
+
+// ---------- CLOCK & STATUS ----------
+const VI_DAYS = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+function tickClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const MM = String(now.getMonth()+1).padStart(2,'0');
+  const yyyy = now.getFullYear();
+  const timeEl = document.getElementById('clockTime');
+  const dateEl = document.getElementById('clockDate');
+  if(timeEl) timeEl.textContent = `${hh}:${mm}:${ss}`;
+  if(dateEl) dateEl.textContent = `${VI_DAYS[now.getDay()]}, ${dd}/${MM}/${yyyy}`;
+
+  const currentWindow = Math.floor(Date.now() / 1000 / 30);
+  if(currentWindow !== totpLastWindow){
+    totpLastWindow = currentWindow;
+    refreshTotpCodes();
+  } else {
+    updateTotpColors();
+  }
+
+  updateSessionClock();
+  checkAutoLogout();
+  // expiry status doesn't need per-second precision — only re-scan once a minute
+  const currentMinute = Math.floor(Date.now() / 60000);
+  if(currentMinute !== lastExpiryCheckMinute){
+    lastExpiryCheckMinute = currentMinute;
+    checkPhoneExpiryNotifications();
+    checkProxyExpiryNotifications();
+  }
+}
+function updateTotalBadge(){
+  const el = document.getElementById('clockTotal');
+  if(!el) return;
+  if(state.key){
+    el.innerHTML = `<i class="ti ti-users"></i>Tổng: ${state.entries.length} tài khoản`;
+  } else {
+    el.innerHTML = `<i class="ti ti-lock"></i>Đang khoá`;
+  }
+}
+
+// ---------- SESSION: login time, active duration, auto-logout ----------
+function formatDuration(ms){
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = String(m).padStart(2,'0');
+  const ss = String(s).padStart(2,'0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+function startSession(){
+  const now = Date.now();
+  state.session.loginTime = now;
+  state.session.lastActivity = now;
+}
+
+function endSession(){
+  state.session.loginTime = null;
+  state.session.lastActivity = null;
+  state.phoneNotified = new Set();
+  state.proxyAlertDismissedIds = new Set();
+  clearPersistedSessionKey(); // any lock/logout — explicit, auto, or via switching vault files — always really locks
+  const box = document.getElementById('sessionClock');
+  if(box) box.classList.remove('show');
+  const proxyBar = document.getElementById('proxyAlertBar');
+  if(proxyBar){ proxyBar.classList.remove('show'); proxyBar.innerHTML = ''; }
+}
+
+function markActivity(){
+  if(state.key && state.session.loginTime){
+    state.session.lastActivity = Date.now();
+  }
+}
+['click','keydown','touchstart','scroll'].forEach(evt => {
+  document.addEventListener(evt, markActivity, { passive: true });
+});
+
+function updateSessionClock(){
+  const box = document.getElementById('sessionClock');
+  if(!box) return;
+  if(!state.key || !state.session.loginTime){
+    box.classList.remove('show');
+    return;
+  }
+  box.classList.add('show');
+  const loginDate = new Date(state.session.loginTime);
+  const hh = String(loginDate.getHours()).padStart(2,'0');
+  const mm = String(loginDate.getMinutes()).padStart(2,'0');
+  const ss = String(loginDate.getSeconds()).padStart(2,'0');
+  const loginEl = document.getElementById('sessionLogin');
+  const activeEl = document.getElementById('sessionActive');
+  if(loginEl) loginEl.textContent = `Đăng nhập lúc ${hh}:${mm}:${ss}`;
+  if(activeEl) activeEl.textContent = formatDuration(Date.now() - state.session.loginTime);
+}
+
+function checkAutoLogout(){
+  if(!state.key || !state.session.lastActivity) return;
+  const idleFor = Date.now() - state.session.lastActivity;
+  if(idleFor >= AUTO_LOGOUT_MS){
+    state.key = null;
+    state.entries = [];
+    state.folders = [];
+    state.notes = [];
+    endSession();
+    closeModal();
+    renderApp();
+    toast('Đã tự động đăng xuất do không hoạt động 30 phút');
+  }
+}
+
+// ---------- PHONE EXPIRY NOTIFICATIONS ----------
+// warns once per session as soon as a "Phone" entry's Ngày hết hạn (expiry date)
+// is within 1 day away (today or tomorrow)
+function checkPhoneExpiryNotifications(){
+  if(!state.key) return;
+  const dueSoon = [];
+  state.entries.filter(e => e.platform === 'phone' && e.expiryDate).forEach(e => {
+    const info = phoneExpiryInfo(e.expiryDate);
+    if(!info) return;
+    if(info.diffDays >= 0 && info.diffDays <= 1 && !state.phoneNotified.has(e.id)){
+      state.phoneNotified.add(e.id);
+      dueSoon.push({ label: e.fbName || e.displayName || '(chưa có số)', diffDays: info.diffDays });
+    }
+  });
+  if(dueSoon.length === 1){
+    const d = dueSoon[0];
+    toast(`⚠ SĐT ${d.label} ${d.diffDays === 0 ? 'hết hạn hôm nay' : 'sắp hết hạn (còn 1 ngày)'}`);
+  } else if(dueSoon.length > 1){
+    toast(`⚠ ${dueSoon.length} số điện thoại sắp hết hạn trong 1 ngày tới`);
+  }
+}
+
+// ---------- PROXY RENEWAL BANNER (top-center, persistent until dismissed) ----------
+function checkProxyExpiryNotifications(){
+  if(!state.key) return;
+  const dueSoon = [];
+  state.entries.filter(e => e.platform === 'proxy' && e.expiryDate).forEach(e => {
+    const info = phoneExpiryInfo(e.expiryDate);
+    if(!info) return;
+    if(info.diffDays >= 0 && info.diffDays <= 1 && !state.proxyAlertDismissedIds.has(e.id)){
+      dueSoon.push({ id: e.id, label: e.fbName || e.displayName || '(chưa có IP)', diffDays: info.diffDays });
+    }
+  });
+  renderProxyAlertBar(dueSoon);
+}
+
+function renderProxyAlertBar(dueSoon){
+  const bar = document.getElementById('proxyAlertBar');
+  if(!bar) return;
+  if(dueSoon.length === 0){
+    bar.classList.remove('show');
+    bar.innerHTML = '';
+    return;
+  }
+  const msg = dueSoon.length === 1
+    ? `⚠ Proxy ${escapeHtml(dueSoon[0].label)} ${dueSoon[0].diffDays === 0 ? 'đã hết hạn hôm nay' : 'sắp hết hạn (còn 1 ngày)'} — hãy gia hạn`
+    : `⚠ ${dueSoon.length} proxy sắp hết hạn trong 1 ngày tới — hãy gia hạn`;
+  bar.innerHTML = `<span>${msg}</span><button type="button" id="proxyAlertDismissBtn" title="Đóng">&times;</button>`;
+  bar.classList.add('show');
+  document.getElementById('proxyAlertDismissBtn').onclick = () => {
+    dueSoon.forEach(d => state.proxyAlertDismissedIds.add(d.id));
+    checkProxyExpiryNotifications();
+  };
+}
+
+tickClock();
+setInterval(tickClock, 1000);
+updateTotalBadge();
+
+// ---------- NETWORK ACCESS TOGGLE (like a phone's Wi-Fi switch) ----------
+// The browser can't literally cut off the machine's network access — only the
+// OS can do that — so this toggle controls whether THIS APP is allowed to make
+// any outbound request (currently: looking up your public IP). When off, no
+// network call is made at all; when on, it fetches and displays your IP so you
+// can see at a glance whether you're online and what address you're using.
+state.networkEnabled = typeof navigator !== 'undefined' ? !!navigator.onLine : false;
+
+function updateNetworkToggleUI(){
+  const sw = document.getElementById('networkToggleSwitch');
+  if(sw){
+    sw.classList.toggle('on', state.networkEnabled);
+    sw.setAttribute('aria-checked', String(state.networkEnabled));
+  }
+}
+
+// Multiple independent IP-lookup services, tried in order — if one is blocked,
+// down, or rate-limited, the app falls through to the next automatically instead
+// of just giving up after a single failed source.
+const IP_LOOKUP_SOURCES = [
+  { url: 'https://api.ipify.org?format=json', parse: async (res) => (await res.json()).ip },
+  { url: 'https://api64.ipify.org?format=json', parse: async (res) => (await res.json()).ip },
+  { url: 'https://ipapi.co/json/', parse: async (res) => (await res.json()).ip },
+  { url: 'https://icanhazip.com/', parse: async (res) => (await res.text()).trim() },
+  { url: 'https://checkip.amazonaws.com/', parse: async (res) => (await res.text()).trim() },
+];
+
+async function fetchMyIp(){
+  for(const source of IP_LOOKUP_SOURCES){
+    try{
+      const res = await fetch(source.url, { cache: 'no-store' });
+      if(!res.ok) continue;
+      const ip = await source.parse(res);
+      if(ip && /^[0-9a-fA-F:.]+$/.test(ip)) return ip;
+    }catch(e){
+      // try the next source
+    }
+  }
+  return null;
+}
+
+async function refreshMyIp(){
+  const ipEl = document.getElementById('networkIpText');
+  if(!ipEl) return;
+  if(!state.networkEnabled){
+    ipEl.textContent = 'Đang tắt';
+    return;
+  }
+  if(typeof navigator !== 'undefined' && !navigator.onLine){
+    ipEl.textContent = 'Không có kết nối mạng';
+    return;
+  }
+  ipEl.textContent = 'Đang lấy địa chỉ IP...';
+  const ip = await fetchMyIp();
+  ipEl.textContent = ip ? `IP: ${ip}` : 'Không lấy được IP — thử mở file này trực tiếp bằng trình duyệt (ngoài cửa sổ xem trước)';
+}
+
+function toggleNetworkAccess(){
+  state.networkEnabled = !state.networkEnabled;
+  updateNetworkToggleUI();
+  refreshMyIp();
+}
+
+function initNetworkToggle(){
+  const sw = document.getElementById('networkToggleSwitch');
+  if(sw) sw.onclick = toggleNetworkAccess;
+  const ipEl = document.getElementById('networkIpText');
+  if(ipEl){
+    ipEl.style.cursor = 'pointer';
+    ipEl.title = 'Bấm để thử lấy lại địa chỉ IP';
+    ipEl.onclick = () => { if(state.networkEnabled) refreshMyIp(); };
+  }
+  updateNetworkToggleUI();
+  if(state.networkEnabled) refreshMyIp();
+  if(typeof window !== 'undefined'){
+    window.addEventListener('online', () => { updateNetworkToggleUI(); if(state.networkEnabled) refreshMyIp(); });
+    window.addEventListener('offline', () => { const el = document.getElementById('networkIpText'); if(el) el.textContent = 'Không có kết nối mạng'; });
+  }
+}
+initNetworkToggle();
+
+// ---------- BOOT ----------
+async function renderApp(){
+  updateTotalBadge();
+  const config = await loadConfig();
+  if(!config){
+    renderSetup();
+    return;
+  }
+  // if "keep session across F5" was turned on and this tab still has a live
+  // session key for THIS exact vault, skip the unlock screen entirely
+  if(await getKeepSessionPref()){
+    const restoredKey = await tryRestoreSessionKey(config.salt);
+    if(restoredKey){
+      try{
+        state.key = restoredKey;
+        await loadEntries();
+        await loadFolders();
+        await loadNotes();
+        startSession();
+        renderVault();
+        return;
+      }catch(e){
+        console.error(e);
+        state.key = null;
+        clearPersistedSessionKey();
+      }
+    }
+  }
+  renderUnlock(config);
+}
+const sidebarToggleBtnEl = document.getElementById('sidebarToggleBtn');
+if(sidebarToggleBtnEl){
+  sidebarToggleBtnEl.onclick = () => {
+    const sb = document.getElementById('platformBar');
+    const rp = document.getElementById('sidePanel');
+    if(rp) rp.classList.remove('open'); // don't show both drawers at once on a narrow screen
+    if(sb) sb.classList.toggle('open');
+  };
+}
+const rightPanelToggleBtnEl = document.getElementById('rightPanelToggleBtn');
+if(rightPanelToggleBtnEl){
+  rightPanelToggleBtnEl.onclick = () => {
+    const rp = document.getElementById('sidePanel');
+    const sb = document.getElementById('platformBar');
+    if(sb) sb.classList.remove('open');
+    if(rp) rp.classList.toggle('open');
+  };
+}
+document.querySelectorAll('.ide-lang-btn').forEach(btn => {
+  btn.onclick = () => setLangPref(btn.dataset.lang);
+});
+// Supports the browser's Back/Forward buttons switching between tabs (since
+// each tab click pushes a URL hash), and keeps things in sync if the same
+// vault is ever open in two windows side by side.
+window.addEventListener('hashchange', () => {
+  const p = getPlatformFromHash();
+  if(p && state.key && p !== state.activePlatform){
+    state.activePlatform = p;
+    state.activeFolder = 'all';
+    renderVault();
+  }
+});
+// Esc closes whichever modal is currently open, from anywhere on the page.
+// "/" jumps straight to the search box — skipped while already typing
+// somewhere else, so it never hijacks a "/" typed into a password field etc.
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    const modalBg = document.getElementById('modalBg');
+    if(modalBg && modalBg.classList.contains('show')) closeModal();
+    return;
+  }
+  if(e.key === '/' && state.key){
+    const active = document.activeElement;
+    const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+    if(isTyping) return;
+    const searchInput = document.getElementById('globalSearchInput');
+    if(searchInput){
+      e.preventDefault();
+      searchInput.focus();
+    }
+  }
+});
+(async () => {
+  state.lang = await loadLangPref();
+  updateLangSwitchUI();
+  renderApp();
+})();
+
+// PWA: registers the offline service worker when the app is actually served
+// over http(s) (GitHub Pages, Netlify, a local dev server, etc.), which is
+// what makes the browser's "Install app" prompt available. Opening the file
+// directly from disk (file://) doesn't support service workers at all — this
+// silently no-ops in that case instead of throwing, so it's always safe to
+// leave in regardless of how the file is being used.
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
