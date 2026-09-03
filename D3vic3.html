@@ -1208,6 +1208,31 @@ function openCreateNewFileVaultModal(){
 // vault/session is currently active, then always landing on the Unlock screen
 // for that file's password (this used to silently patch localStorage without
 // updating what was on screen, which looked like "nothing happened").
+// Shared by both the File-System-Access "open file" flow (Chrome/Edge only)
+// AND the universal file-input flow (works everywhere, including Safari) —
+// takes an already-parsed bundle and switches the app over to it.
+async function applyVaultBundleAndSwitch(bundle, sourceName){
+  if(!bundle || bundle.app !== 'devic3' || !bundle.config){
+    toast('File không đúng định dạng kho Devic3');
+    return false;
+  }
+  state.key = null;
+  state.entries = [];
+  state.folders = [];
+  state.notes = [];
+  endSession();
+
+  await window.storage.set(STORAGE_CONFIG_KEY, JSON.stringify(bundle.config));
+  await window.storage.set(STORAGE_DATA_KEY, JSON.stringify(bundle.entries || null));
+  await window.storage.set(STORAGE_FOLDERS_KEY, JSON.stringify(bundle.folders || null));
+  await window.storage.set(STORAGE_NOTES_KEY, JSON.stringify(bundle.notes || null));
+
+  closeModal();
+  toast(sourceName ? `Đã nhập "${sourceName}" — nhập mật khẩu chính để mở khoá` : 'Đã nhập file sao lưu — nhập mật khẩu chính để mở khoá');
+  renderUnlock(bundle.config);
+  return true;
+}
+
 async function openExistingVaultFileAndSwitch(){
   if(!fileSystemAccessSupported()){
     toast('Trình duyệt này không hỗ trợ mở file trực tiếp (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad). Hãy dùng "Đã có kho lưu trữ? Khôi phục từ file sao lưu" thay thế.');
@@ -1220,30 +1245,61 @@ async function openExistingVaultFileAndSwitch(){
     const file = await handle.getFile();
     const text = await file.text();
     const bundle = JSON.parse(text);
-    if(!bundle || bundle.app !== 'devic3' || !bundle.config){
-      toast('File không đúng định dạng kho Devic3');
-      return;
+    const ok = await applyVaultBundleAndSwitch(bundle, handle.name);
+    if(ok){
+      state.fileHandle = handle;
+      state.fileHandleName = handle.name;
     }
-    // cleanly tear down whatever session is currently open before switching
-    state.key = null;
-    state.entries = [];
-    state.folders = [];
-    state.notes = [];
-    endSession();
-
-    state.fileHandle = handle;
-    state.fileHandleName = handle.name;
-    await window.storage.set(STORAGE_CONFIG_KEY, JSON.stringify(bundle.config));
-    await window.storage.set(STORAGE_DATA_KEY, JSON.stringify(bundle.entries || null));
-    await window.storage.set(STORAGE_FOLDERS_KEY, JSON.stringify(bundle.folders || null));
-    await window.storage.set(STORAGE_NOTES_KEY, JSON.stringify(bundle.notes || null));
-
-    closeModal();
-    toast(`Đã mở file "${handle.name}" — nhập mật khẩu chính để mở khoá`);
-    renderUnlock(bundle.config);
   }catch(e){
     if(e.name !== 'AbortError'){ console.error(e); toast('Không thể mở file — kiểm tra lại đúng file kho chưa'); }
   }
+}
+
+// ---------- UNIVERSAL encrypted backup (.json) — works on every browser,
+// including Safari/iOS where the File System Access API above doesn't exist
+// at all. Same encrypted bundle format, just exported/imported via a plain
+// download link and <input type="file"> instead of native file pickers, so
+// PC and iPhone can use the exact same backup file interchangeably. ----------
+async function exportEncryptedBackupUniversal(){
+  try{
+    const bundle = await assembleVaultBundle();
+    const json = JSON.stringify(bundle);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = backupFileName('json');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Đã tải file sao lưu mã hoá — dùng được để nhập lại trên mọi thiết bị');
+  }catch(e){
+    console.error(e);
+    toast('Không thể tạo file sao lưu, thử lại');
+  }
+}
+
+function openImportEncryptedBackupUniversal(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.onchange = async () => {
+    const file = input.files && input.files[0];
+    document.body.removeChild(input);
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const bundle = JSON.parse(text);
+      await applyVaultBundleAndSwitch(bundle, file.name);
+    }catch(e){
+      console.error(e);
+      toast('Không đọc được file — kiểm tra lại đúng file sao lưu .json chưa');
+    }
+  };
+  input.click();
 }
 
 function unlinkVaultFile(){
@@ -1262,31 +1318,40 @@ function renderFileBackupModal(){
   const supported = fileSystemAccessSupported();
   const linked = !!state.fileHandle;
   modalBody.innerHTML = `
-    <h2>File sao lưu trên ổ cứng</h2>
-    <p class="hint" style="margin-top:-4px;">Lưu toàn bộ kho vào 1 file cố định trên máy bạn (hoặc USB, thư mục đồng bộ...). Mở đúng file này trên máy khác để đăng nhập lại, kể cả khi trình duyệt/Windows bị lỗi phải cài lại.</p>
-    ${!supported ? `<p class="err" style="display:block;">Trình duyệt hiện tại không hỗ trợ tính năng này (chỉ Chrome/Edge trên máy tính — không dùng được trên Safari/iPad hay điện thoại). Hãy dùng nút "Nhập/Xuất" ở màn hình chính để sao lưu/khôi phục thủ công thay thế.</p>` : ''}
+    <h2>Sao lưu / Khôi phục</h2>
+
+    <p class="hint" style="margin-top:-4px; margin-bottom:14px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File .json bên dưới được <b style="color:var(--text);">mã hoá AES-256</b> giống hệt dữ liệu trong app — không lộ nội dung tài khoản dù mở bằng cách nào, khác với file .txt xuất qua "Nhập/Xuất" (dạng chữ thường, đọc được trực tiếp).</p>
+
+    <label>Dùng chung mọi thiết bị (khuyên dùng — cả Windows lẫn iPhone/Safari)</label>
+    <button id="universalExportBtn" style="width:100%; margin-bottom:8px;" ${state.key ? '' : 'disabled'}><i class="ti ti-download" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Tải file sao lưu mã hoá (.json)</button>
+    <button id="universalImportBtn" style="width:100%;"><i class="ti ti-upload" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập từ file sao lưu (.json)</button>
+    <p class="hint" style="margin:4px 0 16px;">Tải file này trên 1 thiết bị, chuyển sang thiết bị kia (AirDrop, email, Drive...) rồi bấm "Nhập" — dùng đúng mật khẩu chính bạn đã đặt lúc tạo kho để mở lại.</p>
+
+    <div style="border-top:0.5px solid var(--border); margin:16px 0;"></div>
+
+    <label>Liên kết file tự động — chỉ Chrome/Edge trên máy tính</label>
+    ${!supported ? `<p class="err" style="display:block;">Trình duyệt hiện tại không hỗ trợ mục này (không dùng được trên Safari/iPad/điện thoại) — dùng phần "Dùng chung mọi thiết bị" ở trên thay thế.</p>` : ''}
     ${linked ? `
-    <p style="font-size:14px; color:var(--text-2); margin:0 0 16px;"><i class="ti ti-file-check" style="color:${STATUS_META.active.color}; vertical-align:-2px;"></i> Đang liên kết: <b style="color:var(--text);">${escapeHtml(state.fileHandleName)}</b></p>
+    <p style="font-size:14px; color:var(--text-2); margin:8px 0 16px;"><i class="ti ti-file-check" style="color:${STATUS_META.active.color}; vertical-align:-2px;"></i> Đang liên kết: <b style="color:var(--text);">${escapeHtml(state.fileHandleName)}</b></p>
     <div class="row" style="margin-bottom:14px;">
       <button id="fileSaveNowBtn" style="flex:1">Lưu ngay</button>
       <button id="fileUnlinkBtn" class="danger" style="flex:1">Bỏ liên kết</button>
     </div>
     ` : ''}
-    <label>Kho mới</label>
-    <button id="fileNewVaultBtn" ${!supported?'disabled':''} style="width:100%;">Tạo kho trống</button>
+    <button id="fileNewVaultBtn" ${!supported?'disabled':''} style="width:100%; margin-top:8px;">Tạo kho trống</button>
     <p class="hint" style="margin:4px 0 12px;">Bắt đầu lại từ đầu, không giữ dữ liệu cũ</p>
 
-    <label>Kho đã có</label>
     <button id="fileOpenSwitchBtn" ${!supported?'disabled':''} style="width:100%;">Mở file khác</button>
     <p class="hint" style="margin:4px 0 12px;">Thay toàn bộ dữ liệu hiện tại bằng nội dung trong file</p>
 
     ${state.key ? `
-    <label>Kho đang mở</label>
-    <button id="fileMirrorBtn" ${!supported?'disabled':''} style="width:100%;">Sao lưu ra file mới</button>
+    <button id="fileMirrorBtn" ${!supported?'disabled':''} style="width:100%;">Liên kết để tự lưu mỗi khi có thay đổi</button>
     <p class="hint" style="margin:4px 0 12px;">Giữ nguyên dữ liệu đang dùng, chỉ thêm nơi lưu</p>
     ` : ''}
     <button id="fileCloseBtn" style="width:100%; margin-top:6px;">Đóng</button>
   `;
+  document.getElementById('universalExportBtn').onclick = exportEncryptedBackupUniversal;
+  document.getElementById('universalImportBtn').onclick = openImportEncryptedBackupUniversal;
   document.getElementById('fileCloseBtn').onclick = closeModal;
   document.getElementById('fileNewVaultBtn').onclick = openCreateNewFileVaultModal;
   document.getElementById('fileOpenSwitchBtn').onclick = openExistingVaultFileAndSwitch;
@@ -1430,12 +1495,14 @@ function renderSetup(){
         <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
         <p class="hint"><i class="ti ti-info-circle" style="vertical-align:-2px;font-size:14px"></i> ${t('hint_pw_not_saved')}</p>
         <button class="primary" id="setupBtn" style="width:100%">${t('btn_create_vault')}</button>
+        <button id="universalImportSetupBtn" style="width:100%; margin-top:10px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập file sao lưu mã hoá (.json) — mọi thiết bị</button>
         <button id="openVaultFileBtn" style="width:100%; margin-top:10px;"><i class="ti ti-device-floppy" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_open_vault_file')}</button>
         <button id="restoreBtn" style="width:100%; margin-top:10px;"><i class="ti ti-upload" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_restore_backup')}</button>
       </div>
     </div>
   `;
   document.getElementById('restoreBtn').onclick = openRestoreModal;
+  document.getElementById('universalImportSetupBtn').onclick = openImportEncryptedBackupUniversal;
   document.getElementById('openVaultFileBtn').onclick = openExistingVaultFileAndSwitch;
   document.getElementById('setupBtn').onclick = async () => {
     const btn = document.getElementById('setupBtn');
