@@ -1391,17 +1391,30 @@ function loadGoogleIdentityScript(){
   return driveScriptPromise;
 }
 
-async function requestGoogleDriveAccess(){
-  const settings = await loadDriveSettings();
+// IMPORTANT: Safari/iOS only allows the OAuth popup when requestAccessToken()
+// runs synchronously in the original click event. Do not add `await` before
+// this function is called from a button handler.
+function requestGoogleDriveAccessFromGesture(settings){
   if(!settings.clientId) throw new Error('Chưa có Google OAuth Client ID.');
-  await loadGoogleIdentityScript();
+  if(!window.google || !window.google.accounts || !window.google.accounts.oauth2){
+    throw new Error('Dịch vụ đăng nhập Google chưa tải xong. Kiểm tra mạng, đợi vài giây rồi bấm lại.');
+  }
   driveRuntimeStatus = 'connecting';
   return new Promise((resolve, reject) => {
     const finishError = detail => {
       driveRuntimeStatus = 'error';
-      reject(new Error(detail && detail.message ? detail.message : 'Đăng nhập Google bị huỷ hoặc thất bại.'));
+      const code = detail && (detail.error || detail.type);
+      let message = detail && detail.message ? detail.message : 'Đăng nhập Google bị huỷ hoặc thất bại.';
+      if(code === 'access_denied'){
+        message = 'Google từ chối quyền (403). Nếu OAuth đang ở chế độ Testing, vào Google Cloud → Google Auth Platform → Audience → Test users và thêm đúng Gmail đang đăng nhập.';
+      }else if(code === 'popup_closed'){
+        message = 'Cửa sổ Google đã đóng. Nếu cửa sổ vừa báo lỗi 403, hãy thêm Gmail đang đăng nhập vào Google Auth Platform → Audience → Test users rồi thử lại.';
+      }else if(code === 'popup_failed_to_open'){
+        message = 'Trình duyệt đã chặn cửa sổ Google. Hãy cho phép popup cho trang này rồi thử lại.';
+      }
+      reject(new Error(message));
     };
-    driveTokenClient = google.accounts.oauth2.initTokenClient({
+    driveTokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: settings.clientId,
       scope: DRIVE_SCOPE,
       callback: response => {
@@ -1616,19 +1629,25 @@ async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = f
   throw new Error('Google Drive có phiên bản khác. Mở Sao lưu / Khôi phục và bấm Đồng bộ để chọn bản cần giữ.');
 }
 
-async function connectAndSyncGoogleDrive(clientId, options = {}){
-  const settings = await loadDriveSettings();
+function connectAndSyncGoogleDrive(clientId, options = {}){
+  // driveSettings and the GIS script are prepared while the modal opens. This
+  // synchronous section must reach requestAccessToken before yielding control.
+  const settings = driveSettings;
+  if(!settings) throw new Error('Cấu hình đồng bộ chưa tải xong. Đợi vài giây rồi bấm lại.');
   const normalized = String(clientId || settings.clientId || '').trim();
   if(!/^[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(normalized)){
     throw new Error('Google OAuth Client ID không đúng định dạng (*.apps.googleusercontent.com).');
   }
   settings.clientId = normalized;
-  await saveDriveSettings();
-  await requestGoogleDriveAccess();
-  const outcome = await performGoogleDriveSync({ allowConflictUi: true, restoreOnly: !!options.restoreOnly });
-  settings.enabled = true;
-  await saveDriveSettings();
-  return outcome;
+  const accessPromise = requestGoogleDriveAccessFromGesture(settings);
+  return (async () => {
+    await saveDriveSettings();
+    await accessPromise;
+    const outcome = await performGoogleDriveSync({ allowConflictUi: true, restoreOnly: !!options.restoreOnly });
+    settings.enabled = true;
+    await saveDriveSettings();
+    return outcome;
+  })();
 }
 
 function scheduleGoogleDriveSync(){
@@ -1670,16 +1689,20 @@ function driveStatusText(settings){
 }
 
 async function openGoogleDriveRestoreModal(){
-  const settings = await loadDriveSettings();
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
   modalBg.classList.add('show');
+  modalBody.innerHTML = '<h2>Khôi phục từ Google Drive</h2><p class="hint">Đang chuẩn bị đăng nhập Google...</p>';
+  const settings = await loadDriveSettings();
+  let identityLoadError = '';
+  try{ await loadGoogleIdentityScript(); }
+  catch(error){ identityLoadError = error.message || 'Không tải được dịch vụ đăng nhập Google.'; }
   modalBody.innerHTML = `
     <h2>Khôi phục từ Google Drive</h2>
     <p class="hint" style="line-height:1.6;">Nhập OAuth Client ID của dự án Google Cloud. Devic3 chỉ xin quyền truy cập thư mục ẩn riêng của ứng dụng và chỉ tải về file JSON đã mã hoá.</p>
     <label>Google OAuth Client ID</label>
     <input id="driveRestoreClientId" autocomplete="off" placeholder="123456789-abc.apps.googleusercontent.com">
-    <p class="err" id="driveRestoreErr"></p>
+    <p class="err" id="driveRestoreErr"${identityLoadError ? ' style="display:block;"' : ''}>${escapeHtml(identityLoadError)}</p>
     <button class="primary" id="driveRestoreNowBtn" style="width:100%;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:5px;"></i>Kết nối và khôi phục</button>
     <button id="driveRestoreCancelBtn" style="width:100%;margin-top:10px;">Huỷ</button>`;
   document.getElementById('driveRestoreClientId').value = settings.clientId;
@@ -1877,6 +1900,9 @@ async function renderFileBackupModal(){
   const supported = fileSystemAccessSupported();
   const linked = !!state.fileHandle;
   const drive = await loadDriveSettings();
+  let identityLoadError = '';
+  try{ await loadGoogleIdentityScript(); }
+  catch(error){ identityLoadError = error.message || 'Không tải được dịch vụ đăng nhập Google.'; }
   modalBody.innerHTML = `
     <h2>Sao lưu / Khôi phục</h2>
     <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File tải ra được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
@@ -1900,7 +1926,7 @@ async function renderFileBackupModal(){
         <button class="primary" id="driveSyncNowBtn" style="flex:1 1 190px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:4px;"></i>Kết nối / Đồng bộ ngay</button>
         ${drive.clientId ? '<button id="driveDisconnectBtn" style="flex:1 1 120px;">Ngắt kết nối</button>' : ''}
       </div>
-      <p class="err" id="driveSyncErr" style="margin-top:10px;"></p>
+      <p class="err" id="driveSyncErr" style="margin-top:10px;${identityLoadError ? 'display:block;' : ''}">${escapeHtml(identityLoadError)}</p>
     </div>
 
     ${supported ? `

@@ -36,7 +36,7 @@ devic3-vault-*.json
 3. Vào **Google Auth Platform / OAuth consent screen**:
    - Gmail cá nhân thường chọn **External**.
    - Điền tên ứng dụng và email hỗ trợ.
-   - Nếu ứng dụng ở trạng thái **Testing**, thêm các tài khoản Google sẽ dùng vào **Test users**.
+   - Nếu ứng dụng ở trạng thái **Testing**, mở **Audience → Test users → Add users**, thêm chính xác từng tài khoản Google sẽ dùng và bấm **Save**.
 4. Vào **Clients → Create client → Web application**.
 5. Trong **Authorized JavaScript origins**, thêm chính xác:
 
@@ -76,7 +76,19 @@ Trong phiên đang kết nối, mỗi thay đổi được tự đồng bộ sau
 5. Nhập mật khẩu chính của kho sau khi tải xong.
 6. Trước khi sửa trên thiết bị này, vào **Sao lưu / Khôi phục → Kết nối / Đồng bộ ngay** để lấy bản mới nhất.
 
-Nếu Safari chặn cửa sổ đăng nhập, tạm tắt chặn popup/content blocker cho trang GitHub Pages rồi thử lại. Google yêu cầu đăng nhập bắt đầu từ một lần bấm của người dùng.
+Nếu Safari vẫn chặn cửa sổ đăng nhập, vào **Cài đặt iPhone → Ứng dụng → Safari → tắt Chặn cửa sổ bật lên** trong lúc kết nối, đồng thời tạm tắt content blocker cho trang GitHub Pages. Sau khi kết nối xong có thể bật lại. Google yêu cầu đăng nhập bắt đầu trực tiếp từ một lần bấm của người dùng.
+
+### Sửa lỗi `403: access_denied`
+
+Lỗi “ứng dụng chưa hoàn tất quy trình xác minh” trong khi app ở chế độ Testing nghĩa là Gmail đang đăng nhập chưa được cấp quyền thử nghiệm:
+
+1. Chọn đúng Google Cloud project đã tạo OAuth Client ID đang dán trong Devic3.
+2. Mở **Google Auth Platform → Audience**.
+3. Tại **Test users**, bấm **Add users**.
+4. Thêm đúng địa chỉ Gmail xuất hiện trong cửa sổ lỗi và bấm **Save**.
+5. Đóng cửa sổ lỗi, đợi vài phút rồi bấm **Kết nối / Đồng bộ ngay** lại.
+
+Nếu muốn nhiều người ngoài danh sách Test users sử dụng, cần chuyển ứng dụng sang **In production** và hoàn thành các yêu cầu xác minh mà Google hiển thị. Với ứng dụng cá nhân, giữ chế độ Testing và khai báo các tài khoản của mình thường đơn giản và an toàn hơn.
 
 ## E. Quy trình tránh xung đột
 
