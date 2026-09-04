@@ -3,6 +3,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const net = require('net');
 const { URL } = require('url');
 const { normalizeMessage, eligibleMessages } = require('./lib/mail-otp');
 
@@ -122,6 +123,28 @@ async function graphJson(fetchImpl, accessToken, pathname) {
   return data;
 }
 
+async function fetchPublicIp(fetchImpl) {
+  const sources = [
+    { url: 'https://api.ipify.org?format=json', family: 4, read: async (response) => (await response.json()).ip },
+    { url: 'https://ipv4.icanhazip.com/', family: 4, read: async (response) => (await response.text()).trim() },
+    { url: 'https://api64.ipify.org?format=json', family: 0, read: async (response) => (await response.json()).ip },
+    { url: 'https://www.cloudflare.com/cdn-cgi/trace', family: 0, read: async (response) => ((await response.text()).match(/^ip=(.+)$/m) || [])[1] }
+  ];
+  for (const source of sources) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetchImpl(source.url, { signal: controller.signal, headers: { Accept: 'application/json,text/plain' } });
+      if (!response.ok) continue;
+      const ip = String(await source.read(response) || '').trim();
+      const family = net.isIP(ip);
+      if (family && (!source.family || family === source.family)) return ip;
+    } catch {}
+    finally { clearTimeout(timer); }
+  }
+  return null;
+}
+
 async function readLatestFacebookOtp(fetchImpl, rawInput, now = Date.now()) {
   const input = validateOtpRequest(rawInput);
   const auth = await exchangeRefreshToken(fetchImpl, input.clientId, input.refreshToken);
@@ -186,7 +209,13 @@ function createDevic3Server(options = {}) {
       const host = String(req.headers.host || '');
       const requestUrl = new URL(req.url, `http://${host || `${HOST}:${PORT}`}`);
 
-      if (requestUrl.pathname === '/api/mail/otp') {
+      if (requestUrl.pathname === '/devic3-network-status') {
+        if (req.method !== 'GET') return sendJson(res, 405, { code: 'METHOD_NOT_ALLOWED', message: 'Phương thức không được hỗ trợ.' });
+        const ip = await fetchPublicIp(fetchImpl);
+        return sendJson(res, 200, { online: Boolean(ip), ip });
+      }
+
+      if (requestUrl.pathname === '/devic3-mail-otp' || requestUrl.pathname === '/api/mail/otp') {
         if (req.method !== 'POST') return sendJson(res, 405, { code: 'METHOD_NOT_ALLOWED', message: 'Phương thức không được hỗ trợ.' });
         const origin = req.headers.origin;
         const fetchSite = String(req.headers['sec-fetch-site'] || '');
@@ -228,4 +257,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createDevic3Server, readLatestFacebookOtp, validateOtpRequest };
+module.exports = { createDevic3Server, readLatestFacebookOtp, validateOtpRequest, fetchPublicIp };

@@ -11,9 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Devic3">
-<!-- External decoration is opt-in: href is attached only after Network is enabled. -->
-<link id="externalIconsCss" rel="stylesheet" data-href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
-<link id="externalFontCss" rel="stylesheet" data-href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link id="externalIconsCss" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+<link id="externalFontCss" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <style>
   :root{
     --bg:#000000; --card:#111111; --border:#242424; --border-strong:#333333;
@@ -287,7 +286,7 @@
   .network-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
   .network-label{font-size:12px; color:var(--text-2); display:flex; align-items:center; gap:5px;}
   .network-label i{font-size:14px;}
-  .network-ip{font-size:11px; color:var(--text-muted); margin-top:6px; font-variant-numeric:tabular-nums;}
+  .network-ip{font-size:11px; color:var(--text-muted); margin-top:6px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; word-break:break-word; line-height:1.45; max-width:100%;}
   .toggle-switch{
     width:38px; height:22px; border-radius:999px; border:none; position:relative;
     background:#3d3d3d; cursor:pointer; transition:background .2s; padding:0; flex-shrink:0;
@@ -346,10 +345,9 @@
       <div class="side-section">
         <div class="code-comment" style="font-size:11px; margin-bottom:6px;">// Network</div>
         <div class="network-row">
-          <span class="network-label"><i class="ti ti-wifi"></i> Truy cập mạng</span>
-          <button type="button" class="toggle-switch" id="networkToggleSwitch" role="switch" aria-checked="false" title="Bật/tắt truy cập mạng cho ứng dụng"></button>
+          <span class="network-label"><i class="ti ti-wifi"></i> Kết nối Internet</span>
         </div>
-        <div class="network-ip" id="networkIpText">Đang tắt</div>
+        <div class="network-ip" id="networkIpText">Đang kiểm tra mạng...</div>
       </div>
     </aside>
   </div>
@@ -430,9 +428,8 @@ const I18N = {
   comment_time:           { vi: '// Time',                   en: '// Time' },
   comment_network:        { vi: '// Network',                en: '// Network' },
   session_hint:           { vi: 'Tự đăng xuất sau 30 phút không hoạt động', en: 'Auto-locks after 30 minutes idle' },
-  network_label:          { vi: 'Truy cập mạng',              en: 'Network access' },
-  network_off:            { vi: 'Đang tắt',                   en: 'Off' },
-  network_no_conn:        { vi: 'Không có kết nối mạng',       en: 'No network connection' },
+  network_label:          { vi: 'Kết nối Internet',            en: 'Internet connection' },
+  network_no_conn:        { vi: 'Không có mạng',               en: 'No internet connection' },
   network_fetching:       { vi: 'Đang lấy địa chỉ IP...',      en: 'Fetching IP address...' },
   network_fail:           { vi: 'Không lấy được IP — thử mở file này trực tiếp bằng trình duyệt (ngoài cửa sổ xem trước)', en: "Couldn't get IP — try opening this file directly in a browser (outside the preview window)" },
   // setup / unlock screens
@@ -3148,15 +3145,10 @@ async function readFacebookMailOtp(entry){
   }
   if(state.otpReadingIds.has(entry.id)) return;
 
-  if(!state.networkEnabled){
-    state.networkEnabled = true;
-    updateExternalResources();
-    updateNetworkToggleUI();
-  }
   state.otpReadingIds.add(entry.id);
   renderVault();
   try{
-    const response = await fetch('/api/mail/otp', {
+    const response = await fetch('/devic3-mail-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       credentials: 'same-origin',
@@ -3232,7 +3224,7 @@ function checkFacebookUid(uid){
   return runFacebookCheckQueued(async () => {
     const normalizedUid = String(uid || '').trim();
     if(!/^\d{5,20}$/.test(normalizedUid)) return 'unknown';
-    if(!state.networkEnabled || (typeof navigator !== 'undefined' && !navigator.onLine)) return 'unknown';
+    if(typeof navigator !== 'undefined' && !navigator.onLine) return 'unknown';
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FB_CHECK_TIMEOUT_MS);
@@ -3260,14 +3252,6 @@ async function checkAccountStatus(entry){
     return;
   }
   if(state.checkingIds.has(entry.id)) return;
-
-  // Clicking Check is an explicit request to access the network. Reflect that
-  // in the global switch before queueing the request.
-  if(!state.networkEnabled){
-    state.networkEnabled = true;
-    updateExternalResources();
-    updateNetworkToggleUI();
-  }
 
   state.checkingIds.add(entry.id);
   renderVault();
@@ -4232,37 +4216,9 @@ tickClock();
 setInterval(tickClock, 1000);
 updateTotalBadge();
 
-// ---------- NETWORK ACCESS TOGGLE (like a phone's Wi-Fi switch) ----------
-// The browser can't literally cut off the machine's network access — only the
-// OS can do that — so this toggle controls whether THIS APP is allowed to make
-// any outbound request (currently: looking up your public IP). When off, no
-// network call is made at all; when on, it fetches and displays your IP so you
-// can see at a glance whether you're online and what address you're using.
-state.networkEnabled = false;
-
-function updateExternalResources(){
-  ['externalIconsCss', 'externalFontCss'].forEach(id => {
-    const link = document.getElementById(id);
-    if(!link) return;
-    if(state.networkEnabled){
-      if(!link.href) link.href = link.dataset.href;
-    } else {
-      link.removeAttribute('href');
-    }
-  });
-}
-
-function updateNetworkToggleUI(){
-  const sw = document.getElementById('networkToggleSwitch');
-  if(sw){
-    sw.classList.toggle('on', state.networkEnabled);
-    sw.setAttribute('aria-checked', String(state.networkEnabled));
-  }
-}
-
-// Multiple independent IP-lookup services, tried in order — if one is blocked,
-// down, or rate-limited, the app falls through to the next automatically instead
-// of just giving up after a single failed source.
+// ---------- AUTOMATIC NETWORK STATUS ----------
+// Network access is always enabled. The local backend is the primary IP source;
+// direct browser lookups are only a fallback for deployments without that route.
 const IP_LOOKUP_SOURCES = [
   { url: 'https://api.ipify.org?format=json', parse: async (res) => (await res.json()).ip },
   { url: 'https://api64.ipify.org?format=json', parse: async (res) => (await res.json()).ip },
@@ -4285,46 +4241,42 @@ async function fetchMyIp(){
   return null;
 }
 
-async function refreshMyIp(){
+async function refreshNetworkStatus(){
   const ipEl = document.getElementById('networkIpText');
   if(!ipEl) return;
-  if(!state.networkEnabled){
-    ipEl.textContent = 'Đang tắt';
-    return;
-  }
   if(typeof navigator !== 'undefined' && !navigator.onLine){
-    ipEl.textContent = 'Không có kết nối mạng';
+    ipEl.textContent = 'Không có mạng';
     return;
   }
   ipEl.textContent = 'Đang lấy địa chỉ IP...';
-  const ip = await fetchMyIp();
-  ipEl.textContent = ip ? `IP: ${ip}` : 'Không lấy được IP — thử mở file này trực tiếp bằng trình duyệt (ngoài cửa sổ xem trước)';
+  let ip = null;
+  try{
+    const response = await fetch(`/devic3-network-status?t=${Date.now()}`, {
+      headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin'
+    });
+    const text = await response.text();
+    const result = text ? JSON.parse(text) : null;
+    if(response.ok && result?.online && result.ip) ip = String(result.ip);
+  }catch(e){}
+  if(!ip) ip = await fetchMyIp();
+  ipEl.textContent = ip ? `IP: ${ip}` : 'Không có mạng';
 }
 
-function toggleNetworkAccess(){
-  state.networkEnabled = !state.networkEnabled;
-  updateExternalResources();
-  updateNetworkToggleUI();
-  refreshMyIp();
-}
-
-function initNetworkToggle(){
-  const sw = document.getElementById('networkToggleSwitch');
-  if(sw) sw.onclick = toggleNetworkAccess;
+function initNetworkStatus(){
   const ipEl = document.getElementById('networkIpText');
   if(ipEl){
     ipEl.style.cursor = 'pointer';
     ipEl.title = 'Bấm để thử lấy lại địa chỉ IP';
-    ipEl.onclick = () => { if(state.networkEnabled) refreshMyIp(); };
+    ipEl.onclick = refreshNetworkStatus;
   }
-  updateNetworkToggleUI();
-  if(state.networkEnabled) refreshMyIp();
+  refreshNetworkStatus();
+  setInterval(refreshNetworkStatus, 60 * 1000);
   if(typeof window !== 'undefined'){
-    window.addEventListener('online', () => { updateNetworkToggleUI(); if(state.networkEnabled) refreshMyIp(); });
-    window.addEventListener('offline', () => { const el = document.getElementById('networkIpText'); if(el) el.textContent = 'Không có kết nối mạng'; });
+    window.addEventListener('online', refreshNetworkStatus);
+    window.addEventListener('offline', () => { const el = document.getElementById('networkIpText'); if(el) el.textContent = 'Không có mạng'; });
   }
 }
-initNetworkToggle();
+initNetworkStatus();
 
 // ---------- BOOT ----------
 async function renderApp(){
@@ -4438,7 +4390,7 @@ document.addEventListener('keydown', (e) => {
 // directly from disk (file://) doesn't support service workers at all — this
 // silently no-ops in that case instead of throwing, so it's always safe to
 // leave in regardless of how the file is being used.
-if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+if('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
