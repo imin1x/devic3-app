@@ -65,7 +65,7 @@ Devic3 chỉ yêu cầu scope `https://www.googleapis.com/auth/drive.appdata`. Q
 5. Devic3 tạo `devic3-vault-sync.json` đã mã hoá trong `appDataFolder`.
 6. Bấm **Backup dữ liệu hiện tại** và cất file `.json` ở nơi an toàn.
 
-Trong phiên đang kết nối, mỗi thay đổi được tự đồng bộ sau khoảng 1,5 giây. Access token Google chỉ nằm trong RAM của tab; sau khi đóng hoặc tải lại trang, bấm **Kết nối / Đồng bộ ngay** để cấp lại phiên. Devic3 không lưu refresh token Google.
+Trong phiên đang kết nối, mỗi thay đổi được đẩy lên Drive gần như ngay sau khi lưu. Các thiết bị khác đang mở, đã kết nối và không có biểu mẫu chưa lưu sẽ tự kiểm tra rồi cập nhật giao diện trong tối đa khoảng 5 giây. Khi đưa ứng dụng từ nền trở lại, Devic3 cũng kiểm tra bản mới ngay. Access token Google chỉ nằm trong RAM của tab; sau khi đóng hoặc tải lại trang, bấm **Kết nối / Đồng bộ ngay** để cấp lại phiên. Devic3 không lưu refresh token Google.
 
 ## D. iPhone hoặc iPad
 

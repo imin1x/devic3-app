@@ -1337,9 +1337,11 @@ let driveTokenClient = null;
 let driveScriptPromise = null;
 let driveSyncTimer = null;
 let driveSyncQueue = Promise.resolve();
+let driveRealtimeTimer = null;
 let driveApplyingRemote = false;
 let driveRuntimeStatus = 'idle';
 let driveRuntimeMessage = '';
+const DRIVE_REALTIME_POLL_MS = 5000;
 
 function newDeviceId(){
   return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -1358,6 +1360,7 @@ async function loadDriveSettings(){
     fileId: typeof parsed.fileId === 'string' ? parsed.fileId : '',
     deviceId: typeof parsed.deviceId === 'string' && parsed.deviceId ? parsed.deviceId : newDeviceId(),
     lastRemoteRevision: Number.isInteger(parsed.lastRemoteRevision) ? parsed.lastRemoteRevision : 0,
+    lastRemoteModifiedTime: typeof parsed.lastRemoteModifiedTime === 'string' ? parsed.lastRemoteModifiedTime : '',
     lastSyncedFingerprint: typeof parsed.lastSyncedFingerprint === 'string' ? parsed.lastSyncedFingerprint : '',
     lastSyncedAt: Number.isFinite(parsed.lastSyncedAt) ? parsed.lastSyncedAt : 0,
   };
@@ -1527,11 +1530,12 @@ async function uploadDriveEnvelope(fileId, bundle, revision){
   return body.id;
 }
 
-async function recordDriveSync(fileId, revision, fingerprint){
+async function recordDriveSync(fileId, revision, fingerprint, modifiedTime = ''){
   const settings = await loadDriveSettings();
   settings.enabled = true;
   settings.fileId = fileId;
   settings.lastRemoteRevision = revision;
+  if(modifiedTime) settings.lastRemoteModifiedTime = modifiedTime;
   settings.lastSyncedFingerprint = fingerprint;
   settings.lastSyncedAt = Date.now();
   await saveDriveSettings();
@@ -1539,12 +1543,46 @@ async function recordDriveSync(fileId, revision, fingerprint){
   driveRuntimeMessage = 'Đã đồng bộ';
 }
 
-async function useRemoteDriveVault(remote, fileId){
+async function applyRemoteDriveVaultLive(bundle){
+  // Decrypt everything before replacing local storage. A wrong/different vault
+  // therefore cannot partially overwrite the session currently being used.
+  const verifier = await decryptStr(state.key, bundle.config.verifier);
+  if(verifier !== VERIFY_STRING) throw new Error('Bản Drive dùng kho hoặc mật khẩu chính khác. Hãy khoá ứng dụng rồi khôi phục bản Drive riêng.');
+  const decodeList = async blob => {
+    if(!blob) return [];
+    const value = JSON.parse(await decryptStr(state.key, blob));
+    if(!Array.isArray(value)) throw new Error('Bản Drive chứa danh sách không hợp lệ.');
+    return value;
+  };
+  const [entries, folders, notes] = await Promise.all([
+    decodeList(bundle.entries), decodeList(bundle.folders), decodeList(bundle.notes),
+  ]);
+  entries.forEach(entry => { if(!entry.platform) entry.platform = 'facebook'; });
+  folders.forEach(folder => { if(!folder.platformId) folder.platformId = 'facebook'; });
+  await replaceStoredVault({
+    [STORAGE_CONFIG_KEY]: JSON.stringify(bundle.config),
+    [STORAGE_DATA_KEY]: bundle.entries == null ? null : JSON.stringify(bundle.entries),
+    [STORAGE_FOLDERS_KEY]: bundle.folders == null ? null : JSON.stringify(bundle.folders),
+    [STORAGE_NOTES_KEY]: bundle.notes == null ? null : JSON.stringify(bundle.notes),
+  });
+  state.entries = entries;
+  state.folders = folders;
+  state.notes = notes;
+  state.selectedIds.clear();
+  if(state.activeFolder !== 'all' && state.activeFolder !== NO_FOLDER_ID && !folders.some(folder => folder.id === state.activeFolder)) state.activeFolder = 'all';
+  renderVault();
+  return true;
+}
+
+async function useRemoteDriveVault(remote, fileId, modifiedTime = ''){
   const fingerprint = await vaultFingerprint(remote.vault);
   driveApplyingRemote = true;
   try{
-    const applied = await applyVaultBundleAndSwitch(remote.vault, 'Google Drive');
-    if(applied) await recordDriveSync(fileId, remote.revision, fingerprint);
+    const applied = state.key
+      ? await applyRemoteDriveVaultLive(remote.vault)
+      : await applyVaultBundleAndSwitch(remote.vault, 'Google Drive');
+    if(applied) await recordDriveSync(fileId, remote.revision, fingerprint, modifiedTime);
+    if(applied && state.key) toast('Đã nhận thay đổi mới từ thiết bị khác');
     return applied;
   }finally{
     driveApplyingRemote = false;
@@ -1581,11 +1619,17 @@ function openDriveConflictModal(localBundle, localFingerprint, remote, remoteFin
   };
 }
 
-async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = false } = {}){
+async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = false, polling = false } = {}){
   const settings = await loadDriveSettings();
+  const statusBeforeSync = driveRuntimeStatus;
   driveRuntimeStatus = 'syncing';
   driveRuntimeMessage = 'Đang kiểm tra Google Drive...';
   const file = await findDriveVaultFile();
+  if(polling && file && file.modifiedTime && file.modifiedTime === settings.lastRemoteModifiedTime){
+    driveRuntimeStatus = 'synced';
+    driveRuntimeMessage = 'Đồng bộ hai chiều đang bật';
+    return 'unchanged';
+  }
   const localBundle = await assembleVaultBundle();
   const hasLocalVault = !!localBundle.config;
   const localFingerprint = hasLocalVault ? await vaultFingerprint(localBundle) : '';
@@ -1600,11 +1644,11 @@ async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = f
   const remote = await downloadDriveEnvelope(file.id);
   const remoteFingerprint = await vaultFingerprint(remote.vault);
   if(!hasLocalVault){
-    await useRemoteDriveVault(remote, file.id);
+    await useRemoteDriveVault(remote, file.id, file.modifiedTime || '');
     return 'restored';
   }
   if(localFingerprint === remoteFingerprint){
-    await recordDriveSync(file.id, remote.revision, remoteFingerprint);
+    await recordDriveSync(file.id, remote.revision, remoteFingerprint, file.modifiedTime || '');
     return 'same';
   }
 
@@ -1616,17 +1660,19 @@ async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = f
     await recordDriveSync(fileId, nextRevision, localFingerprint);
     return 'uploaded';
   }
-  if(localUnchanged && allowConflictUi){
-    await useRemoteDriveVault(remote, file.id);
+  if(localUnchanged && (state.key || allowConflictUi)){
+    await useRemoteDriveVault(remote, file.id, file.modifiedTime || '');
     return 'restored';
   }
+  const alreadyReported = statusBeforeSync === 'conflict';
   driveRuntimeStatus = 'conflict';
   driveRuntimeMessage = 'Có xung đột dữ liệu';
   if(allowConflictUi){
     openDriveConflictModal(localBundle, localFingerprint, remote, remoteFingerprint, file.id);
     return 'conflict';
   }
-  throw new Error('Google Drive có phiên bản khác. Mở Sao lưu / Khôi phục và bấm Đồng bộ để chọn bản cần giữ.');
+  if(!alreadyReported) toast('Google Drive có xung đột. Mở Sao lưu / Đồng bộ để chọn bản cần giữ.', 6000);
+  return 'conflict';
 }
 
 function connectAndSyncGoogleDrive(clientId, options = {}){
@@ -1646,6 +1692,7 @@ function connectAndSyncGoogleDrive(clientId, options = {}){
     const outcome = await performGoogleDriveSync({ allowConflictUi: true, restoreOnly: !!options.restoreOnly });
     settings.enabled = true;
     await saveDriveSettings();
+    startGoogleDriveRealtimeSync();
     return outcome;
   })();
 }
@@ -1660,8 +1707,37 @@ function scheduleGoogleDriveSync(){
       driveRuntimeMessage = error.message || 'Đồng bộ tự động tạm dừng';
       toast(driveRuntimeMessage, 5000);
     });
-  }, 1500);
+  }, 200);
 }
+
+function stopGoogleDriveRealtimeSync(){
+  if(driveRealtimeTimer){ clearInterval(driveRealtimeTimer); driveRealtimeTimer = null; }
+}
+
+function pollGoogleDriveNow(){
+  if(!driveAccessToken || !driveSettings || !driveSettings.enabled || driveRuntimeStatus === 'conflict') return;
+  if(document.visibilityState === 'hidden') return;
+  const modalBg = document.getElementById('modalBg');
+  if(modalBg && modalBg.classList.contains('show')) return; // never replace a form with unsaved typing
+  driveSyncQueue = driveSyncQueue.catch(() => {}).then(() => performGoogleDriveSync({ polling: true })).catch(error => {
+    console.warn('Google Drive realtime polling paused.', error);
+    driveRuntimeStatus = 'error';
+    driveRuntimeMessage = error.message || 'Không kiểm tra được thay đổi mới';
+  });
+}
+
+function startGoogleDriveRealtimeSync(){
+  stopGoogleDriveRealtimeSync();
+  if(!driveAccessToken || !driveSettings || !driveSettings.enabled) return;
+  driveRuntimeStatus = 'synced';
+  driveRuntimeMessage = 'Đồng bộ hai chiều đang bật';
+  driveRealtimeTimer = setInterval(pollGoogleDriveNow, DRIVE_REALTIME_POLL_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') pollGoogleDriveNow();
+});
+window.addEventListener('online', pollGoogleDriveNow);
 
 async function disconnectGoogleDrive(){
   const settings = await loadDriveSettings();
@@ -1669,10 +1745,12 @@ async function disconnectGoogleDrive(){
     try{ google.accounts.oauth2.revoke(driveAccessToken, () => {}); }catch(error){}
   }
   driveAccessToken = '';
+  stopGoogleDriveRealtimeSync();
   driveTokenClient = null;
   settings.enabled = false;
   settings.fileId = '';
   settings.lastRemoteRevision = 0;
+  settings.lastRemoteModifiedTime = '';
   settings.lastSyncedFingerprint = '';
   settings.lastSyncedAt = 0;
   await saveDriveSettings();
@@ -1921,6 +1999,7 @@ async function renderFileBackupModal(){
       <label>Google OAuth Client ID</label>
       <input id="driveClientIdInput" autocomplete="off" placeholder="123456789-abc.apps.googleusercontent.com">
       <p class="hint" style="margin:5px 0 10px;line-height:1.55;"><i class="ti ti-shield-lock" style="vertical-align:-2px;color:#4ade80;"></i> Chỉ dùng quyền <code>drive.appdata</code>. File trên Drive là JSON đã mã hoá AES-256; access token chỉ giữ trong bộ nhớ của tab.</p>
+      <p class="hint" style="margin:0 0 10px;line-height:1.55;"><i class="ti ti-refresh" style="vertical-align:-2px;color:#60a5fa;"></i> Khi hai thiết bị đang mở và đã kết nối, thay đổi được đẩy ngay và thiết bị kia tự cập nhật trong tối đa khoảng 5 giây.</p>
       <p style="font-size:12px;color:var(--text-2);margin:0 0 10px;"><i class="ti ti-cloud" style="vertical-align:-2px;"></i> ${escapeHtml(driveStatusText(drive))}${drive.lastSyncedAt ? ` · ${escapeHtml(new Date(drive.lastSyncedAt).toLocaleString('vi-VN'))}` : ''}</p>
       <div class="row" style="gap:8px;flex-wrap:wrap;">
         <button class="primary" id="driveSyncNowBtn" style="flex:1 1 190px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:4px;"></i>Kết nối / Đồng bộ ngay</button>
