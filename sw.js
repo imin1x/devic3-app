@@ -1,7 +1,7 @@
 // Devic3 — minimal offline-capable service worker.
 // Caches the app shell so it still opens (and works — all data lives in the
 // browser's own storage, not on a server) even with no network connection.
-const CACHE_NAME = 'devic3-cache-v5';
+const CACHE_NAME = 'devic3-cache-v6';
 const APP_SHELL = ['./D3vic3.html', './manifest.json', './icon-192.png', './icon-512.png'];
 const APP_SHELL_PATHS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).pathname));
 

@@ -1,0 +1,8 @@
+# Local encrypted backups and secrets must never be committed.
+devic3-vault-*.json
+Backup*.json
+*.vault.json
+.env
+.env.*
+node_modules/
+*.log

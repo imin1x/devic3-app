@@ -365,49 +365,136 @@
 
 <script>
 /* =====================================================================
-   STORAGE SHIM — works both inside Claude and as a standalone file
-   -----------------------------------------------------------------
-   The app is written against a `window.storage` API (get/set/delete/
-   list, all async) normally provided by the Claude.ai artifact host.
-   When this file is downloaded and opened on its own (double-clicked,
-   or served by a local web server), that API does not exist — this
-   shim recreates the same interface using the browser's built-in
-   localStorage, so every storage call in the app works unchanged
-   either way. Keys are namespaced under "devic3:" to avoid clashing
-   with anything else stored in the same browser profile.
+   STORAGE SHIM — IndexedDB with a non-destructive localStorage migration.
+   Existing `devic3:*` localStorage records are copied once and deliberately
+   left in place as a recovery fallback. If IndexedDB is unavailable (private
+   browsing / an old embedded browser), the app continues using localStorage.
 ===================================================================== */
 if(!window.storage){
   const LS_PREFIX = 'devic3:';
+  const IDB_NAME = 'devic3-vault';
+  const IDB_STORE = 'kv';
+  const MIGRATION_MARKER = '__localStorageMigratedV1';
+  let idbPromise = null;
+
+  function localStorageAdapter(){
+    return {
+      async get(key, shared){
+        const raw = localStorage.getItem(LS_PREFIX + key);
+        return raw === null ? null : { key, value: raw, shared: !!shared };
+      },
+      async set(key, value, shared){
+        localStorage.setItem(LS_PREFIX + key, value);
+        return { key, value, shared: !!shared };
+      },
+      async delete(key, shared){
+        localStorage.removeItem(LS_PREFIX + key);
+        return { key, deleted: true, shared: !!shared };
+      },
+      async list(prefix, shared){
+        const keys = [];
+        for(let i = 0; i < localStorage.length; i++){
+          const full = localStorage.key(i);
+          if(!full || !full.startsWith(LS_PREFIX)) continue;
+          const key = full.slice(LS_PREFIX.length);
+          if(!prefix || key.startsWith(prefix)) keys.push(key);
+        }
+        return { keys, prefix, shared: !!shared };
+      }
+    };
+  }
+  const localFallback = localStorageAdapter();
+
+  function requestToPromise(request){
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('IndexedDB request failed'));
+    });
+  }
+
+  function openIndexedDb(){
+    if(idbPromise) return idbPromise;
+    idbPromise = new Promise((resolve, reject) => {
+      if(!window.indexedDB){ reject(new Error('IndexedDB is unavailable')); return; }
+      const request = indexedDB.open(IDB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+      };
+      request.onsuccess = async () => {
+        const db = request.result;
+        db.onversionchange = () => db.close();
+        try{
+          // Only fill missing keys. Never delete or overwrite the legacy copy.
+          const legacy = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const full = localStorage.key(i);
+            if(full && full.startsWith(LS_PREFIX)) legacy.push([full.slice(LS_PREFIX.length), localStorage.getItem(full)]);
+          }
+          const readTx = db.transaction(IDB_STORE, 'readonly');
+          const existingKeys = new Set(await requestToPromise(readTx.objectStore(IDB_STORE).getAllKeys()));
+          if(!existingKeys.has(MIGRATION_MARKER)){
+            const missing = legacy.filter(([key]) => !existingKeys.has(key));
+            const writeTx = db.transaction(IDB_STORE, 'readwrite');
+            const store = writeTx.objectStore(IDB_STORE);
+            for(const [key, value] of missing) store.put(value, key);
+            store.put(String(Date.now()), MIGRATION_MARKER);
+            await new Promise((ok, fail) => { writeTx.oncomplete = ok; writeTx.onerror = () => fail(writeTx.error); writeTx.onabort = () => fail(writeTx.error); });
+          }
+          resolve(db);
+        }catch(error){ db.close(); reject(error); }
+      };
+      request.onerror = () => reject(request.error || new Error('Cannot open IndexedDB'));
+    }).catch(error => {
+      console.warn('IndexedDB unavailable; using localStorage fallback.', error);
+      return null;
+    });
+    return idbPromise;
+  }
+
+  async function withStore(mode, action){
+    const db = await openIndexedDb();
+    if(!db) return null;
+    const tx = db.transaction(IDB_STORE, mode);
+    const result = await action(tx.objectStore(IDB_STORE));
+    if(mode === 'readwrite'){
+      await new Promise((ok, fail) => { tx.oncomplete = ok; tx.onerror = () => fail(tx.error); tx.onabort = () => fail(tx.error); });
+    }
+    return result;
+  }
+
   window.storage = {
     async get(key, shared){
       try{
-        const raw = localStorage.getItem(LS_PREFIX + key);
-        return raw === null ? null : { key, value: raw, shared: !!shared };
-      }catch(e){ console.error('storage.get failed', e); throw e; }
+        const db = await openIndexedDb();
+        if(!db) return localFallback.get(key, shared);
+        const value = await withStore('readonly', store => requestToPromise(store.get(key)));
+        return value === undefined ? null : { key, value, shared: !!shared };
+      }catch(error){ console.error('storage.get failed', error); throw error; }
     },
     async set(key, value, shared){
       try{
-        localStorage.setItem(LS_PREFIX + key, value);
+        const db = await openIndexedDb();
+        if(!db) return localFallback.set(key, value, shared);
+        await withStore('readwrite', store => requestToPromise(store.put(value, key)));
         return { key, value, shared: !!shared };
-      }catch(e){ console.error('storage.set failed', e); return null; }
+      }catch(error){ console.error('storage.set failed', error); return null; }
     },
     async delete(key, shared){
       try{
-        localStorage.removeItem(LS_PREFIX + key);
+        const db = await openIndexedDb();
+        if(!db) return localFallback.delete(key, shared);
+        await withStore('readwrite', store => requestToPromise(store.delete(key)));
         return { key, deleted: true, shared: !!shared };
-      }catch(e){ console.error('storage.delete failed', e); return null; }
+      }catch(error){ console.error('storage.delete failed', error); return null; }
     },
     async list(prefix, shared){
       try{
-        const keys = [];
-        for(let i = 0; i < localStorage.length; i++){
-          const k = localStorage.key(i);
-          if(!k || !k.startsWith(LS_PREFIX)) continue;
-          const bare = k.slice(LS_PREFIX.length);
-          if(!prefix || bare.startsWith(prefix)) keys.push(bare);
-        }
-        return { keys, prefix, shared: !!shared };
-      }catch(e){ console.error('storage.list failed', e); return null; }
+        const db = await openIndexedDb();
+        if(!db) return localFallback.list(prefix, shared);
+        const keys = await withStore('readonly', store => requestToPromise(store.getAllKeys()));
+        return { keys: keys.filter(key => !prefix || String(key).startsWith(prefix)), prefix, shared: !!shared };
+      }catch(error){ console.error('storage.list failed', error); return null; }
     }
   };
 }
@@ -460,8 +547,8 @@ const I18N = {
   btn_lock:                { vi: 'Khoá',                        en: 'Lock' },
   btn_select_many:         { vi: 'Chọn nhiều',                  en: 'Select' },
   btn_select_done:         { vi: 'Xong',                        en: 'Done' },
-  btn_file_backup:         { vi: 'File ổ cứng',                 en: 'Disk file' },
-  btn_file_linked:         { vi: 'Đã liên kết file',            en: 'File linked' },
+  btn_file_backup:         { vi: 'Sao lưu / Đồng bộ',           en: 'Backup / Sync' },
+  btn_file_linked:         { vi: 'Sao lưu / Đồng bộ',           en: 'Backup / Sync' },
   btn_tools:               { vi: 'Công cụ',                     en: 'Tools' },
   btn_import_export:       { vi: 'Nhập/Xuất',                   en: 'Import/Export' },
   btn_add_note:            { vi: 'Ghi chú mới',                 en: 'New note' },
@@ -490,7 +577,7 @@ const I18N = {
   select_delete:            { vi: 'Xoá đã chọn',                  en: 'Delete selected' },
   title_lock:               { vi: 'Khoá lại',                     en: 'Lock' },
   title_select_many:        { vi: 'Chọn nhiều tài khoản để xoá cùng lúc', en: 'Select multiple accounts to delete at once' },
-  title_file_backup:        { vi: 'Sao lưu vào file trên ổ cứng',   en: 'Back up to a file on disk' },
+  title_file_backup:        { vi: 'Sao lưu file và đồng bộ Google Drive', en: 'File backup and Google Drive sync' },
   title_tools:              { vi: 'Công cụ: tạo mật khẩu, lấy ID Facebook', en: 'Tools: password generator, Facebook ID lookup' },
   status_filter_hidden:     { vi: 'Đang ẩn — bấm để hiện lại',      en: 'Hidden — click to show' },
   status_filter_shown:      { vi: 'Đang hiện — bấm để ẩn',          en: 'Shown — click to hide' },
@@ -1075,6 +1162,7 @@ async function saveEntries(){
       return false;
     }
     if(state.fileHandle) writeVaultFile();
+    scheduleGoogleDriveSync();
     return true;
   }catch(e){
     toast('⚠ Lưu dữ liệu thất bại, thử lại');
@@ -1147,6 +1235,7 @@ async function saveFolders(){
       return false;
     }
     if(state.fileHandle) writeVaultFile();
+    scheduleGoogleDriveSync();
     return true;
   }catch(e){
     toast('⚠ Lưu thư mục thất bại, thử lại');
@@ -1186,6 +1275,7 @@ async function saveNotes(){
       return false;
     }
     if(state.fileHandle) writeVaultFile();
+    scheduleGoogleDriveSync();
     return true;
   }catch(e){
     toast('⚠ Lưu ghi chú thất bại, thử lại');
@@ -1231,6 +1321,385 @@ async function assembleVaultBundle(){
     entries: entriesRes && entriesRes.value ? JSON.parse(entriesRes.value) : null,
     folders: foldersRes && foldersRes.value ? JSON.parse(foldersRes.value) : null,
     notes: notesRes && notesRes.value ? JSON.parse(notesRes.value) : null,
+  };
+}
+
+// ---------- GOOGLE DRIVE SYNC (encrypted bundle in appDataFolder) ----------
+// The OAuth access token exists only in memory. The Drive file contains the
+// same already-encrypted vault blobs as a manual backup; no password, account
+// plaintext, Microsoft token, or Google client secret is sent or stored here.
+const DRIVE_SETTINGS_KEY = 'devic3-google-drive-sync';
+const DRIVE_FILE_NAME = 'devic3-vault-sync.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+let driveSettings = null;
+let driveAccessToken = '';
+let driveTokenClient = null;
+let driveScriptPromise = null;
+let driveSyncTimer = null;
+let driveSyncQueue = Promise.resolve();
+let driveApplyingRemote = false;
+let driveRuntimeStatus = 'idle';
+let driveRuntimeMessage = '';
+
+function newDeviceId(){
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function loadDriveSettings(){
+  if(driveSettings) return driveSettings;
+  let parsed = {};
+  try{
+    const result = await window.storage.get(DRIVE_SETTINGS_KEY);
+    if(result && result.value) parsed = JSON.parse(result.value);
+  }catch(error){ console.warn('Cannot read Google Drive sync settings.', error); }
+  driveSettings = {
+    clientId: typeof parsed.clientId === 'string' ? parsed.clientId : '',
+    enabled: parsed.enabled === true,
+    fileId: typeof parsed.fileId === 'string' ? parsed.fileId : '',
+    deviceId: typeof parsed.deviceId === 'string' && parsed.deviceId ? parsed.deviceId : newDeviceId(),
+    lastRemoteRevision: Number.isInteger(parsed.lastRemoteRevision) ? parsed.lastRemoteRevision : 0,
+    lastSyncedFingerprint: typeof parsed.lastSyncedFingerprint === 'string' ? parsed.lastSyncedFingerprint : '',
+    lastSyncedAt: Number.isFinite(parsed.lastSyncedAt) ? parsed.lastSyncedAt : 0,
+  };
+  await saveDriveSettings();
+  return driveSettings;
+}
+
+async function saveDriveSettings(){
+  if(!driveSettings) return;
+  const result = await window.storage.set(DRIVE_SETTINGS_KEY, JSON.stringify(driveSettings));
+  if(!result) throw new Error('Không thể lưu cấu hình Google Drive trên thiết bị.');
+}
+
+function loadGoogleIdentityScript(){
+  if(window.google && window.google.accounts && window.google.accounts.oauth2) return Promise.resolve();
+  if(driveScriptPromise) return driveScriptPromise;
+  driveScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-devic3-google-identity]');
+    const script = existing || document.createElement('script');
+    const timer = setTimeout(() => reject(new Error('Không tải được Google Identity Services. Kiểm tra kết nối mạng hoặc trình chặn nội dung.')), 15000);
+    script.onload = () => { clearTimeout(timer); resolve(); };
+    script.onerror = () => { clearTimeout(timer); reject(new Error('Không tải được dịch vụ đăng nhập Google.')); };
+    if(!existing){
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.dataset.devic3GoogleIdentity = '1';
+      document.head.appendChild(script);
+    }
+  }).catch(error => { driveScriptPromise = null; throw error; });
+  return driveScriptPromise;
+}
+
+async function requestGoogleDriveAccess(){
+  const settings = await loadDriveSettings();
+  if(!settings.clientId) throw new Error('Chưa có Google OAuth Client ID.');
+  await loadGoogleIdentityScript();
+  driveRuntimeStatus = 'connecting';
+  return new Promise((resolve, reject) => {
+    const finishError = detail => {
+      driveRuntimeStatus = 'error';
+      reject(new Error(detail && detail.message ? detail.message : 'Đăng nhập Google bị huỷ hoặc thất bại.'));
+    };
+    driveTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: settings.clientId,
+      scope: DRIVE_SCOPE,
+      callback: response => {
+        if(response && response.access_token){
+          driveAccessToken = response.access_token;
+          driveRuntimeStatus = 'connected';
+          resolve(response.access_token);
+        }else finishError(response);
+      },
+      error_callback: finishError,
+    });
+    driveTokenClient.requestAccessToken({ prompt: settings.enabled ? '' : 'consent' });
+  });
+}
+
+async function driveFetch(url, options = {}){
+  if(!driveAccessToken) throw new Error('Cần kết nối lại tài khoản Google.');
+  const headers = new Headers(options.headers || {});
+  headers.set('Authorization', `Bearer ${driveAccessToken}`);
+  const response = await fetch(url, { ...options, headers, cache: 'no-store' });
+  if(response.status === 401){
+    driveAccessToken = '';
+    driveRuntimeStatus = 'reauth';
+    throw new Error('Phiên Google đã hết hạn. Bấm Kết nối / Đồng bộ để đăng nhập lại.');
+  }
+  if(!response.ok){
+    let message = `Google Drive trả lỗi ${response.status}.`;
+    try{
+      const body = await response.json();
+      if(body && body.error && body.error.message) message += ` ${body.error.message}`;
+    }catch(error){}
+    throw new Error(message);
+  }
+  return response;
+}
+
+async function findDriveVaultFile(){
+  const params = new URLSearchParams({
+    spaces: 'appDataFolder',
+    q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
+    fields: 'files(id,name,modifiedTime,size)',
+    orderBy: 'modifiedTime desc',
+    pageSize: '10',
+  });
+  const response = await driveFetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+  const body = await response.json();
+  return Array.isArray(body.files) && body.files.length ? body.files[0] : null;
+}
+
+function driveEnvelopeLooksValid(envelope){
+  return !!envelope && envelope.app === 'devic3-drive-sync' && envelope.version === 1 &&
+    Number.isInteger(envelope.revision) && envelope.revision > 0 && envelope.vault &&
+    envelope.vault.app === 'devic3' && configLooksValid(envelope.vault.config) &&
+    ['entries', 'folders', 'notes'].every(name => envelope.vault[name] == null || encryptedBlobLooksValid(envelope.vault[name]));
+}
+
+async function downloadDriveEnvelope(fileId){
+  const response = await driveFetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`);
+  const envelope = await response.json();
+  if(!driveEnvelopeLooksValid(envelope)) throw new Error('Bản đồng bộ trên Drive không đúng định dạng Devic3 hoặc đã bị hỏng.');
+  return envelope;
+}
+
+async function vaultFingerprint(bundle){
+  const stable = JSON.stringify({
+    app: bundle.app,
+    version: bundle.version,
+    config: bundle.config,
+    entries: bundle.entries,
+    folders: bundle.folders,
+    notes: bundle.notes,
+  });
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(stable));
+  return b64(digest);
+}
+
+async function uploadDriveEnvelope(fileId, bundle, revision){
+  const settings = await loadDriveSettings();
+  const envelope = {
+    app: 'devic3-drive-sync',
+    version: 1,
+    revision,
+    deviceId: settings.deviceId,
+    savedAt: Date.now(),
+    vault: bundle,
+  };
+  const content = JSON.stringify(envelope);
+  if(fileId){
+    const response = await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media&fields=id,modifiedTime`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: content,
+    });
+    const body = await response.json();
+    return body.id || fileId;
+  }
+  const boundary = `devic3_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const multipart = [
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: DRIVE_FILE_NAME, parents: ['appDataFolder'], mimeType: 'application/json' })}\r\n`,
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n`,
+    `--${boundary}--`,
+  ].join('');
+  const response = await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime', {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+    body: multipart,
+  });
+  const body = await response.json();
+  if(!body.id) throw new Error('Google Drive không trả về mã file sau khi tải lên.');
+  return body.id;
+}
+
+async function recordDriveSync(fileId, revision, fingerprint){
+  const settings = await loadDriveSettings();
+  settings.enabled = true;
+  settings.fileId = fileId;
+  settings.lastRemoteRevision = revision;
+  settings.lastSyncedFingerprint = fingerprint;
+  settings.lastSyncedAt = Date.now();
+  await saveDriveSettings();
+  driveRuntimeStatus = 'synced';
+  driveRuntimeMessage = 'Đã đồng bộ';
+}
+
+async function useRemoteDriveVault(remote, fileId){
+  const fingerprint = await vaultFingerprint(remote.vault);
+  driveApplyingRemote = true;
+  try{
+    const applied = await applyVaultBundleAndSwitch(remote.vault, 'Google Drive');
+    if(applied) await recordDriveSync(fileId, remote.revision, fingerprint);
+    return applied;
+  }finally{
+    driveApplyingRemote = false;
+  }
+}
+
+function openDriveConflictModal(localBundle, localFingerprint, remote, remoteFingerprint, fileId){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBg.classList.add('show');
+  modalBody.innerHTML = `
+    <h2>Phát hiện hai phiên bản dữ liệu</h2>
+    <p class="hint" style="line-height:1.65;margin-bottom:16px;">Dữ liệu trên thiết bị và Google Drive đều đã thay đổi. Devic3 không tự ghi đè để tránh mất tài khoản. Hãy chọn phiên bản muốn giữ.</p>
+    <button class="primary" id="driveUseRemoteBtn" style="width:100%;"><i class="ti ti-cloud-download" style="vertical-align:-2px;margin-right:5px;"></i>Dùng bản trên Google Drive</button>
+    <p class="hint" style="margin:4px 0 14px;">Thay kho trên thiết bị bằng bản Drive (sau đó nhập lại mật khẩu chính).</p>
+    <button id="driveUseLocalBtn" style="width:100%;"><i class="ti ti-cloud-upload" style="vertical-align:-2px;margin-right:5px;"></i>Giữ bản trên thiết bị</button>
+    <p class="hint" style="margin:4px 0 14px;">Ghi bản đang có trên thiết bị lên Drive.</p>
+    <button id="driveConflictCancelBtn" style="width:100%;">Huỷ, không thay đổi</button>`;
+  document.getElementById('driveConflictCancelBtn').onclick = closeModal;
+  document.getElementById('driveUseRemoteBtn').onclick = async event => {
+    event.currentTarget.disabled = true;
+    try{ await useRemoteDriveVault(remote, fileId); }
+    catch(error){ console.error(error); toast(error.message || 'Không khôi phục được bản Drive', 5000); event.currentTarget.disabled = false; }
+  };
+  document.getElementById('driveUseLocalBtn').onclick = async event => {
+    event.currentTarget.disabled = true;
+    try{
+      const nextRevision = remote.revision + 1;
+      const savedId = await uploadDriveEnvelope(fileId, localBundle, nextRevision);
+      await recordDriveSync(savedId, nextRevision, localFingerprint);
+      closeModal();
+      toast('Đã giữ bản trên thiết bị và cập nhật Google Drive');
+    }catch(error){ console.error(error); toast(error.message || 'Không cập nhật được Google Drive', 5000); event.currentTarget.disabled = false; }
+  };
+}
+
+async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = false } = {}){
+  const settings = await loadDriveSettings();
+  driveRuntimeStatus = 'syncing';
+  driveRuntimeMessage = 'Đang kiểm tra Google Drive...';
+  const file = await findDriveVaultFile();
+  const localBundle = await assembleVaultBundle();
+  const hasLocalVault = !!localBundle.config;
+  const localFingerprint = hasLocalVault ? await vaultFingerprint(localBundle) : '';
+
+  if(!file){
+    if(restoreOnly || !hasLocalVault) throw new Error('Chưa có bản đồng bộ Devic3 trong Google Drive này.');
+    const fileId = await uploadDriveEnvelope('', localBundle, 1);
+    await recordDriveSync(fileId, 1, localFingerprint);
+    return 'uploaded';
+  }
+
+  const remote = await downloadDriveEnvelope(file.id);
+  const remoteFingerprint = await vaultFingerprint(remote.vault);
+  if(!hasLocalVault){
+    await useRemoteDriveVault(remote, file.id);
+    return 'restored';
+  }
+  if(localFingerprint === remoteFingerprint){
+    await recordDriveSync(file.id, remote.revision, remoteFingerprint);
+    return 'same';
+  }
+
+  const localUnchanged = !!settings.lastSyncedFingerprint && localFingerprint === settings.lastSyncedFingerprint;
+  const remoteUnchanged = !!settings.lastSyncedFingerprint && remoteFingerprint === settings.lastSyncedFingerprint;
+  if(remoteUnchanged && !restoreOnly){
+    const nextRevision = remote.revision + 1;
+    const fileId = await uploadDriveEnvelope(file.id, localBundle, nextRevision);
+    await recordDriveSync(fileId, nextRevision, localFingerprint);
+    return 'uploaded';
+  }
+  if(localUnchanged && allowConflictUi){
+    await useRemoteDriveVault(remote, file.id);
+    return 'restored';
+  }
+  driveRuntimeStatus = 'conflict';
+  driveRuntimeMessage = 'Có xung đột dữ liệu';
+  if(allowConflictUi){
+    openDriveConflictModal(localBundle, localFingerprint, remote, remoteFingerprint, file.id);
+    return 'conflict';
+  }
+  throw new Error('Google Drive có phiên bản khác. Mở Sao lưu / Khôi phục và bấm Đồng bộ để chọn bản cần giữ.');
+}
+
+async function connectAndSyncGoogleDrive(clientId, options = {}){
+  const settings = await loadDriveSettings();
+  const normalized = String(clientId || settings.clientId || '').trim();
+  if(!/^[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(normalized)){
+    throw new Error('Google OAuth Client ID không đúng định dạng (*.apps.googleusercontent.com).');
+  }
+  settings.clientId = normalized;
+  await saveDriveSettings();
+  await requestGoogleDriveAccess();
+  const outcome = await performGoogleDriveSync({ allowConflictUi: true, restoreOnly: !!options.restoreOnly });
+  settings.enabled = true;
+  await saveDriveSettings();
+  return outcome;
+}
+
+function scheduleGoogleDriveSync(){
+  if(driveApplyingRemote || !driveSettings || !driveSettings.enabled || !driveAccessToken) return;
+  clearTimeout(driveSyncTimer);
+  driveSyncTimer = setTimeout(() => {
+    driveSyncQueue = driveSyncQueue.catch(() => {}).then(() => performGoogleDriveSync()).catch(error => {
+      console.warn('Automatic Google Drive sync paused.', error);
+      driveRuntimeStatus = 'error';
+      driveRuntimeMessage = error.message || 'Đồng bộ tự động tạm dừng';
+      toast(driveRuntimeMessage, 5000);
+    });
+  }, 1500);
+}
+
+async function disconnectGoogleDrive(){
+  const settings = await loadDriveSettings();
+  if(driveAccessToken && window.google && google.accounts && google.accounts.oauth2){
+    try{ google.accounts.oauth2.revoke(driveAccessToken, () => {}); }catch(error){}
+  }
+  driveAccessToken = '';
+  driveTokenClient = null;
+  settings.enabled = false;
+  settings.fileId = '';
+  settings.lastRemoteRevision = 0;
+  settings.lastSyncedFingerprint = '';
+  settings.lastSyncedAt = 0;
+  await saveDriveSettings();
+  driveRuntimeStatus = 'idle';
+  driveRuntimeMessage = 'Đã ngắt kết nối trên thiết bị này';
+}
+
+function driveStatusText(settings){
+  if(driveRuntimeMessage) return driveRuntimeMessage;
+  if(driveAccessToken && settings.enabled) return 'Đã kết nối trong phiên này';
+  if(settings.enabled) return 'Đã cấu hình — cần kết nối lại sau khi tải trang';
+  if(settings.clientId) return 'Đã lưu Client ID — chưa kết nối';
+  return 'Chưa cấu hình';
+}
+
+async function openGoogleDriveRestoreModal(){
+  const settings = await loadDriveSettings();
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBg.classList.add('show');
+  modalBody.innerHTML = `
+    <h2>Khôi phục từ Google Drive</h2>
+    <p class="hint" style="line-height:1.6;">Nhập OAuth Client ID của dự án Google Cloud. Devic3 chỉ xin quyền truy cập thư mục ẩn riêng của ứng dụng và chỉ tải về file JSON đã mã hoá.</p>
+    <label>Google OAuth Client ID</label>
+    <input id="driveRestoreClientId" autocomplete="off" placeholder="123456789-abc.apps.googleusercontent.com">
+    <p class="err" id="driveRestoreErr"></p>
+    <button class="primary" id="driveRestoreNowBtn" style="width:100%;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:5px;"></i>Kết nối và khôi phục</button>
+    <button id="driveRestoreCancelBtn" style="width:100%;margin-top:10px;">Huỷ</button>`;
+  document.getElementById('driveRestoreClientId').value = settings.clientId;
+  document.getElementById('driveRestoreCancelBtn').onclick = closeModal;
+  document.getElementById('driveRestoreNowBtn').onclick = async event => {
+    const button = event.currentTarget;
+    const errorBox = document.getElementById('driveRestoreErr');
+    errorBox.style.display = 'none';
+    button.disabled = true;
+    button.textContent = 'Đang kết nối...';
+    try{
+      const outcome = await connectAndSyncGoogleDrive(document.getElementById('driveRestoreClientId').value, { restoreOnly: true });
+      if(outcome !== 'conflict') toast('Đã tải kho mã hoá từ Google Drive');
+    }catch(error){
+      console.error(error);
+      errorBox.textContent = error.message || 'Không kết nối được Google Drive.';
+      errorBox.style.display = 'block';
+      button.disabled = false;
+      button.innerHTML = '<i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:5px;"></i>Kết nối và khôi phục';
+    }
   };
 }
 
@@ -1399,13 +1868,15 @@ function unlinkVaultFile(){
 function openFileBackupModal(){
   const modalBg = document.getElementById('modalBg');
   modalBg.classList.add('show');
+  document.getElementById('modalBody').innerHTML = '<h2>Sao lưu / Khôi phục</h2><p class="hint">Đang tải cấu hình...</p>';
   renderFileBackupModal();
 }
 
-function renderFileBackupModal(){
+async function renderFileBackupModal(){
   const modalBody = document.getElementById('modalBody');
   const supported = fileSystemAccessSupported();
   const linked = !!state.fileHandle;
+  const drive = await loadDriveSettings();
   modalBody.innerHTML = `
     <h2>Sao lưu / Khôi phục</h2>
     <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File tải ra được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
@@ -1418,6 +1889,19 @@ function renderFileBackupModal(){
 
     <button id="fbBackupNowBtn" class="primary" style="width:100%;">Backup dữ liệu hiện tại</button>
     <p class="hint" style="margin:4px 0 4px;">Tải file — chuyển sang thiết bị khác (AirDrop, email, Drive...) rồi bấm "Mở file đã lưu" để khôi phục, dùng đúng mật khẩu chính hiện tại</p>
+
+    <div style="border-top:1px solid var(--border);margin:20px 0 16px;padding-top:16px;">
+      <div class="code-comment" style="font-size:12px;margin-bottom:10px;">// Đồng bộ nhiều thiết bị</div>
+      <label>Google OAuth Client ID</label>
+      <input id="driveClientIdInput" autocomplete="off" placeholder="123456789-abc.apps.googleusercontent.com">
+      <p class="hint" style="margin:5px 0 10px;line-height:1.55;"><i class="ti ti-shield-lock" style="vertical-align:-2px;color:#4ade80;"></i> Chỉ dùng quyền <code>drive.appdata</code>. File trên Drive là JSON đã mã hoá AES-256; access token chỉ giữ trong bộ nhớ của tab.</p>
+      <p style="font-size:12px;color:var(--text-2);margin:0 0 10px;"><i class="ti ti-cloud" style="vertical-align:-2px;"></i> ${escapeHtml(driveStatusText(drive))}${drive.lastSyncedAt ? ` · ${escapeHtml(new Date(drive.lastSyncedAt).toLocaleString('vi-VN'))}` : ''}</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap;">
+        <button class="primary" id="driveSyncNowBtn" style="flex:1 1 190px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:4px;"></i>Kết nối / Đồng bộ ngay</button>
+        ${drive.clientId ? '<button id="driveDisconnectBtn" style="flex:1 1 120px;">Ngắt kết nối</button>' : ''}
+      </div>
+      <p class="err" id="driveSyncErr" style="margin-top:10px;"></p>
+    </div>
 
     ${supported ? `
     <div class="entry-extra-toggle" id="fbAdvancedToggle"><i class="ti ti-chevron-right"></i>Nâng cao: tự động lưu mỗi khi có thay đổi (chỉ Chrome/Edge)</div>
@@ -1437,6 +1921,7 @@ function renderFileBackupModal(){
 
     <button id="fileCloseBtn" style="width:100%; margin-top:10px;">Đóng</button>
   `;
+  document.getElementById('driveClientIdInput').value = drive.clientId;
   document.getElementById('fileCloseBtn').onclick = closeModal;
 
   document.getElementById('fbCreateNewBtn').onclick = () => {
@@ -1456,6 +1941,33 @@ function renderFileBackupModal(){
     else openImportEncryptedBackupUniversal();
   };
   document.getElementById('fbBackupNowBtn').onclick = exportEncryptedBackupUniversal;
+
+  document.getElementById('driveSyncNowBtn').onclick = async event => {
+    const button = event.currentTarget;
+    const errorBox = document.getElementById('driveSyncErr');
+    errorBox.style.display = 'none';
+    button.disabled = true;
+    button.textContent = 'Đang kết nối...';
+    try{
+      const outcome = await connectAndSyncGoogleDrive(document.getElementById('driveClientIdInput').value);
+      if(outcome !== 'conflict'){
+        toast(outcome === 'restored' ? 'Đã nhận dữ liệu mới từ Google Drive' : 'Đồng bộ Google Drive thành công');
+        if(document.getElementById('modalBg').classList.contains('show')) renderFileBackupModal();
+      }
+    }catch(error){
+      console.error(error);
+      errorBox.textContent = error.message || 'Không đồng bộ được Google Drive.';
+      errorBox.style.display = 'block';
+      button.disabled = false;
+      button.innerHTML = '<i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:4px;"></i>Kết nối / Đồng bộ ngay';
+    }
+  };
+  const driveDisconnectBtn = document.getElementById('driveDisconnectBtn');
+  if(driveDisconnectBtn) driveDisconnectBtn.onclick = async () => {
+    await disconnectGoogleDrive();
+    toast('Đã ngắt Google Drive trên thiết bị này; file trên Drive không bị xoá');
+    renderFileBackupModal();
+  };
 
   const advToggle = document.getElementById('fbAdvancedToggle');
   if(advToggle){
@@ -1636,6 +2148,7 @@ function renderSetup(){
         <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
         <p class="hint"><i class="ti ti-info-circle" style="vertical-align:-2px;font-size:14px"></i> ${t('hint_pw_not_saved')}</p>
         <button class="primary" id="setupBtn" style="width:100%">${t('btn_create_vault')}</button>
+        <button id="googleDriveRestoreSetupBtn" style="width:100%; margin-top:10px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Khôi phục kho mã hoá từ Google Drive</button>
         <button id="universalImportSetupBtn" style="width:100%; margin-top:10px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập file sao lưu mã hoá (.json) — mọi thiết bị</button>
         <button id="openVaultFileBtn" style="width:100%; margin-top:10px;"><i class="ti ti-device-floppy" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_open_vault_file')}</button>
         <button id="restoreBtn" style="width:100%; margin-top:10px;"><i class="ti ti-upload" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${t('btn_restore_backup')}</button>
@@ -1643,6 +2156,7 @@ function renderSetup(){
     </div>
   `;
   document.getElementById('restoreBtn').onclick = openRestoreModal;
+  document.getElementById('googleDriveRestoreSetupBtn').onclick = openGoogleDriveRestoreModal;
   document.getElementById('universalImportSetupBtn').onclick = openImportEncryptedBackupUniversal;
   document.getElementById('openVaultFileBtn').onclick = openExistingVaultFileAndSwitch;
   document.getElementById('setupBtn').onclick = async () => {
@@ -1941,6 +2455,7 @@ function renderUnlock(config){
         </label>
         <p class="hint" style="margin:0 0 16px;">${t('keep_session_hint')}</p>
         <button class="primary" id="unlockBtn" style="width:100%">${t('btn_unlock')}</button>
+        <button id="googleDriveRestoreUnlockBtn" style="width:100%;margin-top:10px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Thay kho này bằng bản trên Google Drive</button>
         <button type="button" id="deleteVaultLink" style="width:100%; margin-top:16px; background:transparent; border:none; color:var(--text-muted); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;">Quên mật khẩu? Xoá kho hiện tại và tạo kho mới</button>
       </div>
     </div>
@@ -1950,6 +2465,7 @@ function renderUnlock(config){
     if(cb) cb.checked = on;
   });
   document.getElementById('deleteVaultLink').onclick = openDeleteVaultModal;
+  document.getElementById('googleDriveRestoreUnlockBtn').onclick = openGoogleDriveRestoreModal;
   const doUnlock = async () => {
     const btn = document.getElementById('unlockBtn');
     const pw = document.getElementById('pwUnlock').value;
@@ -4097,6 +4613,17 @@ function startSession(){
   const now = Date.now();
   state.session.loginTime = now;
   state.session.lastActivity = now;
+  requestPersistentStorage();
+}
+
+async function requestPersistentStorage(){
+  if(!navigator.storage || typeof navigator.storage.persist !== 'function') return false;
+  try{
+    if(typeof navigator.storage.persisted === 'function' && await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  }catch(error){
+    return false;
+  }
 }
 
 function endSession(){
@@ -4380,6 +4907,7 @@ document.addEventListener('keydown', (e) => {
 });
 (async () => {
   state.lang = await loadLangPref();
+  await loadDriveSettings();
   updateLangSwitchUI();
   renderApp();
 })();
