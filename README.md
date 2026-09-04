@@ -1,0 +1,129 @@
+# Devic3 — kho tài khoản mã hoá và đồng bộ nhiều thiết bị
+
+Devic3 lưu dữ liệu trong trình duyệt bằng **IndexedDB** và mã hoá bằng **AES-256-GCM**. Dữ liệu `localStorage` từ bản cũ được tự động sao chép sang IndexedDB nhưng không bị xoá, nên nâng cấp không làm mất kho hiện có.
+
+Google Drive chỉ nhận một file JSON đã mã hoá trong thư mục ẩn riêng của ứng dụng (`appDataFolder`). GitHub chỉ chứa source code; không chứa kho tài khoản, mật khẩu chính hay OAuth access token.
+
+## Phương án chạy khuyến nghị
+
+- Dùng **GitHub Pages** để mở cùng một địa chỉ HTTPS trên PC, iPhone và iPad.
+- Dùng **Google Drive Sync** trong Devic3 để chuyển kho mã hoá giữa các thiết bị.
+- Định kỳ bấm **Backup dữ liệu hiện tại** để có thêm file `.json` mã hoá dự phòng.
+- Server Node.js cục bộ chỉ dùng để xem trước ứng dụng trên PC và lấy địa chỉ IP mạng; không cần triển khai server này lên Internet.
+
+## A. Đưa giao diện lên GitHub Pages
+
+1. Tạo repository GitHub. Repository public chỉ được chứa source, tuyệt đối không commit file backup hoặc token.
+2. Đưa các file source trong thư mục này lên repository.
+3. Trên GitHub, mở **Settings → Pages**.
+4. Trong **Build and deployment**, chọn **Deploy from a branch**.
+5. Chọn nhánh đang dùng (thường là `main`) và thư mục `/ (root)`, rồi bấm **Save**.
+6. Chờ địa chỉ dạng `https://TEN-CUA-BAN.github.io/TEN-REPO/D3vic3.html` hoạt động.
+7. Luôn dùng đúng URL HTTPS này trên mọi thiết bị. Mỗi tên miền/origin có một kho IndexedDB riêng.
+
+Nên thêm vào `.gitignore` nếu có lưu backup trong thư mục dự án:
+
+```gitignore
+devic3-vault-*.json
+*.vault.json
+.env
+```
+
+## B. Tạo Google OAuth Client ID
+
+1. Mở [Google Cloud Console](https://console.cloud.google.com/) và tạo project riêng, ví dụ `Devic3 Sync`.
+2. Vào **APIs & Services → Library**, tìm **Google Drive API** và bấm **Enable**.
+3. Vào **Google Auth Platform / OAuth consent screen**:
+   - Gmail cá nhân thường chọn **External**.
+   - Điền tên ứng dụng và email hỗ trợ.
+   - Nếu ứng dụng ở trạng thái **Testing**, mở **Audience → Test users → Add users**, thêm chính xác từng tài khoản Google sẽ dùng và bấm **Save**.
+4. Vào **Clients → Create client → Web application**.
+5. Trong **Authorized JavaScript origins**, thêm chính xác:
+
+   ```text
+   https://TEN-CUA-BAN.github.io
+   ```
+
+   Chỉ nhập origin, không thêm tên repository hoặc `/D3vic3.html`.
+6. Nếu thử trên máy tính, thêm:
+
+   ```text
+   http://127.0.0.1:8765
+   ```
+
+7. Tạo client và sao chép **Client ID** có đuôi `.apps.googleusercontent.com`.
+8. Không tạo hoặc chép **Client secret** vào Devic3. Ứng dụng web này không cần client secret.
+
+Devic3 chỉ yêu cầu scope `https://www.googleapis.com/auth/drive.appdata`. Quyền này chỉ cho ứng dụng đọc/ghi thư mục ẩn riêng của chính nó, không đọc các file Drive thông thường.
+
+## C. Thiết bị đầu tiên
+
+1. Mở Devic3 từ GitHub Pages và mở kho bằng mật khẩu chính.
+2. Bấm **Sao lưu / Khôi phục** trên thanh công cụ.
+3. Tại **Đồng bộ nhiều thiết bị**, dán Google OAuth Client ID.
+4. Bấm **Kết nối / Đồng bộ ngay**, đăng nhập đúng tài khoản Google và chấp nhận quyền.
+5. Devic3 tạo `devic3-vault-sync.json` đã mã hoá trong `appDataFolder`.
+6. Bấm **Backup dữ liệu hiện tại** và cất file `.json` ở nơi an toàn.
+
+Trong phiên đang kết nối, mỗi thay đổi được đẩy lên Drive gần như ngay sau khi lưu. Các thiết bị khác đang mở, đã kết nối và không có biểu mẫu chưa lưu sẽ tự kiểm tra rồi cập nhật giao diện trong tối đa khoảng 5 giây. Khi đưa ứng dụng từ nền trở lại, Devic3 cũng kiểm tra bản mới ngay. Access token Google chỉ nằm trong RAM của tab; sau khi đóng hoặc tải lại trang, bấm **Kết nối / Đồng bộ ngay** để cấp lại phiên. Devic3 không lưu refresh token Google.
+
+## D. iPhone hoặc iPad
+
+1. Mở đúng URL GitHub Pages bằng Safari.
+2. Chọn **Chia sẻ → Thêm vào Màn hình chính**.
+3. Ở màn hình tạo kho, bấm **Khôi phục kho mã hoá từ Google Drive**.
+4. Dán cùng Google OAuth Client ID, đăng nhập cùng tài khoản Google.
+5. Nhập mật khẩu chính của kho sau khi tải xong.
+6. Trước khi sửa trên thiết bị này, vào **Sao lưu / Khôi phục → Kết nối / Đồng bộ ngay** để lấy bản mới nhất.
+
+Nếu Safari vẫn chặn cửa sổ đăng nhập, vào **Cài đặt iPhone → Ứng dụng → Safari → tắt Chặn cửa sổ bật lên** trong lúc kết nối, đồng thời tạm tắt content blocker cho trang GitHub Pages. Sau khi kết nối xong có thể bật lại. Google yêu cầu đăng nhập bắt đầu trực tiếp từ một lần bấm của người dùng.
+
+### Sửa lỗi `403: access_denied`
+
+Lỗi “ứng dụng chưa hoàn tất quy trình xác minh” trong khi app ở chế độ Testing nghĩa là Gmail đang đăng nhập chưa được cấp quyền thử nghiệm:
+
+1. Chọn đúng Google Cloud project đã tạo OAuth Client ID đang dán trong Devic3.
+2. Mở **Google Auth Platform → Audience**.
+3. Tại **Test users**, bấm **Add users**.
+4. Thêm đúng địa chỉ Gmail xuất hiện trong cửa sổ lỗi và bấm **Save**.
+5. Đóng cửa sổ lỗi, đợi vài phút rồi bấm **Kết nối / Đồng bộ ngay** lại.
+
+Nếu muốn nhiều người ngoài danh sách Test users sử dụng, cần chuyển ứng dụng sang **In production** và hoàn thành các yêu cầu xác minh mà Google hiển thị. Với ứng dụng cá nhân, giữ chế độ Testing và khai báo các tài khoản của mình thường đơn giản và an toàn hơn.
+
+## E. Quy trình tránh xung đột
+
+1. Mở thiết bị A → kết nối và đồng bộ.
+2. Sửa dữ liệu trên A → chờ đồng bộ hoàn tất.
+3. Trước khi dùng thiết bị B → kết nối và đồng bộ để nhận bản mới.
+4. Tránh sửa đồng thời trên hai thiết bị đang ngoại tuyến.
+
+Nếu cả hai bản đều thay đổi, Devic3 không tự ghi đè mà cho chọn:
+
+- **Dùng bản trên Google Drive**: thay kho thiết bị bằng bản Drive.
+- **Giữ bản trên thiết bị**: ghi bản thiết bị lên Drive.
+- **Huỷ**: không thay đổi để có thể xuất backup trước khi quyết định.
+
+Ứng dụng không tự trộn hai kho vì có thể làm sống lại tài khoản đã xoá hoặc mất chỉnh sửa.
+
+## F. Chạy thử bằng server cục bộ
+
+Nếu muốn chạy source trực tiếp trên PC:
+
+1. Cài Node.js 18 hoặc mới hơn.
+2. Mở PowerShell trong thư mục dự án.
+3. Chạy `npm start`.
+4. Mở `http://127.0.0.1:8765/D3vic3.html`.
+
+Server chỉ lắng nghe tại `127.0.0.1`. Bản GitHub Pages hoạt động độc lập và đồng bộ dữ liệu mã hoá trực tiếp với Google Drive.
+
+## G. Kiểm thử
+
+Chạy `npm test`. Kiểm thử dùng dữ liệu giả, không cần Google token thật.
+
+## Lưu ý bảo mật
+
+- File `.json` đã mã hoá vẫn cần được giữ kín; dùng mật khẩu chính mạnh và riêng biệt.
+- Quên mật khẩu chính đồng nghĩa không thể giải mã bản local hoặc Drive.
+- `appDataFolder` không phải bản sao lưu duy nhất. Luôn giữ thêm backup thủ công.
+- Không commit backup, refresh token, access token hoặc dữ liệu tài khoản lên GitHub.
+- Trên máy lạ, không bật **Giữ đăng nhập khi tải lại trang** và nhớ bấm **Khoá**.

@@ -854,7 +854,12 @@ function platformDelimiter(platformId){
   return platformId === 'proxy' ? ':' : '|';
 }
 function platformFormatHint(platformId){
-  const labels = getPlatformInputFields(platformId).map(f => f.label);
+  const fields = getPlatformInputFields(platformId);
+  const labels = fields.map(f => f.label);
+  if(['tiktok', 'gmail', 'hotmail', 'steam'].includes(platformId)){
+    const otherIndex = fields.findIndex(field => field.key === 'other');
+    labels.splice(otherIndex < 0 ? labels.length : otherIndex, 0, 'Proxy');
+  }
   const d = platformDelimiter(platformId);
   return d === ':' ? labels.join(d) : labels.join(d) + '|';
 }
@@ -3867,6 +3872,163 @@ function looksLikeOpaqueTokenBlob(s){
   return true;
 }
 
+function looksLikeProxyValue(s){
+  const raw = String(s || '').trim();
+  if(!raw || raw.includes(' ') || raw.includes(';')) return false;
+  const value = raw.replace(/^(?:https?|socks[45]?):\/\//i, '');
+  const hostPort = value.includes('@') ? value.slice(value.lastIndexOf('@') + 1) : value;
+  if(/^\[[0-9a-f:]+\]:\d{1,5}$/i.test(hostPort)){
+    const port = Number(hostPort.slice(hostPort.lastIndexOf(':') + 1));
+    return port > 0 && port <= 65535;
+  }
+  const match = hostPort.match(/^([^:]+):(\d{1,5})(?::[^:|]+(?::[^:|]+)?)?$/);
+  if(!match) return false;
+  const host = match[1];
+  const port = Number(match[2]);
+  if(port < 1 || port > 65535) return false;
+  if(/^\d+(?:\.\d+){3}$/.test(host)){
+    return host.split('.').every(part => Number(part) >= 0 && Number(part) <= 255);
+  }
+  return /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(host);
+}
+
+function looksLikePhoneValue(s){
+  const value = String(s || '').trim();
+  const digits = value.replace(/[\s().-]/g, '').replace(/^\+/, '');
+  return /^\d{8,15}$/.test(digits);
+}
+
+function looksLikeSteamId(s){
+  return /^7656119\d{10}$/.test(String(s || '').trim());
+}
+
+function looksLikeSteamSecret(s){
+  const value = String(s || '').trim();
+  return value.length >= 24 && value.length <= 32 && /^[A-Za-z0-9+/]+={0,2}$/.test(value) && /[+/=]/.test(value);
+}
+
+function looksLikeGenericToken(s){
+  const value = String(s || '').trim();
+  return looksLikeFacebookToken(value) || /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?$/.test(value) || looksLikeOpaqueTokenBlob(value);
+}
+
+function looksLikeBackupCodes(s){
+  const value = String(s || '').trim();
+  if(!/[\s,;]+/.test(value)) return false;
+  const codes = value.split(/[\s,;]+/).filter(Boolean);
+  return codes.length >= 2 && codes.every(code => /^[A-Za-z0-9-]{4,16}$/.test(code));
+}
+
+function strongAutoType(value, platformId){
+  if(!value) return 'empty';
+  if(looksLikeProxyValue(value)) return 'proxy';
+  if(looksLikeCookieHeader(value)) return 'cookie';
+  if(looksLikeGenericToken(value)) return 'token';
+  if(platformId === 'steam' && looksLikeSteamId(value)) return 'steamId';
+  if(platformId === 'steam' && looksLikeSteamSecret(value)) return 'steamSecret';
+  if(looksLike2FASecret(value)) return 'twoFA';
+  if(looksLikeEmail(value)) return 'email';
+  if(looksLikePhoneValue(value)) return 'phone';
+  if(looksLikeBackupCodes(value)) return 'backupCodes';
+  return 'unknown';
+}
+
+function parseSmartCredentialParts(parts, platformId){
+  const fields = getPlatformInputFields(platformId);
+  const obj = Object.fromEntries(fields.map(field => [field.key, '']));
+  obj.proxy = '';
+  const values = parts.map((value, index) => ({ value: String(value || '').trim(), index, used: false }));
+  const assign = (item, key) => {
+    if(!item || item.used || !item.value || obj[key]) return false;
+    obj[key] = item.value;
+    item.used = true;
+    return true;
+  };
+  const firstOfType = type => values.find(item => !item.used && strongAutoType(item.value, platformId) === type);
+  const allOfType = type => values.filter(item => !item.used && strongAutoType(item.value, platformId) === type);
+  const hasExplicitGaps = parts.some(value => !String(value || '').trim());
+  const isFullWidth = parts.length >= Math.max(2, fields.length - 1);
+
+  // Establish the login identifier before classifying optional contact data.
+  // Gmail/Hotmail always use an email; TikTok/Steam use the first ordinary
+  // value, which may itself be an email address or phone number.
+  if(platformId === 'gmail' || platformId === 'hotmail'){
+    assign(firstOfType('email'), 'fbName');
+  }else{
+    const firstNonEmpty = values.find(item => item.value);
+    const primaryType = firstNonEmpty ? strongAutoType(firstNonEmpty.value, platformId) : 'empty';
+    if(['unknown', 'email', 'phone'].includes(primaryType)) assign(firstNonEmpty, 'fbName');
+  }
+
+  // Protect declared password columns before Base32 detection: a strong random
+  // password (especially a 16-letter Google app password) may look exactly like
+  // a TOTP secret. In compact rows, the second ordinary item is the login pass.
+  if(hasExplicitGaps || isFullWidth){
+    const passwordKeys = new Set(['password', 'emailPassword', 'secondaryEmailPassword', 'appPassword']);
+    fields.forEach((field, index) => {
+      const item = values[index];
+      if(item && passwordKeys.has(field.key) && ['unknown', 'twoFA'].includes(strongAutoType(item.value, platformId))){
+        assign(item, field.key);
+      }
+    });
+  }else if(!obj.password){
+    const primaryItem = values.find(item => item.used && item.value === obj.fbName);
+    const candidate = values.find(item => !item.used && item.index > (primaryItem?.index ?? -1) && ['unknown', 'twoFA'].includes(strongAutoType(item.value, platformId)));
+    assign(candidate, 'password');
+  }
+
+  // These shapes are reliable enough to classify independently of column order.
+  assign(firstOfType('proxy'), 'proxy');
+  assign(firstOfType('cookie'), 'cookie');
+  assign(firstOfType('token'), 'token');
+  assign(firstOfType('twoFA'), 'twoFA');
+  assign(firstOfType('phone'), 'phone');
+  assign(firstOfType('backupCodes'), 'backupCodes');
+  if(platformId === 'steam'){
+    assign(firstOfType('steamId'), 'steamId');
+    const steamSecrets = allOfType('steamSecret');
+    assign(steamSecrets[0], 'steamSharedSecret');
+    assign(steamSecrets[1], 'steamIdentitySecret');
+  }
+
+  const emailItems = allOfType('email');
+  if(platformId === 'gmail' || platformId === 'hotmail'){
+    assign(emailItems[0], 'secondaryEmail');
+  }else{
+    assign(emailItems[0], 'email');
+  }
+
+  if(hasExplicitGaps || isFullWidth){
+    // A full row (or a row with || placeholders) intentionally follows the
+    // displayed format. Use those positions only for values not classified above.
+    fields.forEach((field, index) => {
+      const item = values[index];
+      if(item && !item.used && strongAutoType(item.value, platformId) === 'unknown') assign(item, field.key);
+    });
+  }
+
+  const remaining = () => values.filter(item => !item.used && item.value);
+  // User and password have no universal signature. Their relative order is the
+  // only safe convention after all recognisable values have been removed.
+  if(!obj.fbName) assign(remaining()[0], 'fbName');
+  if(!obj.password){
+    const primaryIndex = values.find(item => item.used && item.value === obj.fbName)?.index ?? -1;
+    assign(remaining().find(item => item.index > primaryIndex) || remaining()[0], 'password');
+  }
+
+  const linkedEmailKey = platformId === 'gmail' || platformId === 'hotmail' ? 'secondaryEmail' : 'email';
+  const linkedPasswordKey = platformId === 'gmail' || platformId === 'hotmail' ? 'secondaryEmailPassword' : 'emailPassword';
+  if(obj[linkedEmailKey] && !obj[linkedPasswordKey]){
+    const emailIndex = values.find(item => item.used && item.value === obj[linkedEmailKey])?.index ?? -1;
+    assign(remaining().find(item => item.index > emailIndex), linkedPasswordKey);
+  }
+
+  // Preserve every unrecognised value rather than silently discarding it.
+  const leftovers = remaining().map(item => item.value);
+  if(leftovers.length) obj.other = [obj.other, ...leftovers].filter(Boolean).join(' | ');
+  return obj;
+}
+
 // Facebook's format has fields with very distinctive, checkable shapes
 // (UID = digits only, 2FA = long base32 secret, Email = short and RFC-valid,
 // Cookie = long "key=value;" dump, Token = Facebook access token "EAA..."
@@ -3946,6 +4108,9 @@ function parseAutoLine(line, platformId){
   getPlatformInputFields(platformId).forEach((f, i) => { obj[f.key] = parts[i] || ''; });
   if(platformId === 'facebook'){
     return smartCorrectFacebookFields(obj);
+  }
+  if(['tiktok', 'gmail', 'hotmail', 'steam'].includes(platformId)){
+    return parseSmartCredentialParts(parts, platformId);
   }
   return obj;
 }
@@ -4118,7 +4283,10 @@ function buildAutoFormatHintHtml(platformId){
   const dateHint = getPlatformFields(platformId).some(f => fieldMeta(f.key).kind === 'date')
     ? `<br>Ngày viết theo dạng <code>dd/mm/yyyy</code> — VD: <code>${escapeHtml((() => { const d = new Date(); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); })())}</code>.`
     : '';
-  return `Định dạng: <code id="autoFormatCode">${escapeHtml(fmt)}</code> — dán nhiều dòng để thêm hàng loạt tài khoản cùng lúc. Tất cả sẽ được gán vào thư mục chọn ở trên.<br>Nếu tài khoản thiếu trường nào thì cứ để trống phần đó (giữa 2 dấu <code id="autoFormatDelim">${platformDelimiter(platformId)}</code>), phần mềm sẽ tự bỏ qua và không hiển thị mục đó.${dateHint}`;
+  const smartHint = ['tiktok', 'gmail', 'hotmail', 'steam'].includes(platformId)
+    ? '<br><b>Tự nhận dạng:</b> email, 2FA, cookie, token, proxy, số điện thoại và mã riêng của Steam có thể nằm khác thứ tự. Riêng User và Pass nên giữ ở hai vị trí đầu vì hai chuỗi này không có dấu hiệu kỹ thuật đủ chắc chắn để phân biệt.'
+    : '';
+  return `Định dạng: <code id="autoFormatCode">${escapeHtml(fmt)}</code> — dán nhiều dòng để thêm hàng loạt tài khoản cùng lúc. Tất cả sẽ được gán vào thư mục chọn ở trên.<br>Nếu tài khoản thiếu trường nào thì có thể bỏ qua; dùng <code id="autoFormatDelim">${platformDelimiter(platformId)}</code><code>${platformDelimiter(platformId)}</code> khi muốn giữ chính xác một cột trống.${smartHint}${dateHint}`;
 }
 
 function renderModalBody(entry){
