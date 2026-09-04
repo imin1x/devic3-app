@@ -3167,9 +3167,20 @@ async function readFacebookMailOtp(entry){
         clientId: entry.mailClientId,
       }),
     });
+    const responseText = await response.text();
     let result;
-    try{ result = await response.json(); }
-    catch(e){ throw new Error('Máy chủ cục bộ trả về dữ liệu không hợp lệ.'); }
+    try{
+      result = responseText ? JSON.parse(responseText) : null;
+    }catch(e){
+      const looksLikeHtml = /^\s*(?:<!doctype|<html|<head|<body)/i.test(responseText);
+      if(looksLikeHtml){
+        throw new Error('Nút Đọc OTP đang kết nối nhầm server tĩnh. Hãy đóng server cũ, chạy “npm start”, rồi tải lại ứng dụng.');
+      }
+      throw new Error(`Dịch vụ đọc OTP trả về dữ liệu không hợp lệ (HTTP ${response.status}). Hãy khởi động lại bằng “npm start”.`);
+    }
+    if(!result || typeof result !== 'object'){
+      throw new Error(`Dịch vụ đọc OTP không trả về dữ liệu (HTTP ${response.status}). Hãy khởi động lại bằng “npm start”.`);
+    }
 
     if(result.rotatedRefreshToken){
       const saved = await saveRotatedMailRefreshToken(entry.id, result.rotatedRefreshToken);
