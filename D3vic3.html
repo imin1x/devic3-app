@@ -160,7 +160,6 @@
   .entry-created{display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--text-muted);}
   .new-badge{display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:700; letter-spacing:0.3px; color:#000; background:#facc15; padding:2px 7px; border-radius:999px; box-shadow:0 0 8px -2px rgba(250,204,21,0.6);}
   .entry-fieldrow{display:flex; align-items:center; flex-wrap:wrap; font-size:13px; margin-top:5px; row-gap:4px; min-width:0;}
-  .otp-inline-btn{margin-left:6px; padding:4px 9px; font-size:11px;}
   .field-chip{cursor:pointer; padding:2px 5px; border-radius:4px; white-space:normal; overflow-wrap:break-word; color:var(--text-2); display:inline-flex; align-items:baseline; gap:4px; max-width:100%;}
   .field-chip:hover{background:#1c1c1c; color:var(--text);}
   .field-chip .field-label{color:var(--text-muted); font-size:11px;}
@@ -564,7 +563,6 @@ const I18N = {
   status_checking:          { vi: 'Đang kiểm tra',                 en: 'Checking' },
   // entry actions
   btn_check:                { vi: 'Kiểm tra',                     en: 'Check' },
-  btn_read_otp:             { vi: 'Đọc OTP',                      en: 'Read OTP' },
   btn_edit:                 { vi: 'Sửa',                          en: 'Edit' },
   btn_delete:               { vi: 'Xoá',                          en: 'Delete' },
   // common modal buttons
@@ -697,8 +695,6 @@ const FIELD_META = {
   username:               { icon: 'ti-user',        kind: 'text' },
   cookie:                 { icon: 'ti-cookie',      kind: 'area' },
   token:                  { icon: 'ti-key',         kind: 'area' },
-  mailRefreshToken:       { icon: 'ti-refresh',     kind: 'secret' },
-  mailClientId:           { icon: 'ti-apps',        kind: 'secret' },
   backupCodes:            { icon: 'ti-list-numbers',kind: 'area' },
   recoveryCode:           { icon: 'ti-lifebuoy',    kind: 'text' },
   appPassword:            { icon: 'ti-password',    kind: 'text' },
@@ -753,7 +749,6 @@ function buildEntryDisplayRows(e){
     else row3.push({ label: '2FA', field: 'twoFA', value: null, secret: false, isTotp: true });
     used.add('twoFA');
   }
-  if(e.platform === 'facebook' || e.platform === 'hotmail') row3.push({ isMailOtpAction: true });
   if(e.phone){ row3.push({ label: 'SĐT', field: 'phone', value: e.phone, secret: false }); used.add('phone'); }
   if(row3.length) rows.push(row3);
 
@@ -773,9 +768,6 @@ const PLATFORM_FIELDS = {
     { key: 'cookie',        label: 'Cookie' },
     { key: 'token',         label: 'Token' },
     { key: 'other',         label: 'Khác' },
-    // Kept at the end of the storage/export layout for old backup compatibility.
-    { key: 'mailRefreshToken', label: 'Refresh Token Mail' },
-    { key: 'mailClientId',     label: 'Client ID Mail' },
   ],
   gmail: [
     { key: 'fbName',                 label: 'Email' },
@@ -816,8 +808,6 @@ const PLATFORM_FIELDS = {
     { key: 'token',                  label: 'Token' },
     { key: 'recoveryCode',           label: 'Mã khôi phục' },
     { key: 'backupCodes',            label: 'Mã dự phòng' },
-    { key: 'mailRefreshToken',        label: 'Refresh Token Mail' },
-    { key: 'mailClientId',            label: 'Client ID Mail' },
   ],
   steam: [
     { key: 'fbName',        label: 'User' },
@@ -852,9 +842,9 @@ const PLATFORM_FIELDS = {
 // Practical order used by the manual form and bulk-entry format. Storage and
 // text-backup field order remain unchanged for backward compatibility.
 const PLATFORM_INPUT_ORDER = {
-  facebook: ['fbName', 'password', 'twoFA', 'email', 'emailPassword', 'secondaryEmail', 'mailRefreshToken', 'mailClientId', 'cookie', 'token', 'other'],
+  facebook: ['fbName', 'password', 'twoFA', 'email', 'emailPassword', 'secondaryEmail', 'cookie', 'token', 'other'],
   gmail: ['fbName', 'password', 'twoFA', 'secondaryEmail', 'secondaryEmailPassword', 'phone', 'backupCodes', 'appPassword', 'cookie', 'token', 'other'],
-  hotmail: ['fbName', 'password', 'twoFA', 'secondaryEmail', 'secondaryEmailPassword', 'phone', 'recoveryCode', 'backupCodes', 'mailRefreshToken', 'mailClientId', 'cookie', 'token', 'other'],
+  hotmail: ['fbName', 'password', 'twoFA', 'secondaryEmail', 'secondaryEmailPassword', 'phone', 'recoveryCode', 'backupCodes', 'cookie', 'token', 'other'],
   tiktok: ['fbName', 'password', 'twoFA', 'email', 'emailPassword', 'phone', 'backupCodes', 'cookie', 'token', 'other'],
   steam: ['fbName', 'password', 'steamId', 'email', 'emailPassword', 'phone', 'twoFA', 'steamGuardRecoveryCode', 'steamSharedSecret', 'steamIdentitySecret', 'cookie', 'token', 'other'],
 };
@@ -961,7 +951,6 @@ let state = {
   hiddenStatuses: new Set(), // status keys ('active'|'inactive'|'unknown') currently hidden from the list
   selectedIds: new Set(),
   checkingIds: new Set(), // transient; never persisted as an account status
-  otpReadingIds: new Set(), // transient Microsoft Graph request state
   activePlatform: getPlatformFromHash() || 'facebook',
   expandedIds: new Set(),
   visibleEntries: [],
@@ -1327,7 +1316,7 @@ async function assembleVaultBundle(){
 // ---------- GOOGLE DRIVE SYNC (encrypted bundle in appDataFolder) ----------
 // The OAuth access token exists only in memory. The Drive file contains the
 // same already-encrypted vault blobs as a manual backup; no password, account
-// plaintext, Microsoft token, or Google client secret is sent or stored here.
+// plaintext credentials or a Google client secret are sent or stored here.
 const DRIVE_SETTINGS_KEY = 'devic3-google-drive-sync';
 const DRIVE_FILE_NAME = 'devic3-vault-sync.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -1496,11 +1485,13 @@ async function vaultFingerprint(bundle){
 
 async function uploadDriveEnvelope(fileId, bundle, revision){
   const settings = await loadDriveSettings();
+  const writeId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const envelope = {
     app: 'devic3-drive-sync',
     version: 1,
     revision,
     deviceId: settings.deviceId,
+    writeId,
     savedAt: Date.now(),
     vault: bundle,
   };
@@ -1512,7 +1503,7 @@ async function uploadDriveEnvelope(fileId, bundle, revision){
       body: content,
     });
     const body = await response.json();
-    return body.id || fileId;
+    return { fileId: body.id || fileId, modifiedTime: body.modifiedTime || '', envelope };
   }
   const boundary = `devic3_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const multipart = [
@@ -1527,7 +1518,37 @@ async function uploadDriveEnvelope(fileId, bundle, revision){
   });
   const body = await response.json();
   if(!body.id) throw new Error('Google Drive không trả về mã file sau khi tải lên.');
-  return body.id;
+  return { fileId: body.id, modifiedTime: body.modifiedTime || '', envelope };
+}
+
+class DriveWriteConflictError extends Error {
+  constructor(remote, message = 'Dữ liệu Drive vừa được thay đổi từ thiết bị khác.'){
+    super(message);
+    this.name = 'DriveWriteConflictError';
+    this.remote = remote;
+  }
+}
+
+// Drive API v3 does not expose a compare-and-swap operation for media uploads.
+// Re-read immediately before writing and verify our unique writeId afterwards.
+// A simultaneous writer is therefore surfaced as a conflict instead of causing
+// this device to silently pull over (and lose) its unsynchronised local change.
+async function uploadDriveEnvelopeChecked(fileId, bundle, revision, expectedRemote){
+  const expectedFingerprint = await vaultFingerprint(expectedRemote.vault);
+  const freshBefore = await downloadDriveEnvelope(fileId);
+  const freshBeforeFingerprint = await vaultFingerprint(freshBefore.vault);
+  if(freshBefore.revision !== expectedRemote.revision || freshBeforeFingerprint !== expectedFingerprint){
+    throw new DriveWriteConflictError(freshBefore);
+  }
+  const saved = await uploadDriveEnvelope(fileId, bundle, revision);
+  const verified = await downloadDriveEnvelope(saved.fileId);
+  const [wantedFingerprint, verifiedFingerprint] = await Promise.all([
+    vaultFingerprint(bundle), vaultFingerprint(verified.vault),
+  ]);
+  if(verified.revision !== revision || verified.writeId !== saved.envelope.writeId || verifiedFingerprint !== wantedFingerprint){
+    throw new DriveWriteConflictError(verified, 'Một thiết bị khác đã ghi dữ liệu cùng lúc. Bản trên thiết bị này vẫn được giữ nguyên.');
+  }
+  return { ...saved, remote: verified };
 }
 
 async function recordDriveSync(fileId, revision, fingerprint, modifiedTime = ''){
@@ -1604,19 +1625,43 @@ function openDriveConflictModal(localBundle, localFingerprint, remote, remoteFin
   document.getElementById('driveConflictCancelBtn').onclick = closeModal;
   document.getElementById('driveUseRemoteBtn').onclick = async event => {
     event.currentTarget.disabled = true;
-    try{ await useRemoteDriveVault(remote, fileId); }
+    try{
+      await useRemoteDriveVault(remote, fileId);
+      closeModal();
+    }
     catch(error){ console.error(error); toast(error.message || 'Không khôi phục được bản Drive', 5000); event.currentTarget.disabled = false; }
   };
   document.getElementById('driveUseLocalBtn').onclick = async event => {
     event.currentTarget.disabled = true;
     try{
       const nextRevision = remote.revision + 1;
-      const savedId = await uploadDriveEnvelope(fileId, localBundle, nextRevision);
-      await recordDriveSync(savedId, nextRevision, localFingerprint);
+      const saved = await uploadDriveEnvelopeChecked(fileId, localBundle, nextRevision, remote);
+      await recordDriveSync(saved.fileId, nextRevision, localFingerprint, saved.modifiedTime);
       closeModal();
       toast('Đã giữ bản trên thiết bị và cập nhật Google Drive');
-    }catch(error){ console.error(error); toast(error.message || 'Không cập nhật được Google Drive', 5000); event.currentTarget.disabled = false; }
+    }catch(error){
+      console.error(error);
+      if(error instanceof DriveWriteConflictError && error.remote){
+        const newestFingerprint = await vaultFingerprint(error.remote.vault);
+        openDriveConflictModal(localBundle, localFingerprint, error.remote, newestFingerprint, fileId);
+        toast('Drive vừa thay đổi. Hãy chọn lại phiên bản cần giữ.', 6000);
+      }else{
+        toast(error.message || 'Không cập nhật được Google Drive', 5000);
+        event.currentTarget.disabled = false;
+      }
+    }
   };
+}
+
+function reportDriveConflict(localBundle, localFingerprint, remote, remoteFingerprint, fileId, allowConflictUi, alreadyReported = false){
+  driveRuntimeStatus = 'conflict';
+  driveRuntimeMessage = 'Có xung đột dữ liệu';
+  if(allowConflictUi){
+    openDriveConflictModal(localBundle, localFingerprint, remote, remoteFingerprint, fileId);
+  }else if(!alreadyReported){
+    toast('Google Drive có xung đột. Mở Sao lưu / Đồng bộ để chọn bản cần giữ.', 6000);
+  }
+  return 'conflict';
 }
 
 async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = false, polling = false } = {}){
@@ -1636,8 +1681,8 @@ async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = f
 
   if(!file){
     if(restoreOnly || !hasLocalVault) throw new Error('Chưa có bản đồng bộ Devic3 trong Google Drive này.');
-    const fileId = await uploadDriveEnvelope('', localBundle, 1);
-    await recordDriveSync(fileId, 1, localFingerprint);
+    const saved = await uploadDriveEnvelope('', localBundle, 1);
+    await recordDriveSync(saved.fileId, 1, localFingerprint, saved.modifiedTime);
     return 'uploaded';
   }
 
@@ -1656,23 +1701,26 @@ async function performGoogleDriveSync({ allowConflictUi = false, restoreOnly = f
   const remoteUnchanged = !!settings.lastSyncedFingerprint && remoteFingerprint === settings.lastSyncedFingerprint;
   if(remoteUnchanged && !restoreOnly){
     const nextRevision = remote.revision + 1;
-    const fileId = await uploadDriveEnvelope(file.id, localBundle, nextRevision);
-    await recordDriveSync(fileId, nextRevision, localFingerprint);
+    try{
+      const saved = await uploadDriveEnvelopeChecked(file.id, localBundle, nextRevision, remote);
+      await recordDriveSync(saved.fileId, nextRevision, localFingerprint, saved.modifiedTime);
+    }catch(error){
+      if(!(error instanceof DriveWriteConflictError) || !error.remote) throw error;
+      const newestFingerprint = await vaultFingerprint(error.remote.vault);
+      return reportDriveConflict(localBundle, localFingerprint, error.remote, newestFingerprint, file.id, allowConflictUi, statusBeforeSync === 'conflict');
+    }
     return 'uploaded';
   }
   if(localUnchanged && (state.key || allowConflictUi)){
+    // A changed payload with the same/older revision is a concurrent-write
+    // collision, not a legitimate newer version to apply automatically.
+    if(remote.revision <= Number(settings.lastRemoteRevision || 0)){
+      return reportDriveConflict(localBundle, localFingerprint, remote, remoteFingerprint, file.id, allowConflictUi, statusBeforeSync === 'conflict');
+    }
     await useRemoteDriveVault(remote, file.id, file.modifiedTime || '');
     return 'restored';
   }
-  const alreadyReported = statusBeforeSync === 'conflict';
-  driveRuntimeStatus = 'conflict';
-  driveRuntimeMessage = 'Có xung đột dữ liệu';
-  if(allowConflictUi){
-    openDriveConflictModal(localBundle, localFingerprint, remote, remoteFingerprint, file.id);
-    return 'conflict';
-  }
-  if(!alreadyReported) toast('Google Drive có xung đột. Mở Sao lưu / Đồng bộ để chọn bản cần giữ.', 6000);
-  return 'conflict';
+  return reportDriveConflict(localBundle, localFingerprint, remote, remoteFingerprint, file.id, allowConflictUi, statusBeforeSync === 'conflict');
 }
 
 function connectAndSyncGoogleDrive(clientId, options = {}){
@@ -1729,8 +1777,10 @@ function pollGoogleDriveNow(){
 function startGoogleDriveRealtimeSync(){
   stopGoogleDriveRealtimeSync();
   if(!driveAccessToken || !driveSettings || !driveSettings.enabled) return;
-  driveRuntimeStatus = 'synced';
-  driveRuntimeMessage = 'Đồng bộ hai chiều đang bật';
+  if(driveRuntimeStatus !== 'conflict'){
+    driveRuntimeStatus = 'synced';
+    driveRuntimeMessage = 'Đồng bộ hai chiều đang bật';
+  }
   driveRealtimeTimer = setInterval(pollGoogleDriveNow, DRIVE_REALTIME_POLL_MS);
 }
 
@@ -2704,7 +2754,6 @@ function renderVault(){
   list.innerHTML = filtered.map(e => {
     const isPhoneOrProxy = e.platform === 'phone' || e.platform === 'proxy';
     const isChecking = state.checkingIds.has(e.id);
-    const isReadingOtp = state.otpReadingIds.has(e.id);
     const displayedStatus = isChecking ? 'checking' : (e.status || 'unknown');
     const display = isPhoneOrProxy ? null : buildEntryDisplayRows(e);
     const extraFields = isPhoneOrProxy ? [] : getPlatformFields(e.platform).filter(f => {
@@ -2740,9 +2789,6 @@ function renderVault(){
         ${isPhoneOrProxy ? '' : display.rows.map(row => `
         <div class="entry-fieldrow">${row.map((f, i) => {
           const sep = i > 0 ? `<span class="field-sep">|</span>` : '';
-          if(f.isMailOtpAction){
-            return `${sep}<button class="text-btn otp-inline-btn" data-act="read-otp" title="Đọc mã xác nhận Facebook mới nhất từ Outlook" ${isReadingOtp ? 'disabled' : ''}><i class="ti ti-mail-code"></i>${isReadingOtp ? 'Đang đọc...' : t('btn_read_otp')}</button>`;
-          }
           if(f.isTotp){
             return `${sep}<span class="field-chip totp" id="totp-${e.id}" title="Mã 2FA hiện tại — bấm để sao chép"><span class="field-label">2FA:</span><span class="field-val" data-totp-val id="totp-val-${e.id}">------</span></span>`;
           }
@@ -2784,8 +2830,6 @@ function renderVault(){
     if(deleteBtn) deleteBtn.onclick = () => confirmDeleteEntry(id, entry.fbName || entry.email || '(chưa đặt tên)');
     const checkBtn = card.querySelector('[data-act=check]');
     if(checkBtn) checkBtn.onclick = () => checkAccountStatus(entry);
-    const readOtpBtn = card.querySelector('[data-act=read-otp]');
-    if(readOtpBtn) readOtpBtn.onclick = () => readFacebookMailOtp(entry);
     const selectCb = card.querySelector('.entry-checkbox');
     if(selectCb){
       selectCb.onclick = (ev) => ev.stopPropagation();
@@ -3678,138 +3722,6 @@ function showConfirm(title, message, onConfirm, confirmLabel, danger = true){
     closeModal();
     onConfirm();
   };
-}
-
-// ---------- MICROSOFT GRAPH: READ FACEBOOK OTP FROM OUTLOOK ----------
-function openMailOtpConfigHelp(entry, missingLabels){
-  const modalBg = document.getElementById('modalBg');
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <h2>Chưa đủ cấu hình đọc OTP</h2>
-    <p style="font-size:14px;color:var(--text-2);line-height:1.6;">Tài khoản này còn thiếu: <b style="color:var(--text);">${escapeHtml(missingLabels.join(', '))}</b>.</p>
-    <p class="hint">Bấm “Sửa tài khoản”, nhập email Outlook/Hotmail, Refresh Token Mail và Client ID Mail. Ứng dụng Microsoft OAuth cần quyền delegated <code>Mail.Read</code>.</p>
-    <div class="row" style="margin-top:18px;">
-      <button id="mailOtpHelpCloseBtn" style="flex:1;">Đóng</button>
-      <button id="mailOtpHelpEditBtn" class="primary" style="flex:1;">Sửa tài khoản</button>
-    </div>`;
-  modalBg.classList.add('show');
-  document.getElementById('mailOtpHelpCloseBtn').onclick = closeModal;
-  document.getElementById('mailOtpHelpEditBtn').onclick = () => {
-    closeModal();
-    const current = state.entries.find(e => e.id === entry.id);
-    if(current) openModal(current);
-  };
-}
-
-function showMailOtpError(message){
-  const modalBg = document.getElementById('modalBg');
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <h2 style="color:var(--danger-text);">Không đọc được OTP</h2>
-    <p style="font-size:14px;color:var(--text-2);line-height:1.6;">${escapeHtml(message)}</p>
-    <p class="hint">Chỉ kiểm tra Inbox và Junk trong 24 giờ gần đây, đồng thời chỉ chấp nhận người gửi thuộc facebookmail.com hoặc facebook.com.</p>
-    <button id="mailOtpErrorCloseBtn" style="width:100%;margin-top:12px;">Đóng</button>`;
-  modalBg.classList.add('show');
-  document.getElementById('mailOtpErrorCloseBtn').onclick = closeModal;
-}
-
-function showMailOtpResult(result){
-  const modalBg = document.getElementById('modalBg');
-  const modalBody = document.getElementById('modalBody');
-  const sender = result.sender
-    ? [result.sender.name, result.sender.address].filter(Boolean).join(' — ')
-    : 'Facebook';
-  const received = result.receivedDateTime
-    ? new Date(result.receivedDateTime).toLocaleString('vi-VN')
-    : 'Không rõ';
-  modalBody.innerHTML = `
-    <h2>Mã OTP Facebook mới nhất</h2>
-    <div style="text-align:center;border:0.5px solid var(--border);border-radius:12px;padding:20px;margin:14px 0;background:#050505;">
-      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Mã xác nhận</div>
-      <div style="font-family:var(--mono);font-size:34px;font-weight:700;letter-spacing:6px;color:#facc15;overflow-wrap:anywhere;">${escapeHtml(result.otp)}</div>
-    </div>
-    <div style="font-size:13px;line-height:1.7;color:var(--text-2);">
-      <div><span style="color:var(--text-muted);">Email:</span> ${escapeHtml(result.email || '')}</div>
-      <div><span style="color:var(--text-muted);">Người gửi:</span> ${escapeHtml(sender)}</div>
-      <div><span style="color:var(--text-muted);">Tiêu đề:</span> ${escapeHtml(result.subject || '(Không có tiêu đề)')}</div>
-      <div><span style="color:var(--text-muted);">Nhận lúc:</span> ${escapeHtml(received)}</div>
-    </div>
-    <div class="row" style="margin-top:18px;">
-      <button id="mailOtpCloseBtn" style="flex:1;">Đóng</button>
-      <button id="mailOtpCopyBtn" class="primary" style="flex:1;"><i class="ti ti-copy"></i>Sao chép mã</button>
-    </div>`;
-  modalBg.classList.add('show');
-  document.getElementById('mailOtpCloseBtn').onclick = closeModal;
-  document.getElementById('mailOtpCopyBtn').onclick = () => copyText(result.otp, 'Đã sao chép mã OTP', true);
-}
-
-async function saveRotatedMailRefreshToken(entryId, rotatedToken){
-  if(!rotatedToken) return true;
-  const current = state.entries.find(e => e.id === entryId);
-  if(!current || current.mailRefreshToken === rotatedToken) return true;
-  const nextEntries = state.entries.map(e => e.id === entryId
-    ? { ...e, mailRefreshToken: rotatedToken, updatedAt: Date.now() }
-    : e
-  );
-  return commitCollection('entries', nextEntries, saveEntries);
-}
-
-async function readFacebookMailOtp(entry){
-  const mailboxEmail = entry.platform === 'hotmail' ? entry.fbName : entry.email;
-  const missing = [];
-  if(!mailboxEmail) missing.push('Email');
-  if(!entry.mailRefreshToken) missing.push('Refresh Token Mail');
-  if(!entry.mailClientId) missing.push('Client ID Mail');
-  if(missing.length){
-    openMailOtpConfigHelp(entry, missing);
-    return;
-  }
-  if(state.otpReadingIds.has(entry.id)) return;
-
-  state.otpReadingIds.add(entry.id);
-  renderVault();
-  try{
-    const response = await fetch('/devic3-mail-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'same-origin',
-      cache: 'no-store',
-      body: JSON.stringify({
-        email: mailboxEmail,
-        refreshToken: entry.mailRefreshToken,
-        clientId: entry.mailClientId,
-      }),
-    });
-    const responseText = await response.text();
-    let result;
-    try{
-      result = responseText ? JSON.parse(responseText) : null;
-    }catch(e){
-      const looksLikeHtml = /^\s*(?:<!doctype|<html|<head|<body)/i.test(responseText);
-      if(looksLikeHtml){
-        throw new Error('Nút Đọc OTP đang kết nối nhầm server tĩnh. Hãy đóng server cũ, chạy “npm start”, rồi tải lại ứng dụng.');
-      }
-      throw new Error(`Dịch vụ đọc OTP trả về dữ liệu không hợp lệ (HTTP ${response.status}). Hãy khởi động lại bằng “npm start”.`);
-    }
-    if(!result || typeof result !== 'object'){
-      throw new Error(`Dịch vụ đọc OTP không trả về dữ liệu (HTTP ${response.status}). Hãy khởi động lại bằng “npm start”.`);
-    }
-
-    if(result.rotatedRefreshToken){
-      const saved = await saveRotatedMailRefreshToken(entry.id, result.rotatedRefreshToken);
-      if(!saved) throw new Error('Đã đọc thư nhưng không lưu được refresh token mới. Hãy thử lại trước khi đóng ứng dụng.');
-    }
-    if(!response.ok) throw new Error(result.message || 'Không tìm thấy mã OTP phù hợp.');
-    showMailOtpResult(result);
-  }catch(error){
-    const message = location.protocol === 'file:'
-      ? 'Tính năng này cần chạy bằng server cục bộ. Hãy dùng lệnh “npm start” rồi mở địa chỉ được hiển thị.'
-      : (error.message || 'Không kết nối được dịch vụ đọc OTP cục bộ.');
-    showMailOtpError(message);
-  }finally{
-    state.otpReadingIds.delete(entry.id);
-    renderVault();
-  }
 }
 
 // ---------- AUTOMATIC FACEBOOK UID STATUS CHECK ----------
@@ -4859,13 +4771,29 @@ const IP_LOOKUP_SOURCES = [
   { url: 'https://checkip.amazonaws.com/', parse: async (res) => (await res.text()).trim() },
 ];
 
+function isValidIpAddress(value){
+  const ip = String(value || '').trim();
+  if(!ip || ip.includes('%')) return false;
+  if(ip.includes('.')){
+    const parts = ip.split('.');
+    return parts.length === 4 && parts.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+  }
+  if(!/^[0-9a-f:]+$/i.test(ip) || !ip.includes(':')) return false;
+  try{
+    const hostname = new URL(`http://[${ip}]/`).hostname;
+    return hostname.startsWith('[') && hostname.endsWith(']');
+  }catch(error){
+    return false;
+  }
+}
+
 async function fetchMyIp(){
   for(const source of IP_LOOKUP_SOURCES){
     try{
       const res = await fetch(source.url, { cache: 'no-store' });
       if(!res.ok) continue;
       const ip = await source.parse(res);
-      if(ip && /^[0-9a-fA-F:.]+$/.test(ip)) return ip;
+      if(isValidIpAddress(ip)) return String(ip).trim();
     }catch(e){
       // try the next source
     }
@@ -4888,7 +4816,7 @@ async function refreshNetworkStatus(){
     });
     const text = await response.text();
     const result = text ? JSON.parse(text) : null;
-    if(response.ok && result?.online && result.ip) ip = String(result.ip);
+    if(response.ok && result?.online && isValidIpAddress(result.ip)) ip = String(result.ip).trim();
   }catch(e){}
   if(!ip) ip = await fetchMyIp();
   ipEl.textContent = ip ? `IP: ${ip}` : 'Không có mạng';

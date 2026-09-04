@@ -2,7 +2,7 @@
   "name": "devic3-local-vault",
   "version": "1.0.0",
   "private": true,
-  "description": "Máy chủ cục bộ cho Devic3 và trình đọc OTP Microsoft Graph",
+  "description": "Kho tài khoản mã hoá Devic3 và máy chủ xem trước cục bộ",
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "node server.js",
