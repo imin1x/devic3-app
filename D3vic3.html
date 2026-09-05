@@ -25,14 +25,24 @@
     --radius:6px;
     --mono:'JetBrains Mono','Fira Code','Cascadia Code',Consolas,'SF Mono',Menlo,monospace;
   }
-  *{box-sizing:border-box;}
-  html{overflow-x:hidden; max-width:100vw;}
+  *{
+    box-sizing:border-box;
+    scrollbar-width:thin;
+    scrollbar-color:#262626 #050505;
+  }
+  html{overflow-x:hidden; max-width:100vw; color-scheme:dark;}
   body{
     margin:0; background:var(--bg); color:var(--text);
     font-family:var(--mono);
     min-height:100vh; overflow:hidden; max-width:100vw;
   }
   ::selection{background:var(--accent-bg); color:var(--accent-text);}
+  *::-webkit-scrollbar{width:6px; height:6px;}
+  *::-webkit-scrollbar-track{background:#050505;}
+  *::-webkit-scrollbar-thumb{background:#262626; border:1px solid #050505; border-radius:999px; min-height:28px;}
+  *::-webkit-scrollbar-thumb:hover{background:#3a3a3a;}
+  *::-webkit-scrollbar-button{display:none; width:0; height:0;}
+  *::-webkit-scrollbar-corner{background:#050505;}
   .code-comment{color:var(--comment);}
   .wrap{width:100%; max-width:640px;}
   h1{font-size:20px; font-weight:500; margin:0 0 4px; color:var(--text); text-align:center;}
@@ -76,15 +86,21 @@
   .folder-list{max-height:0; overflow:hidden; transition:max-height .2s ease; display:flex; flex-direction:column; gap:4px;}
   .folder-panel.open .folder-list{max-height:220px; overflow-y:auto; padding:0 6px 6px; border-top:0.5px solid var(--border); margin-top:2px; padding-top:6px; scrollbar-width:thin;}
   .folder-list::-webkit-scrollbar{width:5px;}
-  .folder-list::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:999px;}
-  .folder-list::-webkit-scrollbar-track{background:transparent;}
+  .folder-list::-webkit-scrollbar-thumb{background:#262626; border-radius:999px;}
+  .folder-list::-webkit-scrollbar-track{background:#050505;}
   .export-platform-list{
     display:flex; flex-direction:column; gap:4px; max-height:240px; overflow-y:auto;
     border:0.5px solid var(--border); border-radius:12px; padding:6px; scrollbar-width:thin;
   }
   .export-platform-list::-webkit-scrollbar{width:5px;}
-  .export-platform-list::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:999px;}
-  .export-platform-list::-webkit-scrollbar-track{background:transparent;}
+  .export-platform-list::-webkit-scrollbar-thumb{background:#262626; border-radius:999px;}
+  .export-platform-list::-webkit-scrollbar-track{background:#050505;}
+  .export-field-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin:8px 0 14px;}
+  .export-field-option{display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:0.5px solid var(--border); border-radius:8px; background:#090909; color:var(--text-2); font-size:12px; cursor:pointer;}
+  .export-field-option:hover{border-color:var(--border-strong); background:#111; color:var(--text);}
+  .export-field-option input{margin:0; flex-shrink:0; accent-color:var(--accent);}
+  .export-field-option span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  @media (max-width:480px){.export-field-grid{grid-template-columns:1fr;}}
   .platform-bar{display:flex; flex-direction:column; gap:2px;}
   .platform-chip{flex-shrink:0;}
   .platform-chip{
@@ -3249,6 +3265,92 @@ function buildEntryLine(e){
   return `${base}|${folder}|${e.displayName || ''}|${e.proxy || ''}`;
 }
 
+function getSelectableExportFields(platformId){
+  return [
+    ...getPlatformFields(platformId).map(field => ({ key: field.key, label: field.label })),
+    { key: 'folderId', label: 'Thư mục' },
+    { key: 'displayName', label: 'Tên' },
+    { key: 'proxy', label: 'Proxy' },
+  ];
+}
+
+function exportFieldValue(entry, key){
+  if(key === 'folderId') return folderName(entry.folderId) || '';
+  if(fieldMeta(key).kind === 'date') return toDisplayDate(entry[key]) || '';
+  return entry[key] || '';
+}
+
+function buildSelectedExportLines(entries, selectedFields){
+  return entries
+    .map(entry => selectedFields.map(field => exportFieldValue(entry, field.key)).join(platformDelimiter(entry.platform)))
+    .filter(line => line.split('|').some(value => value.trim()));
+}
+
+function exportSelectionFilename(platformId, selectedFields){
+  const date = new Date();
+  const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+  const fieldPart = selectedFields.map(field => field.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()).filter(Boolean).join('-').slice(0, 70) || 'du-lieu';
+  return `devic3-${platformId}-${fieldPart}-${ds}.txt`;
+}
+
+function openExportFieldModal(platformId){
+  const list = state.entries.filter(entry => entry.platform === platformId);
+  const meta = platformMeta(platformId);
+  if(list.length === 0){
+    toast(`Chưa có tài khoản ${meta.name} nào để xuất`);
+    return;
+  }
+  const fields = getSelectableExportFields(platformId);
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBg.classList.add('show');
+  modalBody.innerHTML = `
+    <h2>Chọn dữ liệu xuất — ${escapeHtml(meta.name)}</h2>
+    <p class="hint" style="line-height:1.6;margin-top:-5px;">Chọn đúng những trường muốn đưa vào file. Mỗi tài khoản là một dòng và các trường được ngăn bằng dấu <code>${platformDelimiter(platformId)}</code>.</p>
+    <div class="row" style="margin-bottom:8px;">
+      <button type="button" id="exportSelectAllBtn" style="flex:1;padding:7px 9px;">Chọn tất cả</button>
+      <button type="button" id="exportClearFieldsBtn" style="flex:1;padding:7px 9px;">Bỏ chọn</button>
+    </div>
+    <div class="export-field-grid">
+      ${fields.map(field => `<label class="export-field-option"><input type="checkbox" data-export-field="${escapeAttr(field.key)}" checked><span>${escapeHtml(field.label)}</span></label>`).join('')}
+    </div>
+    <label class="export-field-option" style="margin-bottom:14px;"><input type="checkbox" id="exportIncludeHeader"><span>Kèm tiêu đề và dòng định dạng</span></label>
+    <p class="err" id="exportFieldErr"></p>
+    <p class="hint" style="color:var(--danger-text);line-height:1.55;">File xuất là chữ rõ, không mã hoá. Chỉ lưu ở nơi an toàn và không chia sẻ cho người khác.</p>
+    <div class="row">
+      <button type="button" id="exportFieldsBackBtn" style="flex:1;">Quay lại</button>
+      <button type="button" class="primary" id="exportSelectedFieldsBtn" style="flex:1;"><i class="ti ti-download"></i>Xuất file</button>
+    </div>`;
+
+  const checkboxes = () => [...modalBody.querySelectorAll('[data-export-field]')];
+  document.getElementById('exportSelectAllBtn').onclick = () => checkboxes().forEach(input => { input.checked = true; });
+  document.getElementById('exportClearFieldsBtn').onclick = () => checkboxes().forEach(input => { input.checked = false; });
+  document.getElementById('exportFieldsBackBtn').onclick = renderImportExportModal;
+  document.getElementById('exportSelectedFieldsBtn').onclick = () => {
+    const selectedKeys = checkboxes().filter(input => input.checked).map(input => input.dataset.exportField);
+    const selectedFields = fields.filter(field => selectedKeys.includes(field.key));
+    const err = document.getElementById('exportFieldErr');
+    if(!selectedFields.length){
+      err.textContent = 'Hãy chọn ít nhất một trường để xuất.';
+      err.style.display = 'block';
+      return;
+    }
+    const dataLines = buildSelectedExportLines(list, selectedFields);
+    if(!dataLines.length){
+      err.textContent = 'Các trường đã chọn không có dữ liệu để xuất.';
+      err.style.display = 'block';
+      return;
+    }
+    const includeHeader = document.getElementById('exportIncludeHeader').checked;
+    const content = includeHeader
+      ? [`# Devic3 - ${meta.name}`, `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`, `# Định dạng: ${selectedFields.map(field => field.label).join(platformDelimiter(platformId))}`, '', ...dataLines].join('\n')
+      : dataLines.join('\n');
+    downloadTextFile(content, exportSelectionFilename(platformId, selectedFields));
+    closeModal();
+    toast(`Đã xuất ${dataLines.length} tài khoản ${meta.name}`);
+  };
+}
+
 function buildExportContent(){
   const lines = [
     `# Devic3 - Sao lưu tài khoản`,
@@ -3289,34 +3391,7 @@ function exportAccounts(){
 }
 
 function exportPlatformAccounts(platformId){
-  const list = state.entries.filter(e => e.platform === platformId);
-  const meta = platformMeta(platformId);
-  if(list.length === 0){
-    toast(`Chưa có tài khoản ${meta.name} nào để xuất`);
-    return;
-  }
-  showConfirm(
-    `Xuất tài khoản ${meta.name}?`,
-    `File xuất ra sẽ chứa ${list.length} tài khoản ${meta.name} (mật khẩu, cookie, token...) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn.`,
-    () => {
-      const fmt = backupPlatformFormatHint(platformId) + '|Thư mục|Tên|Proxy';
-      const lines = [
-        `# Devic3 - Sao lưu tài khoản ${meta.name}`,
-        `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,
-        `# Định dạng: ${fmt}`,
-        ``,
-        `## ${meta.name} (${list.length})`,
-      ];
-      list.forEach(e => lines.push(buildEntryLine(e)));
-      const date = new Date();
-      const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
-      downloadTextFile(lines.join('\n'), `devic3-${platformId}-${ds}.txt`);
-      closeModal();
-      toast(`Đã xuất ${list.length} tài khoản ${meta.name}`);
-    },
-    'Xuất file',
-    false
-  );
+  openExportFieldModal(platformId);
 }
 
 function openImportExportModal(){
@@ -3332,7 +3407,7 @@ function renderImportExportModal(){
     <h2>Nhập / Xuất</h2>
     <button type="button" id="ieAddBtn" class="primary" style="width:100%; margin-bottom:12px; justify-content:center;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập tài khoản mới</button>
     ${(state.activePlatform !== 'note' && state.activePlatform !== 'other' && state.activePlatform !== 'phone') ? `<button type="button" id="ieDupScanBtn" style="width:100%; margin-bottom:18px;"><i class="ti ti-copy-check" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Quét tài khoản trùng lặp (${platformMeta(state.activePlatform).name})</button>` : ''}
-    <label>Xuất theo từng nền tảng</label>
+    <label>Chọn nền tảng và các trường cần xuất</label>
     <div class="export-platform-list">
       ${exportablePlatforms.map(p => {
         const c = state.entries.filter(e => e.platform === p.id).length;
