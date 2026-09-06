@@ -192,6 +192,30 @@
   .desktop-login-btn:disabled{opacity:.58; cursor:wait;}
   .login-helper-steps{margin:10px 0 14px; padding-left:22px; color:var(--text-2); line-height:1.65;}
   .login-helper-note{padding:10px 12px; border:1px solid rgba(96,165,250,.28); border-radius:8px; background:rgba(59,130,246,.07); color:var(--text-2); font-size:12px; line-height:1.55;}
+  .log-toolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .log-search{flex:1; min-width:190px; margin:0 !important;}
+  .log-summary{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:10px 0 16px;}
+  .log-summary-card{border:1px solid var(--border); border-radius:9px; padding:10px 12px; background:var(--card); min-width:0;}
+  .log-summary-label{display:block; font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.45px; margin-bottom:4px;}
+  .log-summary-value{font-size:16px; font-weight:700; font-family:var(--mono);}
+  .log-filters{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px;}
+  .log-filter{padding:5px 10px; min-height:29px; font-size:11px; border-radius:999px;}
+  .log-filter.active{background:var(--accent-bg); color:var(--accent-text); border-color:var(--accent);}
+  .log-list{display:flex; flex-direction:column; gap:8px;}
+  .log-item{display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; padding:11px 12px; border:1px solid var(--border); border-left:3px solid var(--log-color,var(--border-strong)); border-radius:9px; background:var(--card);}
+  .log-level-icon{width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--log-color); background:color-mix(in srgb,var(--log-color) 13%,transparent);}
+  .log-item-head{display:flex; align-items:center; gap:7px; flex-wrap:wrap; min-width:0;}
+  .log-level{font-size:10px; font-weight:700; color:var(--log-color); text-transform:uppercase; letter-spacing:.4px;}
+  .log-category{font-size:10px; color:var(--text-muted); padding:1px 6px; border-radius:999px; border:1px solid var(--border);}
+  .log-time{font-size:10px; color:var(--text-muted); margin-left:auto; font-family:var(--mono);}
+  .log-message{font-size:12px; color:var(--text-2); margin-top:4px; overflow-wrap:anywhere; line-height:1.45;}
+  .log-detail{font-size:10px; color:var(--text-muted); margin-top:3px; overflow-wrap:anywhere; font-family:var(--mono);}
+  .duplicate-id-list{display:flex; flex-direction:column; gap:6px; max-height:260px; overflow:auto; margin:10px 0 16px; padding:8px; border:1px solid var(--border); border-radius:9px; background:#080808;}
+  .duplicate-id-row{display:flex; align-items:center; gap:8px; min-width:0; padding:7px 8px; border-radius:7px; background:var(--card); border:1px solid var(--border);}
+  .duplicate-id-index{width:22px; flex:0 0 22px; color:var(--text-muted); font-size:10px; text-align:right;}
+  .duplicate-id-value{flex:1; min-width:0; color:var(--text); font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; word-break:break-word;}
+  .duplicate-copy-btn{padding:3px 7px; min-height:25px; flex:0 0 auto; font-size:11px;}
+  @media(max-width:560px){.log-summary{grid-template-columns:1fr}.log-time{width:100%;margin-left:0}.log-item{padding:10px}}
   .entry-extra-toggle{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted); cursor:pointer; margin-top:6px; padding:2px 0; width:fit-content;}
   .entry-extra-toggle:hover{color:var(--text-2);}
   .entry-extra-toggle i{font-size:12px; transition:transform .15s;}
@@ -643,6 +667,7 @@ const STORAGE_CONFIG_KEY = 'fb-vault-config';
 const STORAGE_DATA_KEY = 'fb-vault-entries';
 const STORAGE_FOLDERS_KEY = 'fb-vault-folders';
 const STORAGE_NOTES_KEY = 'fb-vault-notes';
+const STORAGE_LOGS_KEY = 'fb-vault-logs-local';
 const VERIFY_STRING = 'vault-ok-v1';
 const NO_FOLDER_ID = '__none__';
 
@@ -654,6 +679,7 @@ const PLATFORMS = [
   { id: 'tiktok',   name: 'TikTok',   color: '#000000' },
   { id: 'steam',    name: 'Steam',    color: '#171a21' },
   { id: 'note',     name: 'Note',     color: '#F5A623' },
+  { id: 'log',      name: 'Log',      color: '#22c55e' },
   { id: 'phone',    name: 'Phone',    color: '#9C27B0' },
   { id: 'proxy',    name: 'Proxy',    color: '#14b8a6' },
   { id: 'other',    name: 'Công cụ',  color: '#6b6b66' },
@@ -683,6 +709,7 @@ const PLATFORM_SVG_INNER = {
   steam: `<circle cx="9" cy="16" r="3.1" fill="none" stroke="#ffffff" stroke-width="1.6"/><circle cx="15.3" cy="8.2" r="3.6" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M10.9 14.1l3-3.1" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>`,
   other: `<path d="M14.7 6.3a3 3 0 0 1-3.9 3.9L6.4 14.6a1.5 1.5 0 0 1-2.1-2.1l4.4-4.4a3 3 0 0 1 3.9-3.9l-2 2 1.4 1.4 2-2z" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>`,
   note: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M7 3.5h7l3.5 3.5V20.5H7z"/><path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M14 3.5V7h3.5"/><path fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" d="M9.3 11h5.4M9.3 13.7h5.4M9.3 16.4h3.4"/>`,
+  log: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 5h14v14H5zM8 9l2 2-2 2M12 14h4"/>`,
   phone: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" d="M11 18.3h2"/>`,
   proxy: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 8h13m0 0-3.2-3.2M17 8l-3.2 3.2M20 16H7m0 0 3.2-3.2M7 16l3.2 3.2"/>`,
 };
@@ -733,6 +760,15 @@ function fieldMeta(key){
   return FIELD_META[key] || { icon: 'ti-dots', kind: 'text' };
 }
 
+function primaryIdentifierLabel(platformId){
+  if(platformId === 'gmail' || platformId === 'hotmail') return 'Email';
+  if(platformId === 'tiktok' || platformId === 'steam') return 'User';
+  if(platformId === 'phone') return 'SĐT';
+  if(platformId === 'proxy') return 'IP';
+  if(platformId === 'facebook') return 'UID';
+  return 'Định danh';
+}
+
 // Groups a credential account's fields into up to 3 compact, scannable rows:
 //   1) UID/User/Email + Pass + Tên
 //   2) Email + Pass Email (whichever email/password pair actually has data)
@@ -745,9 +781,7 @@ function buildEntryDisplayRows(e){
   const used = new Set(['fbName']);
 
   const row1 = [];
-  const primaryLabel = (e.platform === 'gmail' || e.platform === 'hotmail')
-    ? 'Email'
-    : ((e.platform === 'tiktok' || e.platform === 'steam') ? 'User' : 'UID');
+  const primaryLabel = primaryIdentifierLabel(e.platform);
   row1.push({ label: primaryLabel, field: 'fbName', value: e.fbName, secret: false });
   if(e.password){ row1.push({ label: 'Pass', field: 'password', value: e.password, secret: true }); used.add('password'); }
   if(e.platform === 'gmail' || e.platform === 'hotmail'){
@@ -990,6 +1024,9 @@ let state = {
   visibleEntries: [],
   session: { loginTime: null, lastActivity: null },
   notes: [],
+  logs: [], // encrypted local-only diagnostic/activity history; never synced to Drive
+  logLevelFilter: 'all',
+  logSearch: '',
   activeNoteId: null,
   phoneNotified: new Set(), // ids of phone entries we've already alerted about this session
   proxyAlertDismissedIds: new Set(), // ids of proxy entries the person has dismissed the renewal banner for
@@ -1182,6 +1219,7 @@ async function saveEntries(){
     const result = await window.storage.set(STORAGE_DATA_KEY, JSON.stringify(blob));
     if(!result){
       toast('⚠ Lưu dữ liệu thất bại, thử lại');
+      recordLog('error', 'storage', 'Không thể lưu thay đổi tài khoản');
       return false;
     }
     if(state.fileHandle) writeVaultFile();
@@ -1189,6 +1227,7 @@ async function saveEntries(){
     return true;
   }catch(e){
     toast('⚠ Lưu dữ liệu thất bại, thử lại');
+    recordLog('error', 'storage', 'Không thể lưu thay đổi tài khoản');
     return false;
   }
 }
@@ -1255,6 +1294,7 @@ async function saveFolders(){
     const result = await window.storage.set(STORAGE_FOLDERS_KEY, JSON.stringify(blob));
     if(!result){
       toast('⚠ Lưu thư mục thất bại, thử lại');
+      recordLog('error', 'storage', 'Không thể lưu thay đổi thư mục');
       return false;
     }
     if(state.fileHandle) writeVaultFile();
@@ -1262,6 +1302,7 @@ async function saveFolders(){
     return true;
   }catch(e){
     toast('⚠ Lưu thư mục thất bại, thử lại');
+    recordLog('error', 'storage', 'Không thể lưu thay đổi thư mục');
     return false;
   }
 }
@@ -1295,6 +1336,7 @@ async function saveNotes(){
     const result = await window.storage.set(STORAGE_NOTES_KEY, JSON.stringify(blob));
     if(!result){
       toast('⚠ Lưu ghi chú thất bại, thử lại');
+      recordLog('error', 'storage', 'Không thể lưu thay đổi ghi chú');
       return false;
     }
     if(state.fileHandle) writeVaultFile();
@@ -1302,6 +1344,7 @@ async function saveNotes(){
     return true;
   }catch(e){
     toast('⚠ Lưu ghi chú thất bại, thử lại');
+    recordLog('error', 'storage', 'Không thể lưu thay đổi ghi chú');
     return false;
   }
 }
@@ -1321,6 +1364,107 @@ async function loadNotes(){
   }
   state.notes = [];
 }
+
+// Logs deliberately live in their own encrypted, device-local record. Keeping
+// them out of the Drive vault avoids a feedback loop where "sync completed"
+// creates another sync write, and prevents one device's diagnostics from
+// overwriting another device's history.
+const LOG_LIMIT = 500;
+let logSaveTimer = null;
+let logRenderTimer = null;
+const pendingRuntimeLogs = [];
+
+function sanitizeLogText(value, maxLength = 260){
+  let text = String(value == null ? '' : value);
+  text = text.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]');
+  text = text.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[ip]');
+  text = text.replace(/([?&](?:token|key|code|secret|password|pass|cookie)=)[^&\s]+/gi, '$1[redacted]');
+  text = text.replace(/\b[A-Za-z0-9_\-+/=]{32,}\b/g, '[redacted]');
+  return text.trim().slice(0, maxLength);
+}
+
+function makeLogEntry(level, category, message, detail = ''){
+  const safeLevel = ['info', 'warn', 'error'].includes(level) ? level : 'info';
+  return {
+    id: uid(),
+    time: Date.now(),
+    level: safeLevel,
+    category: sanitizeLogText(category || 'system', 40) || 'system',
+    message: sanitizeLogText(message || 'Hoạt động không có mô tả'),
+    detail: sanitizeLogText(detail, 180),
+    count: 1
+  };
+}
+
+function scheduleLogSave(){
+  clearTimeout(logSaveTimer);
+  logSaveTimer = setTimeout(() => saveLogs(), 180);
+}
+
+function recordLog(level, category, message, detail = ''){
+  const item = makeLogEntry(level, category, message, detail);
+  if(!state.key){
+    pendingRuntimeLogs.unshift(item);
+    if(pendingRuntimeLogs.length > 30) pendingRuntimeLogs.length = 30;
+    return;
+  }
+  const previous = state.logs[0];
+  if(previous && previous.level === item.level && previous.category === item.category && previous.message === item.message && previous.detail === item.detail && item.time - previous.time < 30000){
+    previous.time = item.time;
+    previous.count = Number(previous.count || 1) + 1;
+  }else{
+    state.logs.unshift(item);
+  }
+  if(state.logs.length > LOG_LIMIT) state.logs.length = LOG_LIMIT;
+  scheduleLogSave();
+  if(state.activePlatform === 'log' && !logRenderTimer){
+    logRenderTimer = setTimeout(() => {
+      logRenderTimer = null;
+      if(state.key && state.activePlatform === 'log') renderLogVault();
+    }, 0);
+  }
+}
+
+async function saveLogs(){
+  if(!state.key) return false;
+  try{
+    const blob = await encryptStr(state.key, JSON.stringify(state.logs.slice(0, LOG_LIMIT)));
+    const result = await window.storage.set(STORAGE_LOGS_KEY, JSON.stringify(blob));
+    return !!result;
+  }catch(_error){
+    return false;
+  }
+}
+
+async function loadLogs(){
+  state.logs = [];
+  try{
+    const result = await window.storage.get(STORAGE_LOGS_KEY);
+    if(result && result.value){
+      const blob = JSON.parse(result.value);
+      const decoded = JSON.parse(await decryptStr(state.key, blob));
+      if(Array.isArray(decoded)) state.logs = decoded.slice(0, LOG_LIMIT);
+    }
+  }catch(_error){
+    state.logs = [];
+    pendingRuntimeLogs.unshift(makeLogEntry('warn', 'storage', 'Không đọc được log cũ của thiết bị; dữ liệu tài khoản không bị ảnh hưởng'));
+  }
+  if(pendingRuntimeLogs.length){
+    state.logs = [...pendingRuntimeLogs.splice(0), ...state.logs].slice(0, LOG_LIMIT);
+    await saveLogs();
+  }
+}
+
+window.addEventListener('error', event => {
+  const file = event.filename ? String(event.filename).split('/').pop() : 'D3vic3.html';
+  const locationText = [file, event.lineno || '', event.colno || ''].filter(Boolean).join(':');
+  recordLog('error', 'source', event.message || 'Lỗi JavaScript không xác định', locationText);
+});
+window.addEventListener('unhandledrejection', event => {
+  const reason = event.reason;
+  const message = reason && reason.message ? reason.message : 'Promise bị từ chối nhưng chưa được xử lý';
+  recordLog('error', 'source', message, 'unhandledrejection');
+});
 
 // ---------- ON-DISK FILE BACKUP (File System Access API — Chrome/Edge) ----------
 // Lets the vault live in one file the person picks on their own hard drive, instead
@@ -1877,9 +2021,13 @@ async function openGoogleDriveRestoreModal(){
     button.textContent = 'Đang kết nối...';
     try{
       const outcome = await connectAndSyncGoogleDrive(document.getElementById('driveRestoreClientId').value, { restoreOnly: true });
-      if(outcome !== 'conflict') toast('Đã tải kho mã hoá từ Google Drive');
+      if(outcome !== 'conflict'){
+        recordLog('info', 'sync', 'Đã khôi phục kho mã hoá từ Google Drive');
+        toast('Đã tải kho mã hoá từ Google Drive');
+      }
     }catch(error){
       console.error(error);
+      recordLog('error', 'sync', 'Không thể khôi phục dữ liệu từ Google Drive', error.message || 'Lỗi không xác định');
       errorBox.textContent = error.message || 'Không kết nối được Google Drive.';
       errorBox.style.display = 'block';
       button.disabled = false;
@@ -1968,6 +2116,7 @@ async function applyVaultBundleAndSwitch(bundle, sourceName){
   state.entries = [];
   state.folders = [];
   state.notes = [];
+  state.logs = [];
   endSession();
 
   closeModal();
@@ -2140,11 +2289,13 @@ async function renderFileBackupModal(){
     try{
       const outcome = await connectAndSyncGoogleDrive(document.getElementById('driveClientIdInput').value);
       if(outcome !== 'conflict'){
+        recordLog('info', 'sync', 'Đồng bộ Google Drive thành công', outcome);
         toast(outcome === 'restored' ? 'Đã nhận dữ liệu mới từ Google Drive' : 'Đồng bộ Google Drive thành công');
         if(document.getElementById('modalBg').classList.contains('show')) renderFileBackupModal();
       }
     }catch(error){
       console.error(error);
+      recordLog('error', 'sync', 'Không thể đồng bộ Google Drive', error.message || 'Lỗi không xác định');
       errorBox.textContent = error.message || 'Không đồng bộ được Google Drive.';
       errorBox.style.display = 'block';
       button.disabled = false;
@@ -2154,6 +2305,7 @@ async function renderFileBackupModal(){
   const driveDisconnectBtn = document.getElementById('driveDisconnectBtn');
   if(driveDisconnectBtn) driveDisconnectBtn.onclick = async () => {
     await disconnectGoogleDrive();
+    recordLog('info', 'sync', 'Đã ngắt kết nối Google Drive trên thiết bị này');
     toast('Đã ngắt Google Drive trên thiết bị này; file trên Drive không bị xoá');
     renderFileBackupModal();
   };
@@ -2170,14 +2322,14 @@ async function renderFileBackupModal(){
   if(linkBtn){
     linkBtn.onclick = async () => {
       const ok = await linkNewVaultFile();
-      if(ok) toast('Đã liên kết file — từ giờ tự lưu mỗi khi có thay đổi');
+      if(ok){ recordLog('info', 'backup', 'Đã liên kết file sao lưu cục bộ'); toast('Đã liên kết file — từ giờ tự lưu mỗi khi có thay đổi'); }
       renderFileBackupModal();
     };
   }
   const saveNowBtn = document.getElementById('fileSaveNowBtn');
-  if(saveNowBtn) saveNowBtn.onclick = async () => { if(await writeVaultFile()) toast('Đã lưu vào file'); };
+  if(saveNowBtn) saveNowBtn.onclick = async () => { if(await writeVaultFile()){ recordLog('info', 'backup', 'Đã lưu kho vào file cục bộ'); toast('Đã lưu vào file'); } };
   const unlinkBtn = document.getElementById('fileUnlinkBtn');
-  if(unlinkBtn) unlinkBtn.onclick = () => { unlinkVaultFile(); toast('Đã bỏ liên kết file'); renderFileBackupModal(); };
+  if(unlinkBtn) unlinkBtn.onclick = () => { unlinkVaultFile(); recordLog('info', 'backup', 'Đã bỏ liên kết file cục bộ'); toast('Đã bỏ liên kết file'); renderFileBackupModal(); };
 }
 
 
@@ -2281,10 +2433,11 @@ function updateIdeChrome(){
   // that tab's own numbers, not a running total across the whole vault.
   const isNote = state.activePlatform === 'note';
   const isTools = state.activePlatform === 'other';
-  const platformEntries = isNote || isTools ? [] : state.entries.filter(e => e.platform === state.activePlatform);
+  const isLog = state.activePlatform === 'log';
+  const platformEntries = isNote || isTools || isLog ? [] : state.entries.filter(e => e.platform === state.activePlatform);
 
   let dupCount = 0;
-  if(!isNote && !isTools){
+  if(!isNote && !isTools && !isLog){
     dupCount = findAllDuplicateGroups(state.activePlatform).reduce((s, g) => s + (g.list.length - 1), 0);
   }
   let expiringCount = 0;
@@ -2296,13 +2449,14 @@ function updateIdeChrome(){
   });
   const countLabel = isNote ? state.notes.length + ' ' + t('comment_notes').replace('// ', '')
     : isTools ? ''
+    : isLog ? `${state.logs.length} sự kiện`
     : `${platformEntries.length} ${t('status_accounts')}`;
 
   bar.innerHTML = `
     <span><span class="sb-dot" style="background:#4ade80;"></span>${t('status_unlocked')}</span>
     <span>~/devic3/${escapeHtml(state.activePlatform)}</span>
-    ${!isNote && !isTools ? `<span class="${dupCount>0?'sb-err':''}"><i class="ti ti-copy-check" style="font-size:11px;vertical-align:-1px;"></i> ${dupCount} ${t('status_duplicates')}</span>` : ''}
-    ${!isNote && !isTools ? `<span class="${expiringCount>0?'sb-warn':''}"><i class="ti ti-clock-exclamation" style="font-size:11px;vertical-align:-1px;"></i> ${expiringCount} ${t('status_expiring')}</span>` : ''}
+    ${!isNote && !isTools && !isLog ? `<span class="${dupCount>0?'sb-err':''}"><i class="ti ti-copy-check" style="font-size:11px;vertical-align:-1px;"></i> ${dupCount} ${t('status_duplicates')}</span>` : ''}
+    ${!isNote && !isTools && !isLog ? `<span class="${expiringCount>0?'sb-warn':''}"><i class="ti ti-clock-exclamation" style="font-size:11px;vertical-align:-1px;"></i> ${expiringCount} ${t('status_expiring')}</span>` : ''}
     <span class="sb-sep">${countLabel}${countLabel ? ' · ' : ''}AES-256</span>
   `;
 }
@@ -2388,6 +2542,9 @@ function renderSetup(){
       state.entries = [];
       state.folders = defaultFolders;
       state.notes = [];
+      state.logs = [];
+      recordLog('info', 'system', 'Đã tạo kho dữ liệu mới');
+      await saveLogs();
       startSession();
       renderVault();
     }catch(e){
@@ -2508,19 +2665,21 @@ async function deleteEntireVault(){
       [STORAGE_FOLDERS_KEY]: null,
       [STORAGE_NOTES_KEY]: null,
     });
-    // The preference contains no vault data. Failure to remove it must not turn
-    // a successfully deleted vault into a misleading "delete failed" result.
-    await window.storage.delete(STORAGE_KEEP_SESSION_PREF_KEY, false);
   }catch(e){
     console.error(e);
     toast('Không thể xoá kho; dữ liệu hiện tại được giữ nguyên');
     return false;
   }
+  // These supplemental local records contain no vault payload. Their removal
+  // is best-effort after the transactional vault deletion has succeeded.
+  try{ await window.storage.delete(STORAGE_KEEP_SESSION_PREF_KEY, false); }catch(_error){}
+  try{ await window.storage.delete(STORAGE_LOGS_KEY, false); }catch(_error){}
   clearPersistedSessionKey();
   state.key = null;
   state.entries = [];
   state.folders = [];
   state.notes = [];
+  state.logs = [];
   state.fileHandle = null;
   state.fileHandleName = null;
   endSession();
@@ -2612,6 +2771,9 @@ function openRestoreModal(){
       state.entries = nextEntries;
       state.folders = nextFolders;
       state.notes = nextNotes;
+      state.logs = [];
+      recordLog('info', 'backup', `Đã khôi phục ${parsedList.length} tài khoản từ file sao lưu`);
+      await saveLogs();
       startSession();
       closeModal();
       renderVault();
@@ -2686,11 +2848,14 @@ function renderUnlock(config){
       await loadEntries();
       await loadFolders();
       await loadNotes();
+      await loadLogs();
+      recordLog('info', 'system', 'Đã mở kho dữ liệu');
       startSession();
       renderVault();
     }catch(e){
       console.error(e);
       state.key = null;
+      state.logs = [];
       err.textContent = 'Mở khoá thất bại: ' + (e.message || 'không đọc được dữ liệu đã lưu.');
       err.style.display = 'block';
       btn.disabled = false;
@@ -2784,10 +2949,12 @@ function requestDesktopLogin(payload){
 async function startDesktopLogin(entry){
   if(!entry || !['gmail', 'hotmail'].includes(entry.platform)) return;
   if(!entry.fbName || !entry.password){
+    recordLog('warn', 'login', `Không thể mở đăng nhập ${platformMeta(entry.platform).name}: thiếu Email hoặc Pass`);
     toast('Tài khoản cần có đủ Email và Pass để tự điền', 3500);
     return;
   }
   if(!desktopLoginHelperReady()){
+    recordLog('warn', 'login', `Tiện ích đăng nhập PC chưa sẵn sàng cho ${platformMeta(entry.platform).name}`);
     openDesktopLoginHelp();
     return;
   }
@@ -2803,10 +2970,14 @@ async function startDesktopLogin(entry){
       password: String(entry.password),
       totp: currentTotp || ''
     });
+    recordLog(currentTotp || !entry.twoFA ? 'info' : 'warn', 'login',
+      `Đã mở hỗ trợ đăng nhập ${platformMeta(entry.platform).name}`,
+      currentTotp || !entry.twoFA ? 'Chờ người dùng xác nhận từng bước' : 'Mã 2FA đã lưu không hợp lệ');
     toast(currentTotp || !entry.twoFA
       ? 'Đã mở trang đăng nhập — hãy kiểm tra rồi bấm tiếp'
       : 'Đã mở đăng nhập; mã 2FA lưu trong tài khoản không hợp lệ', 4200);
   }catch(error){
+    recordLog('warn', 'login', `Không kết nối được tiện ích đăng nhập ${platformMeta(entry.platform).name}`);
     if(error && error.message === 'EXTENSION_NOT_READY') openDesktopLoginHelp();
     else toast('Không kết nối được tiện ích đăng nhập PC', 4000);
   }finally{
@@ -2815,9 +2986,97 @@ async function startDesktopLogin(entry){
   }
 }
 
+const LOG_LEVEL_META = {
+  info:  { label: 'Thông tin', color: '#60a5fa', icon: 'ti-info-circle' },
+  warn:  { label: 'Cảnh báo',  color: '#facc15', icon: 'ti-alert-triangle' },
+  error: { label: 'Lỗi',       color: '#f87171', icon: 'ti-bug' }
+};
+
+function renderLogVault(){
+  const app = document.getElementById('app');
+  const query = state.logSearch.trim().toLowerCase();
+  const filtered = state.logs.filter(item => {
+    if(state.logLevelFilter !== 'all' && item.level !== state.logLevelFilter) return false;
+    if(!query) return true;
+    return `${item.category} ${item.message} ${item.detail}`.toLowerCase().includes(query);
+  });
+  const errorCount = state.logs.filter(item => item.level === 'error').length;
+  const warnCount = state.logs.filter(item => item.level === 'warn').length;
+  const sourceErrorCount = state.logs.filter(item => item.level === 'error' && item.category === 'source').length;
+  app.innerHTML = `
+    <div class="code-comment" style="font-size:12px;margin-bottom:8px;">// Nhật ký hoạt động và chẩn đoán</div>
+    <div class="log-toolbar">
+      <button class="text-btn" id="logLockBtn" title="Khoá lại"><i class="ti ti-lock"></i>Khoá</button>
+      <input class="log-search" id="logSearchInput" type="search" placeholder="Tìm trong log..." value="${escapeAttr(state.logSearch)}">
+      <button class="text-btn danger" id="clearLogsBtn" ${state.logs.length ? '' : 'disabled'}><i class="ti ti-trash"></i>Xoá log</button>
+    </div>
+    <div class="log-summary">
+      <div class="log-summary-card"><span class="log-summary-label">Tổng sự kiện</span><span class="log-summary-value">${state.logs.length}</span></div>
+      <div class="log-summary-card"><span class="log-summary-label">Cảnh báo</span><span class="log-summary-value" style="color:#facc15">${warnCount}</span></div>
+      <div class="log-summary-card"><span class="log-summary-label">Lỗi source</span><span class="log-summary-value" style="color:${sourceErrorCount ? '#f87171' : '#4ade80'}">${sourceErrorCount}</span></div>
+    </div>
+    <div class="login-helper-note" style="border-color:${sourceErrorCount ? 'rgba(248,113,113,.35)' : 'rgba(74,222,128,.28)'};background:${sourceErrorCount ? 'rgba(248,113,113,.06)' : 'rgba(74,222,128,.06)'};margin-bottom:14px;">
+      <i class="ti ${sourceErrorCount ? 'ti-bug' : 'ti-circle-check'}" style="color:${sourceErrorCount ? '#f87171' : '#4ade80'}"></i>
+      ${sourceErrorCount ? `Đã ghi nhận ${sourceErrorCount} lỗi JavaScript trên thiết bị này. Chọn bộ lọc “Lỗi” để xem.` : 'Chưa ghi nhận lỗi JavaScript nào trên thiết bị này.'}
+      <br><span style="color:var(--text-muted)">Log được mã hoá và chỉ lưu cục bộ; không ghi mật khẩu, cookie, token hay secret 2FA.</span>
+    </div>
+    <div class="log-filters">
+      ${[
+        ['all', 'Tất cả', state.logs.length],
+        ['info', 'Thông tin', state.logs.filter(item => item.level === 'info').length],
+        ['warn', 'Cảnh báo', warnCount],
+        ['error', 'Lỗi', errorCount]
+      ].map(([key, label, count]) => `<button class="text-btn log-filter ${state.logLevelFilter === key ? 'active' : ''}" data-log-level="${key}">${label} · ${count}</button>`).join('')}
+    </div>
+    <div class="log-list">
+      ${filtered.length ? filtered.map(item => {
+        const meta = LOG_LEVEL_META[item.level] || LOG_LEVEL_META.info;
+        const date = new Date(Number(item.time) || Date.now());
+        return `<div class="log-item" style="--log-color:${meta.color}">
+          <div class="log-level-icon"><i class="ti ${meta.icon}"></i></div>
+          <div>
+            <div class="log-item-head"><span class="log-level">${meta.label}</span><span class="log-category">${escapeHtml(item.category)}</span>${Number(item.count || 1) > 1 ? `<span class="log-category">×${Number(item.count)}</span>` : ''}<span class="log-time">${escapeHtml(date.toLocaleString('vi-VN'))}</span></div>
+            <div class="log-message">${escapeHtml(item.message)}</div>
+            ${item.detail ? `<div class="log-detail">${escapeHtml(item.detail)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') : `<div class="empty"><i class="ti ti-list-search" style="font-size:30px;display:block;margin-bottom:8px"></i>${state.logs.length ? 'Không có log phù hợp với bộ lọc.' : 'Chưa có hoạt động nào được ghi lại.'}</div>`}
+    </div>`;
+
+  renderPlatformBar();
+  updateIdeChrome();
+  syncGlobalSearchBar(null);
+  document.getElementById('logLockBtn').onclick = async () => {
+    recordLog('info', 'system', 'Đã khoá kho dữ liệu');
+    await saveLogs();
+    state.key = null; state.entries = []; state.folders = []; state.notes = []; state.logs = [];
+    endSession(); renderApp();
+  };
+  document.getElementById('logSearchInput').oninput = debounce(event => {
+    state.logSearch = event.target.value;
+    renderLogVault();
+  }, 180);
+  document.querySelectorAll('[data-log-level]').forEach(button => {
+    button.onclick = () => { state.logLevelFilter = button.dataset.logLevel; renderLogVault(); };
+  });
+  document.getElementById('clearLogsBtn').onclick = () => {
+    showConfirm('Xoá toàn bộ log?', 'Chỉ nhật ký hoạt động trên thiết bị này bị xoá. Dữ liệu tài khoản, thư mục và ghi chú không bị ảnh hưởng.', async () => {
+      state.logs = [];
+      clearTimeout(logSaveTimer);
+      await saveLogs();
+      renderLogVault();
+      toast('Đã xoá log trên thiết bị này');
+    }, 'Xoá log');
+  };
+}
+
 // ---------- RENDER: VAULT ----------
 function renderVault(){
   updateTotalBadge();
+  if(state.activePlatform === 'log'){
+    renderLogVault();
+    return;
+  }
   if(state.activePlatform === 'note'){
     renderNotesVault();
     return;
@@ -2870,7 +3129,12 @@ function renderVault(){
   document.getElementById('fileBackupBtn').onclick = openFileBackupModal;
   document.getElementById('toolsBtn').onclick = openToolsModal;
   syncGlobalSearchBar('accounts');
-  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  document.getElementById('lockBtn').onclick = async () => {
+    recordLog('info', 'system', 'Đã khoá kho dữ liệu');
+    await saveLogs();
+    state.key = null; state.entries = []; state.folders = []; state.notes = []; state.logs = [];
+    endSession(); renderApp();
+  };
   document.getElementById('selectModeBtn').onclick = () => {
     state.selectMode = !state.selectMode;
     if(!state.selectMode) state.selectedIds = new Set();
@@ -3057,7 +3321,7 @@ function renderPlatformBar(){
   const bar = document.getElementById('platformBar');
   bar.innerHTML = `<div class="ide-sidebar-label code-comment">${t('sidebar_platforms')}</div>` + PLATFORMS.map(p => {
     const isTools = p.id === 'other';
-    const c = p.id === 'note' ? state.notes.length : isTools ? null : state.entries.filter(e => e.platform === p.id).length;
+    const c = p.id === 'note' ? state.notes.length : p.id === 'log' ? state.logs.length : isTools ? null : state.entries.filter(e => e.platform === p.id).length;
     const label = isTools ? t('platform_tools') : escapeHtml(p.name);
     // Real <a href> (not a <button>) so Ctrl/Cmd-click, middle-click, and
     // "open in new tab" all work exactly like a normal browser link — the
@@ -3179,7 +3443,12 @@ function renderNotesVault(){
   updateIdeChrome();
   document.getElementById('toolsBtn').onclick = openToolsModal;
   syncGlobalSearchBar('notes');
-  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  document.getElementById('lockBtn').onclick = async () => {
+    recordLog('info', 'system', 'Đã khoá kho dữ liệu');
+    await saveLogs();
+    state.key = null; state.entries = []; state.folders = []; state.notes = []; state.logs = [];
+    endSession(); renderApp();
+  };
   document.getElementById('exportAllNotesBtn').onclick = exportAllNotes;
   document.getElementById('addNoteBtn').onclick = () => openNoteModal(null);
 
@@ -3254,6 +3523,7 @@ function openNoteModal(note){
       ? state.notes.map(n => n.id === note.id ? { ...n, title, content, updatedAt: Date.now() } : n)
       : [...state.notes, { id: uid(), title, content, updatedAt: Date.now() }];
     if(!await commitCollection('notes', nextNotes, saveNotes)) return;
+    recordLog('info', 'note', note ? 'Đã cập nhật một ghi chú' : 'Đã thêm một ghi chú');
     closeModal();
     renderVault();
     toast('Đã lưu ghi chú');
@@ -3267,6 +3537,7 @@ function confirmDeleteNote(note){
     async () => {
       const nextNotes = state.notes.filter(n => n.id !== note.id);
       if(!await commitCollection('notes', nextNotes, saveNotes)) return;
+      recordLog('info', 'note', 'Đã xoá một ghi chú');
       renderVault();
       toast('Đã xoá ghi chú');
     }
@@ -3386,6 +3657,7 @@ function downloadTextFile(content, filename){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  recordLog('info', 'export', 'Đã xuất một file dữ liệu');
 }
 
 function buildEntryLine(e){
@@ -3534,7 +3806,7 @@ function openImportExportModal(){
 
 function renderImportExportModal(){
   const modalBody = document.getElementById('modalBody');
-  const exportablePlatforms = PLATFORMS.filter(p => p.id !== 'note');
+  const exportablePlatforms = PLATFORMS.filter(p => p.id !== 'note' && p.id !== 'log');
   modalBody.innerHTML = `
     <h2>Nhập / Xuất</h2>
     <button type="button" id="ieAddBtn" class="primary" style="width:100%; margin-bottom:12px; justify-content:center;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập tài khoản mới</button>
@@ -3602,7 +3874,12 @@ function renderToolsVault(){
       </button>
     </div>
   `;
-  document.getElementById('lockBtn').onclick = () => { state.key = null; state.entries = []; state.folders = []; state.notes = []; endSession(); renderApp(); };
+  document.getElementById('lockBtn').onclick = async () => {
+    recordLog('info', 'system', 'Đã khoá kho dữ liệu');
+    await saveLogs();
+    state.key = null; state.entries = []; state.folders = []; state.notes = []; state.logs = [];
+    endSession(); renderApp();
+  };
   syncGlobalSearchBar(null);
   const openTool = (renderFn) => {
     document.getElementById('modalBg').classList.add('show');
@@ -3867,8 +4144,10 @@ function exportSingleEntry(entry){
 }
 
 async function deleteEntry(id){
+  const removed = state.entries.find(e => e.id === id);
   const nextEntries = state.entries.filter(e => e.id !== id);
   if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+  recordLog('info', 'account', `Đã xoá một tài khoản ${removed ? platformMeta(removed.platform).name : ''}`.trim());
   state.expandedIds.delete(id);
   renderVault();
   toast('Đã xoá tài khoản');
@@ -3909,6 +4188,7 @@ function confirmDeleteSelected(){
     async () => {
       const nextEntries = state.entries.filter(e => !state.selectedIds.has(e.id));
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+      recordLog('info', 'account', `Đã xoá ${count} tài khoản được chọn`, platformMeta(state.activePlatform).name);
       state.selectedIds = new Set();
       state.selectMode = false;
       renderVault();
@@ -4008,6 +4288,7 @@ async function checkAccountStatus(entry){
       : e
     );
     if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+    recordLog(status === 'unknown' ? 'warn' : 'info', 'status', `Đã kiểm tra trạng thái Facebook: ${statusMeta(status).label}`);
     toast(`Kết quả: ${statusMeta(status).label}`);
   }finally{
     state.checkingIds.delete(entry.id);
@@ -4375,6 +4656,7 @@ function renderFolderRows(){
         inp.value = f.name;
         return;
       }
+      recordLog('info', 'folder', 'Đã đổi tên một thư mục', platformMeta(state.activePlatform).name);
       toast('Đã đổi tên thư mục');
     });
   });
@@ -4393,6 +4675,7 @@ function renderFolderRows(){
             { property: 'folders', nextValue: nextFolders, saveFn: saveFolders },
             { property: 'entries', nextValue: nextEntries, saveFn: saveEntries },
           ])) return;
+          recordLog('info', 'folder', 'Đã xoá một thư mục', platformMeta(state.activePlatform).name);
           if(state.activeFolder === id) state.activeFolder = 'all';
           openFolderManager();
           toast('Đã xoá thư mục');
@@ -4414,6 +4697,7 @@ async function addFolder(){
   }
   const nextFolders = [...state.folders, { id: uid(), name, platformId: state.activePlatform }];
   if(!await commitCollection('folders', nextFolders, saveFolders)) return;
+  recordLog('info', 'folder', 'Đã thêm một thư mục', platformMeta(state.activePlatform).name);
   input.value = '';
   renderFolderRows();
 }
@@ -4439,7 +4723,7 @@ function folderOptionsHtml(selectedId, platformId){
 }
 
 function platformOptionsHtml(selectedId){
-  return PLATFORMS.map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  return PLATFORMS.filter(p => p.id !== 'log').map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
 }
 
 // renders just the platform-specific input/textarea fields (the part that changes when
@@ -4664,6 +4948,7 @@ function renderDuplicateScanModal(){
         async () => {
           const nextEntries = state.entries.filter(e => !idsToDelete.has(e.id));
           if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+          recordLog('info', 'account', `Đã xoá ${idsToDelete.size} bản ghi trùng lặp`, platformMeta(state.activePlatform).name);
           closeModal();
           renderVault();
           toast(`Đã xoá ${idsToDelete.size} tài khoản trùng lặp`);
@@ -4673,34 +4958,51 @@ function renderDuplicateScanModal(){
   }
 }
 
-function showDuplicateChoice(label, onOverwrite, onSkip){
+function showDuplicateChoice(label, platformId, onOverwrite, onSkip){
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
+  const identifierLabel = primaryIdentifierLabel(platformId);
   modalBody.innerHTML = `
     <h2>Tài khoản đã tồn tại</h2>
-    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">Đã có tài khoản với định danh "<b style="color:var(--text);">${escapeHtml(label)}</b>" trong hệ thống. Bạn muốn làm gì?</p>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 8px;">Đã có tài khoản trùng ${escapeHtml(identifierLabel)} trong hệ thống:</p>
+    <div class="duplicate-id-list" style="max-height:none;">
+      <div class="duplicate-id-row"><span class="duplicate-id-index">1.</span><span class="duplicate-id-value"><span style="color:var(--text-muted)">${escapeHtml(identifierLabel)}:</span> ${escapeHtml(label)}</span><button type="button" class="text-btn duplicate-copy-btn" id="singleDuplicateCopyBtn" title="Sao chép ${escapeAttr(identifierLabel)}"><i class="ti ti-copy"></i>Sao chép</button></div>
+    </div>
+    <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 16px;">Bạn muốn xử lý tài khoản này như thế nào?</p>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button type="button" id="dupOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè tài khoản cũ</button>
-      <button type="button" id="dupSkipBtn" style="width:100%; justify-content:center;">Bỏ qua (không nhập)</button>
+      <button type="button" id="dupOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè bằng bản mới</button>
+      <button type="button" id="dupSkipBtn" style="width:100%; justify-content:center;">Giữ tài khoản cũ, bỏ qua bản mới</button>
     </div>
   `;
   modalBg.classList.add('show');
+  document.getElementById('singleDuplicateCopyBtn').onclick = () => copyText(label, `Đã sao chép ${identifierLabel}`, false);
   document.getElementById('dupOverwriteBtn').onclick = onOverwrite;
   document.getElementById('dupSkipBtn').onclick = onSkip;
 }
 
-function showBulkDuplicateChoice(count, onChoice){
+function showBulkDuplicateChoice(dupPairs, platformId, newAccountCount, onChoice){
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
+  const count = dupPairs.length;
+  const identifierLabel = primaryIdentifierLabel(platformId);
+  const duplicateIds = dupPairs.map(({ fields, existing }) => String(fields.fbName || fields.email || existing.fbName || existing.email || '(trống)'));
   modalBody.innerHTML = `
     <h2>Phát hiện tài khoản trùng</h2>
-    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 20px;">${count} tài khoản trong danh sách vừa dán đã tồn tại sẵn trong hệ thống (trùng định danh). Bạn muốn xử lý các tài khoản trùng này như thế nào? Những tài khoản mới, không trùng vẫn được thêm bình thường.</p>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 6px;">${count} tài khoản trong danh sách vừa dán đã tồn tại sẵn. Danh sách ${escapeHtml(identifierLabel)} bị trùng:</p>
+    <div class="duplicate-id-list">
+      ${duplicateIds.map((value, index) => `<div class="duplicate-id-row"><span class="duplicate-id-index">${index + 1}.</span><span class="duplicate-id-value"><span style="color:var(--text-muted)">${escapeHtml(identifierLabel)}:</span> ${escapeHtml(value)}</span><button type="button" class="text-btn duplicate-copy-btn" data-copy-duplicate="${index}" title="Sao chép ${escapeAttr(identifierLabel)}"><i class="ti ti-copy"></i>Sao chép</button></div>`).join('')}
+    </div>
+    <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 8px;">Bạn muốn xử lý các tài khoản trùng này như thế nào?</p>
+    <div class="login-helper-note" style="margin-bottom:14px;"><i class="ti ti-info-circle" style="color:#60a5fa"></i> Dù chọn phương án nào, <b>${newAccountCount}</b> tài khoản mới không trùng vẫn được nhập.</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè tất cả (${count})</button>
-      <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Bỏ qua tất cả, không nhập</button>
+      <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè ${count} tài khoản trùng</button>
+      <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Giữ bản cũ, bỏ qua ${count} tài khoản trùng</button>
     </div>
   `;
   modalBg.classList.add('show');
+  modalBody.querySelectorAll('[data-copy-duplicate]').forEach(button => {
+    button.onclick = () => copyText(duplicateIds[Number(button.dataset.copyDuplicate)], `Đã sao chép ${identifierLabel}`, false);
+  });
   document.getElementById('bulkOverwriteBtn').onclick = () => onChoice(true);
   document.getElementById('bulkSkipBtn').onclick = () => onChoice(false);
 }
@@ -4732,10 +5034,12 @@ async function saveModal(entry){
     fields.updatedAt = Date.now();
 
     const commitManual = async () => {
+      const wasEditing = !!state.editingId;
       const nextEntries = state.editingId
         ? state.entries.map(e => e.id === state.editingId ? { ...e, ...fields } : e)
         : [...state.entries, { id: uid(), createdAt: Date.now(), ...fields }];
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+      recordLog('info', 'account', wasEditing ? 'Đã cập nhật một tài khoản' : 'Đã thêm một tài khoản', platformMeta(platform).name);
       closeModal();
       renderVault();
       toast('Đã lưu');
@@ -4745,6 +5049,7 @@ async function saveModal(entry){
     if(dup){
       showDuplicateChoice(
         dup.fbName,
+        platform,
         async () => {
           // While editing A into B's identifier, replace B and remove A;
           // otherwise both records would remain duplicated.
@@ -4752,9 +5057,10 @@ async function saveModal(entry){
             .filter(e => !state.editingId || e.id !== state.editingId || e.id === dup.id)
             .map(e => e.id === dup.id ? { ...e, ...fields } : e);
           if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+          recordLog('info', 'account', 'Đã ghi đè một tài khoản trùng', platformMeta(platform).name);
           closeModal(); renderVault(); toast('Đã ghi đè tài khoản');
         },
-        () => { closeModal(); toast('Đã bỏ qua, không nhập tài khoản trùng'); }
+        () => { closeModal(); toast('Đã giữ tài khoản cũ, bỏ qua bản mới'); }
       );
       return;
     }
@@ -4784,19 +5090,22 @@ async function saveModal(entry){
       if(dup){
         showDuplicateChoice(
           dup.fbName,
+          platform,
           async () => {
             const nextEntries = state.entries
               .filter(e => e.id !== state.editingId || e.id === dup.id)
               .map(e => e.id === dup.id ? { ...e, ...fields } : e);
             if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+            recordLog('info', 'account', 'Đã ghi đè một tài khoản trùng', platformMeta(platform).name);
             closeModal(); renderVault(); toast('Đã ghi đè tài khoản');
           },
-          () => { closeModal(); toast('Đã bỏ qua, không nhập tài khoản trùng'); }
+          () => { closeModal(); toast('Đã giữ tài khoản cũ, bỏ qua bản mới'); }
         );
         return;
       }
       const nextEntries = state.entries.map(e => e.id === state.editingId ? { ...e, ...fields } : e);
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+      recordLog('info', 'account', 'Đã cập nhật một tài khoản', platformMeta(platform).name);
       closeModal();
       renderVault();
       toast('Đã lưu');
@@ -4813,6 +5122,7 @@ async function saveModal(entry){
 
       const finishBulk = async (overwrittenCount) => {
         if(!await commitCollection('entries', nextEntries, saveEntries)) return;
+        recordLog('info', 'import', `Đã nhập ${newOnes.length} tài khoản mới`, `${platformMeta(platform).name} · ghi đè ${overwrittenCount} · bỏ qua ${dupPairs.length && !overwrittenCount ? dupPairs.length : 0} trùng · ${skippedCount} dòng lỗi`);
         closeModal();
         renderVault();
         const parts = [];
@@ -4828,7 +5138,7 @@ async function saveModal(entry){
         return;
       }
 
-      showBulkDuplicateChoice(dupPairs.length, async (overwriteAll) => {
+      showBulkDuplicateChoice(dupPairs, platform, newOnes.length, async (overwriteAll) => {
         if(overwriteAll){
           dupPairs.forEach(({ fields, existing }) => {
             fields.folderId = folderId;
@@ -5062,10 +5372,13 @@ function checkAutoLogout(){
   if(!state.key || !state.session.lastActivity) return;
   const idleFor = Date.now() - state.session.lastActivity;
   if(idleFor >= AUTO_LOGOUT_MS){
+    recordLog('info', 'system', 'Đã tự động khoá sau 30 phút không hoạt động');
+    saveLogs();
     state.key = null;
     state.entries = [];
     state.folders = [];
     state.notes = [];
+    state.logs = [];
     endSession();
     closeModal();
     renderApp();
@@ -5249,12 +5562,15 @@ async function renderApp(){
         await loadEntries();
         await loadFolders();
         await loadNotes();
+        await loadLogs();
+        recordLog('info', 'system', 'Đã khôi phục phiên và mở kho dữ liệu');
         startSession();
         renderVault();
         return;
       }catch(e){
         console.error(e);
         state.key = null;
+        state.logs = [];
         clearPersistedSessionKey();
       }
     }
