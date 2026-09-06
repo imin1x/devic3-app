@@ -183,6 +183,15 @@
   .field-chip.secret .field-val{letter-spacing:2px;}
   .field-chip.totp .field-val{font-weight:700; letter-spacing:1px; transition:color .3s ease;}
   .field-sep{color:var(--border-strong); margin:0 2px; user-select:none;}
+  .desktop-login-btn{
+    min-height:25px; padding:3px 8px; margin-left:2px; border-radius:6px;
+    border-color:rgba(96,165,250,.42); color:#93c5fd; background:rgba(59,130,246,.08);
+    font-size:11px; line-height:1; white-space:nowrap;
+  }
+  .desktop-login-btn:hover{background:rgba(59,130,246,.16); border-color:#60a5fa; color:#dbeafe;}
+  .desktop-login-btn:disabled{opacity:.58; cursor:wait;}
+  .login-helper-steps{margin:10px 0 14px; padding-left:22px; color:var(--text-2); line-height:1.65;}
+  .login-helper-note{padding:10px 12px; border:1px solid rgba(96,165,250,.28); border-radius:8px; background:rgba(59,130,246,.07); color:var(--text-2); font-size:12px; line-height:1.55;}
   .entry-extra-toggle{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted); cursor:pointer; margin-top:6px; padding:2px 0; width:fit-content;}
   .entry-extra-toggle:hover{color:var(--text-2);}
   .entry-extra-toggle i{font-size:12px; transition:transform .15s;}
@@ -741,6 +750,9 @@ function buildEntryDisplayRows(e){
     : ((e.platform === 'tiktok' || e.platform === 'steam') ? 'User' : 'UID');
   row1.push({ label: primaryLabel, field: 'fbName', value: e.fbName, secret: false });
   if(e.password){ row1.push({ label: 'Pass', field: 'password', value: e.password, secret: true }); used.add('password'); }
+  if(e.platform === 'gmail' || e.platform === 'hotmail'){
+    row1.push({ isDesktopLoginAction: true });
+  }
   if(e.displayName){ row1.push({ label: 'Tên', field: 'displayName', value: e.displayName, secret: false }); used.add('displayName'); }
   rows.push(row1);
 
@@ -972,6 +984,7 @@ let state = {
   hiddenStatuses: new Set(), // status keys ('active'|'inactive'|'unknown') currently hidden from the list
   selectedIds: new Set(),
   checkingIds: new Set(), // transient; never persisted as an account status
+  loginLaunchingIds: new Set(), // transient state while the PC browser helper opens a sign-in tab
   activePlatform: getPlatformFromHash() || 'facebook',
   expandedIds: new Set(),
   visibleEntries: [],
@@ -2694,6 +2707,114 @@ function folderName(id){
   return f ? f.name : null;
 }
 
+// ---------- PC LOGIN HELPER (Chrome / Edge extension) ----------
+// The web page cannot and must not inject credentials into another website.
+// A small, locally installed extension provides the cross-origin bridge. The
+// page only releases a short-lived username/password/current TOTP after that
+// bridge has positively marked itself as ready. The extension never clicks a
+// button or submits a form: the person reviews each screen and continues it.
+const DESKTOP_LOGIN_REQUEST_EVENT = 'devic3-login-request';
+const DESKTOP_LOGIN_RESPONSE_EVENT = 'devic3-login-response';
+const DESKTOP_LOGIN_NODE_ATTR = 'data-devic3-login-request';
+
+function desktopLoginHelperReady(){
+  return document.documentElement.getAttribute('data-devic3-login-helper') === 'ready';
+}
+
+function openDesktopLoginHelp(){
+  const modalBg = document.getElementById('modalBg');
+  const modalBody = document.getElementById('modalBody');
+  modalBg.classList.add('show');
+  modalBody.innerHTML = `
+    <h2>Thiết lập Đăng nhập PC</h2>
+    <p class="hint">Tính năng này cần tiện ích Devic3 Login Helper trên Chrome hoặc Edge của máy tính.</p>
+    <ol class="login-helper-steps">
+      <li>Mở <code>chrome://extensions</code> hoặc <code>edge://extensions</code>.</li>
+      <li>Bật <b>Chế độ dành cho nhà phát triển</b>.</li>
+      <li>Chọn <b>Tải tiện ích đã giải nén</b> và chọn thư mục <code>extension</code> trong source Devic3.</li>
+      <li>Tải lại trang Devic3 rồi mở tài khoản và bấm <b>Đăng nhập PC</b>.</li>
+    </ol>
+    <div class="login-helper-note"><i class="ti ti-shield-check"></i> Tiện ích chỉ điền trường đang hiển thị trên trang đăng nhập chính thức. Bạn vẫn là người bấm “Tiếp theo” hoặc “Đăng nhập”; Devic3 không tự gửi biểu mẫu.</div>
+    <button id="desktopLoginHelpClose" style="width:100%;margin-top:16px;">Đóng</button>`;
+  document.getElementById('desktopLoginHelpClose').onclick = closeModal;
+}
+
+function requestDesktopLogin(payload){
+  return new Promise((resolve, reject) => {
+    if(!desktopLoginHelperReady()){
+      reject(new Error('EXTENSION_NOT_READY'));
+      return;
+    }
+    const requestId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const node = document.createElement('span');
+    node.hidden = true;
+    node.setAttribute(DESKTOP_LOGIN_NODE_ATTR, requestId);
+    node.textContent = JSON.stringify({ requestId, ...payload });
+    document.documentElement.appendChild(node);
+
+    let settled = false;
+    const cleanup = () => {
+      window.removeEventListener(DESKTOP_LOGIN_RESPONSE_EVENT, onResponse);
+      if(node.isConnected){ node.textContent = ''; node.remove(); }
+    };
+    const onResponse = (event) => {
+      const responseNode = document.querySelector(`[data-devic3-login-response="${CSS.escape(requestId)}"]`);
+      if(!responseNode) return;
+      let response;
+      try{ response = JSON.parse(responseNode.textContent || '{}'); }catch(_e){ response = null; }
+      responseNode.textContent = '';
+      responseNode.remove();
+      if(settled) return;
+      settled = true;
+      cleanup();
+      if(response && response.ok) resolve(response);
+      else reject(new Error((response && response.error) || 'EXTENSION_ERROR'));
+    };
+    window.addEventListener(DESKTOP_LOGIN_RESPONSE_EVENT, onResponse);
+    window.dispatchEvent(new Event(DESKTOP_LOGIN_REQUEST_EVENT));
+    setTimeout(() => {
+      if(settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error('EXTENSION_TIMEOUT'));
+    }, 6000);
+  });
+}
+
+async function startDesktopLogin(entry){
+  if(!entry || !['gmail', 'hotmail'].includes(entry.platform)) return;
+  if(!entry.fbName || !entry.password){
+    toast('Tài khoản cần có đủ Email và Pass để tự điền', 3500);
+    return;
+  }
+  if(!desktopLoginHelperReady()){
+    openDesktopLoginHelp();
+    return;
+  }
+  if(state.loginLaunchingIds.has(entry.id)) return;
+  state.loginLaunchingIds.add(entry.id);
+  renderVault();
+  try{
+    // Send only the current six-digit result, never the saved Base32 2FA secret.
+    const currentTotp = entry.twoFA ? await computeTotp(entry.twoFA) : '';
+    await requestDesktopLogin({
+      provider: entry.platform,
+      username: String(entry.fbName),
+      password: String(entry.password),
+      totp: currentTotp || ''
+    });
+    toast(currentTotp || !entry.twoFA
+      ? 'Đã mở trang đăng nhập — hãy kiểm tra rồi bấm tiếp'
+      : 'Đã mở đăng nhập; mã 2FA lưu trong tài khoản không hợp lệ', 4200);
+  }catch(error){
+    if(error && error.message === 'EXTENSION_NOT_READY') openDesktopLoginHelp();
+    else toast('Không kết nối được tiện ích đăng nhập PC', 4000);
+  }finally{
+    state.loginLaunchingIds.delete(entry.id);
+    renderVault();
+  }
+}
+
 // ---------- RENDER: VAULT ----------
 function renderVault(){
   updateTotalBadge();
@@ -2810,6 +2931,10 @@ function renderVault(){
         ${isPhoneOrProxy ? '' : display.rows.map(row => `
         <div class="entry-fieldrow">${row.map((f, i) => {
           const sep = i > 0 ? `<span class="field-sep">|</span>` : '';
+          if(f.isDesktopLoginAction){
+            const launching = state.loginLaunchingIds.has(e.id);
+            return `${sep}<button type="button" class="text-btn desktop-login-btn" data-act="desktop-login" title="Mở Chrome/Edge và tự điền; bạn xác nhận từng bước" ${launching ? 'disabled' : ''}><i class="ti ${launching ? 'ti-loader-2' : 'ti-login'}"></i>${launching ? 'Đang mở…' : 'Đăng nhập PC'}</button>`;
+          }
           if(f.isTotp){
             return `${sep}<span class="field-chip totp" id="totp-${e.id}" title="Mã 2FA hiện tại — bấm để sao chép"><span class="field-label">2FA:</span><span class="field-val" data-totp-val id="totp-val-${e.id}">------</span></span>`;
           }
@@ -2851,6 +2976,13 @@ function renderVault(){
     if(deleteBtn) deleteBtn.onclick = () => confirmDeleteEntry(id, entry.fbName || entry.email || '(chưa đặt tên)');
     const checkBtn = card.querySelector('[data-act=check]');
     if(checkBtn) checkBtn.onclick = () => checkAccountStatus(entry);
+    const desktopLoginBtn = card.querySelector('[data-act=desktop-login]');
+    if(desktopLoginBtn){
+      desktopLoginBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        startDesktopLogin(entry);
+      };
+    }
     const selectCb = card.querySelector('.entry-checkbox');
     if(selectCb){
       selectCb.onclick = (ev) => ev.stopPropagation();

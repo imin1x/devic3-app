@@ -116,7 +116,23 @@ Nếu muốn chạy source trực tiếp trên PC:
 
 Server chỉ lắng nghe tại `127.0.0.1`. Bản GitHub Pages hoạt động độc lập và đồng bộ dữ liệu mã hoá trực tiếp với Google Drive.
 
-## G. Kiểm thử
+## G. Tự điền đăng nhập Gmail / Hotmail trên PC
+
+Tính năng này chỉ hoạt động trên Chrome hoặc Edge máy tính và cần tiện ích cục bộ trong thư mục `extension`:
+
+1. Chrome: mở `chrome://extensions`. Edge: mở `edge://extensions`.
+2. Bật **Chế độ dành cho nhà phát triển**.
+3. Chọn **Tải tiện ích đã giải nén** rồi chọn thư mục `extension` của project.
+4. Tải lại Devic3.
+5. Mở tab Gmail hoặc Hotmail, bấm vào thẻ tài khoản để hiện chi tiết.
+6. Trên dòng `Email | Pass`, bấm **Đăng nhập PC**.
+7. Tiện ích điền từng trường đang hiện. Kiểm tra và tự bấm **Tiếp theo/Đăng nhập** ở mỗi bước.
+
+Devic3 không tự gửi biểu mẫu. Dữ liệu dùng cho lần đăng nhập chỉ nằm trong bộ nhớ phiên của tiện ích tối đa 2 phút, bị xoá khi đóng tab; secret 2FA gốc không được chuyển khỏi app, chỉ mã 2FA hiện tại được chuyển để điền.
+
+Tiện ích hiện cho phép source Devic3 tại `127.0.0.1`, `localhost` và `https://imin1x.github.io`. Nếu đổi tài khoản/domain GitHub Pages, sửa domain trong `extension/manifest.json` và `extension/background.js`, sau đó tải lại tiện ích.
+
+## H. Kiểm thử
 
 Chạy `npm test`. Kiểm thử dùng dữ liệu giả, không cần Google token thật.
 
