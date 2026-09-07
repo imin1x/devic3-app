@@ -132,7 +132,17 @@ Devic3 không tự gửi biểu mẫu. Dữ liệu dùng cho lần đăng nhập
 
 Tiện ích hiện cho phép source Devic3 tại `127.0.0.1`, `localhost` và `https://imin1x.github.io`. Nếu đổi tài khoản/domain GitHub Pages, sửa domain trong `extension/manifest.json` và `extension/background.js`, sau đó tải lại tiện ích.
 
-## H. Kiểm thử
+## H. Tab Log
+
+Tab **Log** trong thanh nền tảng ghi lại các hoạt động chính như mở/khoá kho, thêm/sửa/xoá tài khoản, nhập/xuất, thư mục, ghi chú, kiểm tra trạng thái, đăng nhập PC và đồng bộ Google Drive. Các lỗi JavaScript không được xử lý cũng được ghi với mức **Lỗi** và vị trí file/dòng khi trình duyệt cung cấp.
+
+- Log được mã hoá bằng cùng khoá AES của kho đang mở.
+- Log chỉ lưu cục bộ trên từng thiết bị và không đẩy lên Google Drive, tránh tạo vòng lặp đồng bộ.
+- Giữ tối đa 500 sự kiện; các lỗi giống nhau liên tiếp được gộp lại.
+- Không ghi UID, email, mật khẩu, cookie, token, mã OTP hoặc secret 2FA.
+- Có tìm kiếm, lọc Thông tin/Cảnh báo/Lỗi và nút xoá toàn bộ log cục bộ.
+
+## I. Kiểm thử
 
 Chạy `npm test`. Kiểm thử dùng dữ liệu giả, không cần Google token thật.
 

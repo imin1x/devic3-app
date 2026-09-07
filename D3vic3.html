@@ -210,6 +210,57 @@
   .log-time{font-size:10px; color:var(--text-muted); margin-left:auto; font-family:var(--mono);}
   .log-message{font-size:12px; color:var(--text-2); margin-top:4px; overflow-wrap:anywhere; line-height:1.45;}
   .log-detail{font-size:10px; color:var(--text-muted); margin-top:3px; overflow-wrap:anywhere; font-family:var(--mono);}
+  .home-shell{display:flex; flex-direction:column; gap:18px; max-width:1180px; margin:0 auto;}
+  .home-hero{
+    position:relative; overflow:hidden; border:1px solid #26374e; border-radius:16px; padding:24px;
+    background:radial-gradient(circle at 88% 4%,rgba(77,148,255,.19),transparent 36%),linear-gradient(145deg,#121a25 0%,#0b0e13 58%,#090909 100%);
+  }
+  .home-hero::after{content:'';position:absolute;right:-62px;bottom:-82px;width:210px;height:210px;border:1px solid rgba(96,165,250,.14);border-radius:50%;box-shadow:0 0 0 28px rgba(96,165,250,.035),0 0 0 58px rgba(96,165,250,.025);pointer-events:none;}
+  .home-hero-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;}
+  .home-kicker{display:flex;align-items:center;gap:7px;color:#7fb2ff;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px;}
+  .home-title{font-size:26px;line-height:1.25;margin:0;color:#f1f5f9;font-weight:700;letter-spacing:-.6px;text-align:left;}
+  .home-subtitle{font-size:12px;color:var(--text-2);line-height:1.65;margin:8px 0 0;max-width:650px;}
+  .home-sync-pill{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;padding:7px 10px;border:1px solid var(--home-sync-color,#3f3f46);border-radius:999px;background:rgba(0,0,0,.24);color:var(--home-sync-color,#a1a1aa);font-size:11px;}
+  .home-sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;}
+  .home-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:22px;}
+  .home-stat{min-width:0;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(0,0,0,.28);}
+  .home-stat-label{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+  .home-stat-value{display:block;font-size:21px;font-weight:700;color:#e5e7eb;font-variant-numeric:tabular-nums;}
+  .home-section{border:1px solid var(--border);border-radius:14px;background:#090909;padding:17px;}
+  .home-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+  .home-section-title{font-size:13px;font-weight:700;color:var(--text);margin:0;display:flex;align-items:center;gap:7px;}
+  .home-section-note{font-size:10px;color:var(--text-muted);}
+  .home-quick-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .home-quick-actions button{min-height:32px;}
+  .home-nav-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
+  .home-nav-card{display:flex;align-items:center;gap:11px;min-width:0;text-align:left;padding:12px;border:1px solid var(--border);border-radius:10px;background:#101010;transition:transform .15s,border-color .15s,background .15s;}
+  .home-nav-card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--home-color) 58%,#333);background:#151515;}
+  .home-nav-icon{width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--home-color) 20%,#080808);border:1px solid color-mix(in srgb,var(--home-color) 40%,#222);}
+  .home-nav-icon svg{width:18px!important;height:18px!important;}
+  .home-nav-copy{min-width:0;flex:1;}
+  .home-nav-name{display:block;color:var(--text);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .home-nav-meta{display:block;color:var(--text-muted);font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .home-nav-arrow{font-size:14px;color:var(--text-muted);}
+  .home-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
+  .home-health-card{padding:12px;border:1px solid var(--border);border-radius:10px;background:#0f0f0f;min-width:0;}
+  .home-health-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
+  .home-health-label{font-size:11px;color:var(--text-2);}
+  .home-health-icon{font-size:16px;color:var(--health-color);}
+  .home-health-number{font-size:19px;font-weight:700;color:var(--health-color);font-variant-numeric:tabular-nums;}
+  .home-health-hint{font-size:10px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
+  .home-log-list{display:flex;flex-direction:column;gap:7px;}
+  .home-log-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 9px;border-radius:8px;background:#0f0f0f;border:1px solid #1d1d1d;}
+  .home-log-dot{width:6px;height:6px;border-radius:50%;background:var(--log-dot);}
+  .home-log-message{font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .home-log-time{font-size:9px;color:var(--text-muted);white-space:nowrap;}
+  .link-entry-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .link-entry-description{font-size:12px;color:var(--text-2);line-height:1.5;margin:3px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .link-entry-url{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:11px;color:#a78bfa;text-decoration:none;margin-top:6px;}
+  .link-entry-url span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .link-entry-url:hover{color:#c4b5fd;text-decoration:underline;}
+  @media(max-width:600px){.link-entry .entry-top{flex-direction:column}.link-entry .entry-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}}
+  @media(max-width:780px){.home-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.home-nav-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.home-hero-head{flex-direction:column;}.home-sync-pill{align-self:flex-start;}}
+  @media(max-width:520px){.home-hero{padding:18px}.home-title{font-size:21px}.home-nav-grid,.home-health-grid{grid-template-columns:1fr}.home-section{padding:13px}.home-log-row{grid-template-columns:8px minmax(0,1fr)}.home-log-time{grid-column:2}.home-quick-actions button{flex:1 1 calc(50% - 8px);}}
   .duplicate-id-list{display:flex; flex-direction:column; gap:6px; max-height:260px; overflow:auto; margin:10px 0 16px; padding:8px; border:1px solid var(--border); border-radius:9px; background:#080808;}
   .duplicate-id-row{display:flex; align-items:center; gap:8px; min-width:0; padding:7px 8px; border-radius:7px; background:var(--card); border:1px solid var(--border);}
   .duplicate-id-index{width:22px; flex:0 0 22px; color:var(--text-muted); font-size:10px; text-align:right;}
@@ -267,7 +318,6 @@
   .ide-titlebar{
     display:flex; align-items:center; gap:8px; padding:10px 16px; flex-shrink:0;
     background:#0a0a0a; border-bottom:1px solid var(--border); overflow:hidden; min-width:0;
-  }
   }
   .titlebar-clock{display:flex; align-items:baseline; gap:8px; flex-shrink:0; white-space:nowrap;}
   .titlebar-clock-time{font-size:14px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; letter-spacing:0.5px;}
@@ -673,11 +723,13 @@ const NO_FOLDER_ID = '__none__';
 
 // platforms supported
 const PLATFORMS = [
+  { id: 'home',     name: 'Home',     color: '#60A5FA' },
   { id: 'facebook', name: 'Facebook', color: '#1877F2' },
   { id: 'gmail',    name: 'Gmail',    color: '#EA4335' },
   { id: 'hotmail',  name: 'Hotmail',  color: '#0078D4' },
   { id: 'tiktok',   name: 'TikTok',   color: '#000000' },
   { id: 'steam',    name: 'Steam',    color: '#171a21' },
+  { id: 'link',     name: 'Link',     color: '#8B5CF6' },
   { id: 'note',     name: 'Note',     color: '#F5A623' },
   { id: 'log',      name: 'Log',      color: '#22c55e' },
   { id: 'phone',    name: 'Phone',    color: '#9C27B0' },
@@ -702,11 +754,13 @@ function platformMeta(id){
 
 // inline SVG brand marks (self-contained, no external font dependency so they always render)
 const PLATFORM_SVG_INNER = {
+  home: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3.5 11.2 12 4l8.5 7.2M5.5 10v10h13V10M9.5 20v-6h5v6"/>`,
   facebook: `<path fill="#ffffff" d="M13.5 21v-7.5h2.5l.4-3H13.5V8.5c0-.86.24-1.5 1.5-1.5h1.6V4.3C16.3 4.2 15.4 4 14.4 4 12.2 4 10.6 5.3 10.6 7.7v2.8H8v3h2.6V21h2.9z"/>`,
   gmail: `<rect x="3.2" y="6" width="17.6" height="12" rx="1.8" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M4 7l8 6 8-6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   tiktok: `<path fill="#ffffff" d="M15.3 3.5c.5 2.1 1.9 3.6 4 3.9v3c-1.5 0-2.9-.4-4-1.2v6.1c0 3-2.4 5.4-5.4 5.4S4.5 17.3 4.5 14.3s2.4-5.4 5.4-5.4c.3 0 .6 0 .9.1v3.1c-.3-.1-.6-.2-.9-.2-1.3 0-2.4 1.1-2.4 2.4s1.1 2.4 2.4 2.4 2.4-1.1 2.4-2.4V3.5h3z"/>`,
   hotmail: `<rect x="3" y="4" width="8" height="8" fill="#ffffff"/><rect x="12" y="4" width="8" height="8" fill="#ffffff" opacity="0.75"/><rect x="3" y="13" width="8" height="8" fill="#ffffff" opacity="0.75"/><rect x="12" y="13" width="8" height="8" fill="#ffffff" opacity="0.5"/>`,
   steam: `<circle cx="9" cy="16" r="3.1" fill="none" stroke="#ffffff" stroke-width="1.6"/><circle cx="15.3" cy="8.2" r="3.6" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M10.9 14.1l3-3.1" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>`,
+  link: `<path fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M9.5 14.5 14.5 9.5M7.2 16.8l-1 1a3.5 3.5 0 0 1-5-5l3.2-3.2a3.5 3.5 0 0 1 5 0M16.8 7.2l1-1a3.5 3.5 0 0 1 5 5l-3.2 3.2a3.5 3.5 0 0 1-5 0" transform="translate(.4 .4) scale(.96)"/>`,
   other: `<path d="M14.7 6.3a3 3 0 0 1-3.9 3.9L6.4 14.6a1.5 1.5 0 0 1-2.1-2.1l4.4-4.4a3 3 0 0 1 3.9-3.9l-2 2 1.4 1.4 2-2z" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>`,
   note: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M7 3.5h7l3.5 3.5V20.5H7z"/><path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M14 3.5V7h3.5"/><path fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" d="M9.3 11h5.4M9.3 13.7h5.4M9.3 16.4h3.4"/>`,
   log: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 5h14v14H5zM8 9l2 2-2 2M12 14h4"/>`,
@@ -761,6 +815,7 @@ function fieldMeta(key){
 }
 
 function primaryIdentifierLabel(platformId){
+  if(platformId === 'link') return 'Link';
   if(platformId === 'gmail' || platformId === 'hotmail') return 'Email';
   if(platformId === 'tiktok' || platformId === 'steam') return 'User';
   if(platformId === 'phone') return 'SĐT';
@@ -899,6 +954,10 @@ const PLATFORM_FIELDS = {
     { key: 'password',   label: 'Pass' },
     { key: 'expiryDate', label: 'Ngày hết hạn' },
   ],
+  link: [
+    { key: 'fbName', label: 'Link' },
+    { key: 'other',  label: 'Mô tả' },
+  ],
 };
 
 // Practical order used by the manual form and bulk-entry format. Storage and
@@ -909,6 +968,7 @@ const PLATFORM_INPUT_ORDER = {
   hotmail: ['fbName', 'password', 'twoFA', 'secondaryEmail', 'secondaryEmailPassword', 'phone', 'recoveryCode', 'backupCodes', 'cookie', 'token', 'other'],
   tiktok: ['fbName', 'password', 'twoFA', 'email', 'emailPassword', 'phone', 'backupCodes', 'cookie', 'token', 'other'],
   steam: ['fbName', 'password', 'steamId', 'email', 'emailPassword', 'phone', 'twoFA', 'steamGuardRecoveryCode', 'steamSharedSecret', 'steamIdentitySecret', 'cookie', 'token', 'other'],
+  link: ['fbName', 'other'],
 };
 
 // which delimiter this platform's auto-import / export lines use between fields
@@ -923,11 +983,13 @@ function platformFormatHint(platformId){
     labels.splice(otherIndex < 0 ? labels.length : otherIndex, 0, 'Proxy');
   }
   const d = platformDelimiter(platformId);
+  if(platformId === 'link') return labels.join(d);
   return d === ':' ? labels.join(d) : labels.join(d) + '|';
 }
 function backupPlatformFormatHint(platformId){
   const labels = getPlatformFields(platformId).map(f => f.label);
   const d = platformDelimiter(platformId);
+  if(platformId === 'link') return labels.join(d);
   return d === ':' ? labels.join(d) : labels.join(d) + '|';
 }
 function getPlatformFields(platformId){
@@ -1019,7 +1081,7 @@ let state = {
   selectedIds: new Set(),
   checkingIds: new Set(), // transient; never persisted as an account status
   loginLaunchingIds: new Set(), // transient state while the PC browser helper opens a sign-in tab
-  activePlatform: getPlatformFromHash() || 'facebook',
+  activePlatform: getPlatformFromHash() || 'home',
   expandedIds: new Set(),
   visibleEntries: [],
   session: { loginTime: null, lastActivity: null },
@@ -2348,7 +2410,7 @@ function debounce(fn, wait){
 // so it survives every re-render untouched — no more losing focus/cursor
 // position on each keystroke like when it used to get destroyed and
 // recreated inside the scrollable content area. `context` is 'accounts',
-// 'notes', or null (hides the box entirely — locked screens, Tools tab).
+// 'links', 'notes', or null (hides the box entirely — locked screens, Tools/Home).
 function syncGlobalSearchBar(context){
   const wrap = document.getElementById('titlebarSearchWrap');
   const input = document.getElementById('globalSearchInput');
@@ -2358,7 +2420,7 @@ function syncGlobalSearchBar(context){
     return;
   }
   wrap.style.display = 'flex';
-  input.placeholder = context === 'notes' ? t('placeholder_search_notes') : t('placeholder_search');
+  input.placeholder = context === 'notes' ? t('placeholder_search_notes') : context === 'links' ? 'Tìm theo link hoặc mô tả' : t('placeholder_search');
   if(document.activeElement !== input && input.value !== state.search) input.value = state.search;
   input.oninput = debounce((e) => {
     state.search = e.target.value;
@@ -2431,13 +2493,15 @@ function updateIdeChrome(){
   }
   // Everything below is scoped to the CURRENT tab only — switching tabs shows
   // that tab's own numbers, not a running total across the whole vault.
+  const isHome = state.activePlatform === 'home';
   const isNote = state.activePlatform === 'note';
   const isTools = state.activePlatform === 'other';
   const isLog = state.activePlatform === 'log';
-  const platformEntries = isNote || isTools || isLog ? [] : state.entries.filter(e => e.platform === state.activePlatform);
+  const isSpecialPage = isHome || isNote || isTools || isLog;
+  const platformEntries = isSpecialPage ? [] : state.entries.filter(e => e.platform === state.activePlatform);
 
   let dupCount = 0;
-  if(!isNote && !isTools && !isLog){
+  if(!isSpecialPage){
     dupCount = findAllDuplicateGroups(state.activePlatform).reduce((s, g) => s + (g.list.length - 1), 0);
   }
   let expiringCount = 0;
@@ -2447,16 +2511,18 @@ function updateIdeChrome(){
       if(info && info.diffDays >= 0 && info.diffDays <= 1) expiringCount++;
     }
   });
-  const countLabel = isNote ? state.notes.length + ' ' + t('comment_notes').replace('// ', '')
+  const countLabel = isHome ? `${state.entries.length + state.notes.length} mục trong kho`
+    : isNote ? state.notes.length + ' ' + t('comment_notes').replace('// ', '')
     : isTools ? ''
     : isLog ? `${state.logs.length} sự kiện`
+    : state.activePlatform === 'link' ? `${platformEntries.length} liên kết`
     : `${platformEntries.length} ${t('status_accounts')}`;
 
   bar.innerHTML = `
     <span><span class="sb-dot" style="background:#4ade80;"></span>${t('status_unlocked')}</span>
     <span>~/devic3/${escapeHtml(state.activePlatform)}</span>
-    ${!isNote && !isTools && !isLog ? `<span class="${dupCount>0?'sb-err':''}"><i class="ti ti-copy-check" style="font-size:11px;vertical-align:-1px;"></i> ${dupCount} ${t('status_duplicates')}</span>` : ''}
-    ${!isNote && !isTools && !isLog ? `<span class="${expiringCount>0?'sb-warn':''}"><i class="ti ti-clock-exclamation" style="font-size:11px;vertical-align:-1px;"></i> ${expiringCount} ${t('status_expiring')}</span>` : ''}
+    ${!isSpecialPage ? `<span class="${dupCount>0?'sb-err':''}"><i class="ti ti-copy-check" style="font-size:11px;vertical-align:-1px;"></i> ${dupCount} ${t('status_duplicates')}</span>` : ''}
+    ${!isSpecialPage && state.activePlatform !== 'link' ? `<span class="${expiringCount>0?'sb-warn':''}"><i class="ti ti-clock-exclamation" style="font-size:11px;vertical-align:-1px;"></i> ${expiringCount} ${t('status_expiring')}</span>` : ''}
     <span class="sb-sep">${countLabel}${countLabel ? ' · ' : ''}AES-256</span>
   `;
 }
@@ -2583,6 +2649,7 @@ function parseBackupLine(line, platformId){
   }
   const obj = {};
   fields.forEach((f, i) => { obj[f.key] = (baseFields[i] || '').trim(); });
+  if(platformId === 'link') obj.fbName = normalizeHttpLink(obj.fbName);
   obj.__folderName = (suffixParts[0] || '').trim();
   obj.displayName = (suffixParts[1] || '').trim();
   obj.proxy = (suffixParts[2] || '').trim();
@@ -2881,22 +2948,46 @@ function folderName(id){
 const DESKTOP_LOGIN_REQUEST_EVENT = 'devic3-login-request';
 const DESKTOP_LOGIN_RESPONSE_EVENT = 'devic3-login-response';
 const DESKTOP_LOGIN_NODE_ATTR = 'data-devic3-login-request';
+const DESKTOP_LOGIN_HELPER_MIN_VERSION = '1.1.0';
+
+function versionAtLeast(current, minimum){
+  const left = String(current || '').split('.').map(part => Number.parseInt(part, 10) || 0);
+  const right = String(minimum || '').split('.').map(part => Number.parseInt(part, 10) || 0);
+  for(let index = 0; index < Math.max(left.length, right.length); index += 1){
+    if((left[index] || 0) > (right[index] || 0)) return true;
+    if((left[index] || 0) < (right[index] || 0)) return false;
+  }
+  return true;
+}
+
+function desktopLoginHelperStatus(){
+  const marker = document.documentElement.getAttribute('data-devic3-login-helper');
+  const version = document.documentElement.getAttribute('data-devic3-login-helper-version') || '';
+  if(marker !== 'ready') return { ready: false, reason: 'missing', version };
+  if(!versionAtLeast(version, DESKTOP_LOGIN_HELPER_MIN_VERSION)) return { ready: false, reason: 'outdated', version };
+  return { ready: true, reason: '', version };
+}
 
 function desktopLoginHelperReady(){
-  return document.documentElement.getAttribute('data-devic3-login-helper') === 'ready';
+  return desktopLoginHelperStatus().ready;
 }
 
 function openDesktopLoginHelp(){
+  const helper = desktopLoginHelperStatus();
+  const outdated = helper.reason === 'outdated';
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
   modalBg.classList.add('show');
   modalBody.innerHTML = `
-    <h2>Thiết lập Đăng nhập PC</h2>
-    <p class="hint">Tính năng này cần tiện ích Devic3 Login Helper trên Chrome hoặc Edge của máy tính.</p>
+    <h2>${outdated ? 'Cập nhật tiện ích Đăng nhập PC' : 'Thiết lập Đăng nhập PC'}</h2>
+    <p class="hint">${outdated
+      ? `Devic3 đã nhận tiện ích cũ${helper.version ? ` (v${escapeHtml(helper.version)})` : ''}. Source hiện tại cần Devic3 Login Helper v${DESKTOP_LOGIN_HELPER_MIN_VERSION} trở lên.`
+      : 'Tính năng này cần tiện ích Devic3 Login Helper trên Chrome hoặc Edge của máy tính.'}</p>
     <ol class="login-helper-steps">
       <li>Mở <code>chrome://extensions</code> hoặc <code>edge://extensions</code>.</li>
-      <li>Bật <b>Chế độ dành cho nhà phát triển</b>.</li>
-      <li>Chọn <b>Tải tiện ích đã giải nén</b> và chọn thư mục <code>extension</code> trong source Devic3.</li>
+      ${outdated
+        ? '<li>Tìm <b>Devic3 Login Helper</b> và bấm <b>Tải lại</b>.</li>'
+        : '<li>Bật <b>Chế độ dành cho nhà phát triển</b>.</li><li>Chọn <b>Tải tiện ích đã giải nén</b> và chọn thư mục <code>extension</code> trong source Devic3.</li>'}
       <li>Tải lại trang Devic3 rồi mở tài khoản và bấm <b>Đăng nhập PC</b>.</li>
     </ol>
     <div class="login-helper-note"><i class="ti ti-shield-check"></i> Tiện ích chỉ điền trường đang hiển thị trên trang đăng nhập chính thức. Bạn vẫn là người bấm “Tiếp theo” hoặc “Đăng nhập”; Devic3 không tự gửi biểu mẫu.</div>
@@ -2906,8 +2997,9 @@ function openDesktopLoginHelp(){
 
 function requestDesktopLogin(payload){
   return new Promise((resolve, reject) => {
-    if(!desktopLoginHelperReady()){
-      reject(new Error('EXTENSION_NOT_READY'));
+    const helper = desktopLoginHelperStatus();
+    if(!helper.ready){
+      reject(new Error(helper.reason === 'outdated' ? 'EXTENSION_OUTDATED' : 'EXTENSION_NOT_READY'));
       return;
     }
     const requestId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -2977,8 +3069,9 @@ async function startDesktopLogin(entry){
       ? 'Đã mở trang đăng nhập — hãy kiểm tra rồi bấm tiếp'
       : 'Đã mở đăng nhập; mã 2FA lưu trong tài khoản không hợp lệ', 4200);
   }catch(error){
-    recordLog('warn', 'login', `Không kết nối được tiện ích đăng nhập ${platformMeta(entry.platform).name}`);
-    if(error && error.message === 'EXTENSION_NOT_READY') openDesktopLoginHelp();
+    const errorCode = String(error && error.message || 'EXTENSION_ERROR');
+    recordLog('warn', 'login', `Không kết nối được tiện ích đăng nhập ${platformMeta(entry.platform).name}`, errorCode);
+    if(['EXTENSION_NOT_READY', 'EXTENSION_OUTDATED'].includes(errorCode)) openDesktopLoginHelp();
     else toast('Không kết nối được tiện ích đăng nhập PC', 4000);
   }finally{
     state.loginLaunchingIds.delete(entry.id);
@@ -3070,9 +3163,167 @@ function renderLogVault(){
   };
 }
 
+function normalizeHttpLink(value){
+  const raw = String(value || '').trim();
+  if(!raw) return '';
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try{
+    const parsed = new URL(candidate);
+    if(!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return '';
+    return parsed.href;
+  }catch(_error){
+    return '';
+  }
+}
+
+function homePlatformCount(platformId){
+  if(platformId === 'note') return state.notes.length;
+  if(platformId === 'log') return state.logs.length;
+  if(platformId === 'home' || platformId === 'other') return null;
+  return state.entries.filter(entry => entry.platform === platformId).length;
+}
+
+function navigateToPlatform(platformId){
+  if(!PLATFORMS.some(platform => platform.id === platformId)) return;
+  state.activePlatform = platformId;
+  state.activeFolder = 'all';
+  state.selectMode = false;
+  state.selectedIds = new Set();
+  if(location.hash !== `#platform=${platformId}`) location.hash = `platform=${platformId}`;
+  renderVault();
+}
+
+function renderHomeVault(){
+  const app = document.getElementById('app');
+  const accountPlatformIds = new Set(['facebook', 'gmail', 'hotmail', 'tiktok', 'steam']);
+  const totalAccounts = state.entries.filter(entry => accountPlatformIds.has(entry.platform)).length;
+  const linkCount = state.entries.filter(entry => entry.platform === 'link').length;
+  const duplicateCount = PLATFORMS
+    .filter(platform => !['home', 'note', 'log', 'other'].includes(platform.id))
+    .reduce((sum, platform) => sum + findAllDuplicateGroups(platform.id).reduce((groupSum, group) => groupSum + group.list.length - 1, 0), 0);
+  const unknownCount = state.entries.filter(entry => STATUS_FILTER_PLATFORMS.includes(entry.platform) && (entry.status || 'unknown') === 'unknown').length;
+  const expiringCount = state.entries.filter(entry => {
+    if(!['phone', 'proxy'].includes(entry.platform) || !entry.expiryDate) return false;
+    const info = phoneExpiryInfo(entry.expiryDate);
+    return info && info.diffDays <= 7;
+  }).length;
+  const settings = driveSettings || { enabled: false, clientId: '', lastSyncedAt: 0 };
+  const syncText = driveStatusText(settings);
+  const syncHealthy = ['synced', 'connected'].includes(driveRuntimeStatus) || (!!driveAccessToken && settings.enabled);
+  const syncProblem = ['error', 'conflict', 'reauth'].includes(driveRuntimeStatus);
+  const syncColor = syncProblem ? '#f87171' : syncHealthy ? '#4ade80' : settings.enabled || settings.clientId ? '#facc15' : '#8b8b8b';
+  const quickPlatforms = PLATFORMS.filter(platform => platform.id !== 'home');
+  const platformDescriptions = {
+    facebook: 'UID và phiên Facebook', gmail: 'Tài khoản Google', hotmail: 'Outlook / Microsoft',
+    tiktok: 'Tài khoản TikTok', steam: 'Steam và Guard', link: 'Kho liên kết website',
+    note: 'Ghi chú mã hóa', phone: 'Số điện thoại', proxy: 'Proxy và thời hạn',
+    other: 'Bộ công cụ tiện ích', log: 'Nhật ký hoạt động',
+  };
+  const recentLogs = state.logs.slice(0, 4);
+  const logColors = { info: '#60a5fa', warn: '#facc15', error: '#f87171' };
+
+  app.innerHTML = `
+    <div class="home-shell">
+      <section class="home-hero">
+        <div class="home-hero-head">
+          <div>
+            <div class="home-kicker"><i class="ti ti-layout-dashboard"></i> Trung tâm điều hành</div>
+            <h1 class="home-title">Mọi dữ liệu quan trọng, trong một kho an toàn.</h1>
+            <p class="home-subtitle">Theo dõi nhanh tài khoản, liên kết, ghi chú và những mục cần xử lý. Toàn bộ nội dung vẫn nằm trong kho mã hóa hiện tại của Devic3.</p>
+          </div>
+          <div class="home-sync-pill" style="--home-sync-color:${syncColor}" title="Trạng thái Google Drive">
+            <span class="home-sync-dot"></span><span>${escapeHtml(syncText)}</span>
+          </div>
+        </div>
+        <div class="home-stats">
+          <div class="home-stat"><span class="home-stat-label">Tài khoản</span><span class="home-stat-value">${totalAccounts}</span></div>
+          <div class="home-stat"><span class="home-stat-label">Liên kết</span><span class="home-stat-value">${linkCount}</span></div>
+          <div class="home-stat"><span class="home-stat-label">Ghi chú</span><span class="home-stat-value">${state.notes.length}</span></div>
+          <div class="home-stat"><span class="home-stat-label">Thư mục</span><span class="home-stat-value">${state.folders.length}</span></div>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2 class="home-section-title"><i class="ti ti-bolt" style="color:#facc15"></i> Thao tác nhanh</h2>
+          <span class="home-section-note">Các lệnh dùng thường xuyên</span>
+        </div>
+        <div class="home-quick-actions">
+          <button type="button" class="primary" id="homeAddAccountBtn"><i class="ti ti-user-plus"></i> Thêm tài khoản</button>
+          <button type="button" id="homeAddLinkBtn"><i class="ti ti-link-plus"></i> Thêm link</button>
+          <button type="button" id="homeAddNoteBtn"><i class="ti ti-note"></i> Ghi chú mới</button>
+          <button type="button" id="homeBackupBtn"><i class="ti ti-cloud-upload"></i> Sao lưu / Đồng bộ</button>
+          <button type="button" id="homeLockBtn"><i class="ti ti-lock"></i> Khoá kho</button>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2 class="home-section-title"><i class="ti ti-apps" style="color:#60a5fa"></i> Không gian làm việc</h2>
+          <span class="home-section-note">Mở nhanh từng khu vực</span>
+        </div>
+        <div class="home-nav-grid">
+          ${quickPlatforms.map(platform => {
+            const count = homePlatformCount(platform.id);
+            const metaText = count === null ? platformDescriptions[platform.id] : `${count} mục · ${platformDescriptions[platform.id]}`;
+            return `<button type="button" class="home-nav-card" data-home-platform="${platform.id}" style="--home-color:${platform.color}">
+              <span class="home-nav-icon" style="--pcolor:${platform.color}">${platformSvg(platform.id)}</span>
+              <span class="home-nav-copy"><span class="home-nav-name">${platform.id === 'other' ? t('platform_tools') : escapeHtml(platform.name)}</span><span class="home-nav-meta">${escapeHtml(metaText)}</span></span>
+              <i class="ti ti-chevron-right home-nav-arrow"></i>
+            </button>`;
+          }).join('')}
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2 class="home-section-title"><i class="ti ti-activity-heartbeat" style="color:#4ade80"></i> Sức khỏe dữ liệu</h2>
+          <span class="home-section-note">Ưu tiên những mục cần kiểm tra</span>
+        </div>
+        <div class="home-health-grid">
+          <div class="home-health-card" style="--health-color:${duplicateCount ? '#f87171' : '#4ade80'}"><div class="home-health-top"><span class="home-health-label">Bản ghi trùng</span><i class="ti ti-copy-check home-health-icon"></i></div><div class="home-health-number">${duplicateCount}</div><div class="home-health-hint">${duplicateCount ? 'Nên rà soát và giữ lại bản chính xác nhất.' : 'Không phát hiện dữ liệu trùng lặp.'}</div></div>
+          <div class="home-health-card" style="--health-color:${expiringCount ? '#facc15' : '#4ade80'}"><div class="home-health-top"><span class="home-health-label">Hết hạn / trong 7 ngày</span><i class="ti ti-calendar-due home-health-icon"></i></div><div class="home-health-number">${expiringCount}</div><div class="home-health-hint">Theo dõi thời hạn Phone và Proxy.</div></div>
+          <div class="home-health-card" style="--health-color:${unknownCount ? '#a1a1aa' : '#4ade80'}"><div class="home-health-top"><span class="home-health-label">Chưa xác định</span><i class="ti ti-help-hexagon home-health-icon"></i></div><div class="home-health-number">${unknownCount}</div><div class="home-health-hint">Tài khoản chưa có trạng thái xác nhận.</div></div>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2 class="home-section-title"><i class="ti ti-terminal-2" style="color:#22c55e"></i> Hoạt động gần đây</h2>
+          <button type="button" class="text-btn" id="homeOpenLogBtn">Xem tất cả</button>
+        </div>
+        <div class="home-log-list">
+          ${recentLogs.length ? recentLogs.map(item => `<div class="home-log-row" style="--log-dot:${logColors[item.level] || '#8b8b8b'}"><span class="home-log-dot"></span><span class="home-log-message">${escapeHtml(item.message || 'Hoạt động hệ thống')}</span><span class="home-log-time">${item.time ? escapeHtml(new Date(item.time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })) : ''}</span></div>`).join('') : '<div class="empty" style="padding:18px 0;">Chưa có hoạt động nào được ghi nhận.</div>'}
+        </div>
+      </section>
+    </div>`;
+
+  renderPlatformBar();
+  updateIdeChrome();
+  syncGlobalSearchBar(null);
+  document.getElementById('homeAddAccountBtn').onclick = () => { navigateToPlatform('facebook'); state.modalTab = 'manual'; openModal(null); };
+  document.getElementById('homeAddLinkBtn').onclick = () => { navigateToPlatform('link'); state.modalTab = 'manual'; openModal(null); };
+  document.getElementById('homeAddNoteBtn').onclick = () => { navigateToPlatform('note'); openNoteModal(null); };
+  document.getElementById('homeBackupBtn').onclick = openFileBackupModal;
+  document.getElementById('homeOpenLogBtn').onclick = () => navigateToPlatform('log');
+  document.querySelectorAll('[data-home-platform]').forEach(button => {
+    button.onclick = () => navigateToPlatform(button.dataset.homePlatform);
+  });
+  document.getElementById('homeLockBtn').onclick = async () => {
+    recordLog('info', 'system', 'Đã khoá kho dữ liệu');
+    await saveLogs();
+    state.key = null; state.entries = []; state.folders = []; state.notes = []; state.logs = [];
+    endSession(); renderApp();
+  };
+}
+
 // ---------- RENDER: VAULT ----------
 function renderVault(){
   updateTotalBadge();
+  if(state.activePlatform === 'home'){
+    renderHomeVault();
+    return;
+  }
   if(state.activePlatform === 'log'){
     renderLogVault();
     return;
@@ -3093,17 +3344,18 @@ function renderVault(){
     if(state.hiddenStatuses.has(e.status || 'unknown')) return false;
     const q = state.search.toLowerCase();
     if(!q) return true;
-    return (e.fbName||'').toLowerCase().includes(q) || (e.email||'').toLowerCase().includes(q) || (e.displayName||'').toLowerCase().includes(q);
+    return (e.fbName||'').toLowerCase().includes(q) || (e.email||'').toLowerCase().includes(q) || (e.displayName||'').toLowerCase().includes(q) || (e.other||'').toLowerCase().includes(q);
   });
 
   app.innerHTML = `
-    <div class="code-comment" style="font-size:12px; margin-bottom:8px;">${t('comment_input_data')}</div>
+    <div class="code-comment" style="font-size:12px; margin-bottom:8px;">${state.activePlatform === 'link' ? '// Kho liên kết' : t('comment_input_data')}</div>
     <div class="topbar-actions">
       <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
-      <button class="text-btn ${state.selectMode ? 'primary' : ''}" id="selectModeBtn" title="${t('title_select_many')}"><i class="ti ti-checkbox"></i>${state.selectMode ? t('btn_select_done') : t('btn_select_many')}</button>
+      <button class="text-btn ${state.selectMode ? 'primary' : ''}" id="selectModeBtn" title="${state.activePlatform === 'link' ? 'Chọn nhiều liên kết để xoá cùng lúc' : t('title_select_many')}"><i class="ti ti-checkbox"></i>${state.selectMode ? t('btn_select_done') : t('btn_select_many')}</button>
       <button class="text-btn" id="fileBackupBtn" title="${t('title_file_backup')}"><i class="ti ti-device-floppy"></i>${state.fileHandle ? t('btn_file_linked') : t('btn_file_backup')}</button>
       <button class="text-btn" id="toolsBtn" title="${t('title_tools')}"><i class="ti ti-tool"></i>${t('btn_tools')}</button>
-      <button class="primary" id="importExportBtn"><i class="ti ti-arrows-exchange" style="vertical-align:-2px;font-size:15px"></i> ${t('btn_import_export')}</button>
+      <button class="${state.activePlatform === 'link' ? 'text-btn' : 'primary'}" id="importExportBtn"><i class="ti ti-arrows-exchange" style="vertical-align:-2px;font-size:15px"></i> ${t('btn_import_export')}</button>
+      ${state.activePlatform === 'link' ? '<button class="primary" id="addLinkBtn"><i class="ti ti-link-plus" style="vertical-align:-2px;font-size:15px"></i> Thêm link</button>' : ''}
     </div>
     <div class="folder-panel" id="folderBar"></div>
     ${STATUS_FILTER_PLATFORMS.includes(state.activePlatform) ? `
@@ -3118,7 +3370,7 @@ function renderVault(){
         <button class="text-btn danger" id="deleteSelectedBtn" disabled>${t('select_delete')}</button>
       </div>
     </div>` : ''}
-    <div class="code-comment" style="font-size:12px; margin:14px 0 8px;">${t('comment_account_list')}</div>
+    <div class="code-comment" style="font-size:12px; margin:14px 0 8px;">${state.activePlatform === 'link' ? '// Danh sách liên kết' : t('comment_account_list')}</div>
     <div id="list"></div>
   `;
 
@@ -3126,9 +3378,11 @@ function renderVault(){
   updateIdeChrome();
 
   document.getElementById('importExportBtn').onclick = openImportExportModal;
+  const addLinkBtn = document.getElementById('addLinkBtn');
+  if(addLinkBtn) addLinkBtn.onclick = () => { state.modalTab = 'manual'; openModal(null); };
   document.getElementById('fileBackupBtn').onclick = openFileBackupModal;
   document.getElementById('toolsBtn').onclick = openToolsModal;
-  syncGlobalSearchBar('accounts');
+  syncGlobalSearchBar(state.activePlatform === 'link' ? 'links' : 'accounts');
   document.getElementById('lockBtn').onclick = async () => {
     recordLog('info', 'system', 'Đã khoá kho dữ liệu');
     await saveLogs();
@@ -3153,11 +3407,36 @@ function renderVault(){
   const list = document.getElementById('list');
   if(filtered.length === 0){
     state.visibleEntries = [];
-    list.innerHTML = `<div class="empty"><span class="platform-icon" style="width:40px;height:40px;margin:0 auto 8px;--pcolor:${platformMeta(state.activePlatform).color};">${platformSvg(state.activePlatform)}</span>${platformEntries.length===0 ? `Chưa có tài khoản ${platformMeta(state.activePlatform).name} nào. Nhấn "Thêm" để lưu tài khoản đầu tiên.` : 'Không tìm thấy kết quả phù hợp.'}</div>`;
+    list.innerHTML = `<div class="empty"><span class="platform-icon" style="width:40px;height:40px;margin:0 auto 8px;--pcolor:${platformMeta(state.activePlatform).color};">${platformSvg(state.activePlatform)}</span>${platformEntries.length===0 ? (state.activePlatform === 'link' ? 'Chưa có liên kết nào. Nhấn “Thêm link” để lưu website đầu tiên.' : `Chưa có tài khoản ${platformMeta(state.activePlatform).name} nào. Nhấn "Thêm" để lưu tài khoản đầu tiên.`) : 'Không tìm thấy kết quả phù hợp.'}</div>`;
     return;
   }
 
   list.innerHTML = filtered.map(e => {
+    if(e.platform === 'link'){
+      const href = normalizeHttpLink(e.fbName);
+      let hostname = 'Website';
+      try{ hostname = new URL(href).hostname.replace(/^www\./i, '') || hostname; }catch(_error){}
+      return `
+      <div class="entry link-entry" data-id="${e.id}">
+        <div class="entry-top">
+          <div class="entry-info">
+            <p class="entry-name"><span class="platform-icon" style="width:20px;height:20px;--pcolor:${platformMeta('link').color};">${platformSvg('link')}</span><span class="link-entry-title">${escapeHtml(hostname)}</span></p>
+            ${e.other ? `<p class="link-entry-description">${escapeHtml(e.other)}</p>` : ''}
+            <a class="link-entry-url" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" title="Mở liên kết trong tab mới"><i class="ti ti-external-link"></i><span>${escapeHtml(e.fbName)}</span></a>
+            <div class="entry-meta-row">
+              ${folderName(e.folderId) ? `<span class="entry-folder"><i class="ti ti-folder" style="font-size:11px;vertical-align:-1px"></i> ${escapeHtml(folderName(e.folderId))}</span>` : ''}
+              ${isNewEntry(e) ? `<span class="new-badge" title="Liên kết mới thêm — tự ẩn sau 24 giờ"><i class="ti ti-sparkles" style="font-size:10px;"></i> MỚI</span>` : ''}
+              <span class="entry-created" title="Ngày lưu liên kết"><i class="ti ti-calendar-plus" style="font-size:11px;vertical-align:-1px"></i> ${formatDateDMY(new Date(e.createdAt || Date.now()))}</span>
+            </div>
+          </div>
+          <div class="entry-actions">
+            ${state.selectMode
+              ? `<input type="checkbox" class="entry-checkbox" data-select-id="${e.id}" ${state.selectedIds.has(e.id) ? 'checked' : ''}>`
+              : `<button class="text-btn" data-act="open-link" title="Mở website"><i class="ti ti-external-link"></i>Mở</button><button class="text-btn" data-act="edit" title="${t('btn_edit')}"><i class="ti ti-edit"></i>${t('btn_edit')}</button><button class="text-btn danger" data-act="delete" title="${t('btn_delete')}"><i class="ti ti-trash"></i>${t('btn_delete')}</button>`}
+          </div>
+        </div>
+      </div>`;
+    }
     const isPhoneOrProxy = e.platform === 'phone' || e.platform === 'proxy';
     const isChecking = state.checkingIds.has(e.id);
     const displayedStatus = isChecking ? 'checking' : (e.status || 'unknown');
@@ -3225,7 +3504,8 @@ function renderVault(){
   list.querySelectorAll('.entry').forEach(card => {
     const id = card.dataset.id;
     const entry = state.entries.find(x => x.id === id);
-    card.querySelector('[data-act=toggle-expand]').onclick = (ev) => {
+    const expandTarget = card.querySelector('[data-act=toggle-expand]');
+    if(expandTarget) expandTarget.onclick = (ev) => {
       if(ev.target.closest('[data-act=edit]') || ev.target.closest('[data-act=delete]') || ev.target.closest('[data-act=check]') || ev.target.closest('.entry-checkbox')) return;
       // toggle just this one card's class instead of rebuilding the whole list —
       // expand/collapse is the single most frequent interaction on a long list,
@@ -3238,6 +3518,11 @@ function renderVault(){
     if(editBtn) editBtn.onclick = () => openModal(entry);
     const deleteBtn = card.querySelector('[data-act=delete]');
     if(deleteBtn) deleteBtn.onclick = () => confirmDeleteEntry(id, entry.fbName || entry.email || '(chưa đặt tên)');
+    const openLinkBtn = card.querySelector('[data-act=open-link]');
+    if(openLinkBtn) openLinkBtn.onclick = () => {
+      const href = normalizeHttpLink(entry.fbName);
+      if(href) window.open(href, '_blank', 'noopener,noreferrer');
+    };
     const checkBtn = card.querySelector('[data-act=check]');
     if(checkBtn) checkBtn.onclick = () => checkAccountStatus(entry);
     const desktopLoginBtn = card.querySelector('[data-act=desktop-login]');
@@ -3319,28 +3604,26 @@ function renderVault(){
 
 function renderPlatformBar(){
   const bar = document.getElementById('platformBar');
-  bar.innerHTML = `<div class="ide-sidebar-label code-comment">${t('sidebar_platforms')}</div>` + PLATFORMS.map(p => {
+  const platformLinkHtml = p => {
     const isTools = p.id === 'other';
-    const c = p.id === 'note' ? state.notes.length : p.id === 'log' ? state.logs.length : isTools ? null : state.entries.filter(e => e.platform === p.id).length;
+    const c = homePlatformCount(p.id);
     const label = isTools ? t('platform_tools') : escapeHtml(p.name);
     // Real <a href> (not a <button>) so Ctrl/Cmd-click, middle-click, and
     // "open in new tab" all work exactly like a normal browser link — the
     // browser handles that natively, we only intercept a plain left-click.
     return `<a href="#platform=${p.id}" class="platform-chip ${state.activePlatform===p.id?'active':''}" data-platform="${p.id}" style="--pcolor:${p.color};"><span class="platform-icon">${platformSvg(p.id)}</span>${label}${c === null ? '' : `<span class="platform-chip-count">${c}</span>`}</a>`;
-  }).join('');
+  };
+  const homePlatform = PLATFORMS.find(platform => platform.id === 'home');
+  const remainingPlatforms = PLATFORMS.filter(platform => platform.id !== 'home');
+  bar.innerHTML = `<div class="ide-sidebar-label code-comment">// Tổng quan</div>${platformLinkHtml(homePlatform)}<div class="ide-sidebar-label code-comment" style="padding-top:14px;border-top:1px solid var(--border);margin-top:8px;">${t('sidebar_platforms')}</div>${remainingPlatforms.map(platformLinkHtml).join('')}`;
   bar.querySelectorAll('[data-platform]').forEach(link => {
     link.onclick = (ev) => {
       // Ctrl/Cmd/middle-click/shift-click: let the browser open it in a new
       // tab/window on its own — don't intercept, don't switch the tab here.
       if(ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button === 1) return;
       ev.preventDefault();
-      state.activePlatform = link.dataset.platform;
-      if(location.hash !== `#platform=${link.dataset.platform}`) location.hash = `platform=${link.dataset.platform}`;
-      state.activeFolder = 'all';
-      state.selectMode = false;
-      state.selectedIds = new Set();
-      renderVault();
       bar.classList.remove('open'); // close the mobile sidebar drawer after picking a tab
+      navigateToPlatform(link.dataset.platform);
     };
   });
 }
@@ -3751,13 +4034,13 @@ function openExportFieldModal(platformId){
       : dataLines.join('\n');
     downloadTextFile(content, exportSelectionFilename(platformId, selectedFields));
     closeModal();
-    toast(`Đã xuất ${dataLines.length} tài khoản ${meta.name}`);
+    toast(platformId === 'link' ? `Đã xuất ${dataLines.length} liên kết` : `Đã xuất ${dataLines.length} tài khoản ${meta.name}`);
   };
 }
 
 function buildExportContent(){
   const lines = [
-    `# Devic3 - Sao lưu tài khoản`,
+    `# Devic3 - Sao lưu dữ liệu`,
     `# Xuất lúc: ${new Date().toLocaleString('vi-VN')}`,
     `# Mỗi nền tảng có định dạng cột riêng, xem dòng "Định dạng:" ngay trên từng nhóm bên dưới.`,
     ``
@@ -3775,12 +4058,12 @@ function buildExportContent(){
 
 function exportAccounts(){
   if(state.entries.length === 0){
-    toast('Chưa có tài khoản nào để xuất');
+    toast('Chưa có dữ liệu nào để xuất');
     return;
   }
   showConfirm(
     'Xuất tài khoản?',
-    `File xuất ra sẽ chứa toàn bộ ${state.entries.length} tài khoản (UID, mật khẩu, 2FA, cookie, token...) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn và không chia sẻ cho người khác.`,
+    `File xuất ra sẽ chứa toàn bộ ${state.entries.length} bản ghi (tài khoản, liên kết và các trường liên quan) ở dạng chữ rõ, không mã hoá. Hãy lưu file này ở nơi an toàn và không chia sẻ cho người khác.`,
     () => {
       const content = buildExportContent();
       const date = new Date();
@@ -3806,11 +4089,11 @@ function openImportExportModal(){
 
 function renderImportExportModal(){
   const modalBody = document.getElementById('modalBody');
-  const exportablePlatforms = PLATFORMS.filter(p => p.id !== 'note' && p.id !== 'log');
+  const exportablePlatforms = PLATFORMS.filter(p => !['home', 'note', 'log', 'other'].includes(p.id));
   modalBody.innerHTML = `
     <h2>Nhập / Xuất</h2>
-    <button type="button" id="ieAddBtn" class="primary" style="width:100%; margin-bottom:12px; justify-content:center;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Nhập tài khoản mới</button>
-    ${(state.activePlatform !== 'note' && state.activePlatform !== 'other' && state.activePlatform !== 'phone') ? `<button type="button" id="ieDupScanBtn" style="width:100%; margin-bottom:18px;"><i class="ti ti-copy-check" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>Quét tài khoản trùng lặp (${platformMeta(state.activePlatform).name})</button>` : ''}
+    <button type="button" id="ieAddBtn" class="primary" style="width:100%; margin-bottom:12px; justify-content:center;"><i class="ti ti-plus" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${state.activePlatform === 'link' ? 'Thêm link mới' : 'Nhập tài khoản mới'}</button>
+    ${(state.activePlatform !== 'note' && state.activePlatform !== 'other' && state.activePlatform !== 'phone') ? `<button type="button" id="ieDupScanBtn" style="width:100%; margin-bottom:18px;"><i class="ti ti-copy-check" style="vertical-align:-2px;font-size:15px;margin-right:4px"></i>${state.activePlatform === 'link' ? 'Quét liên kết trùng lặp' : `Quét tài khoản trùng lặp (${platformMeta(state.activePlatform).name})`}</button>` : ''}
     <label>Chọn nền tảng và các trường cần xuất</label>
     <div class="export-platform-list">
       ${exportablePlatforms.map(p => {
@@ -3818,7 +4101,7 @@ function renderImportExportModal(){
         return `<button type="button" class="folder-chip" data-export-platform="${p.id}"><span>${escapeHtml(p.name)}</span><span>${c}</span></button>`;
       }).join('')}
     </div>
-    <button type="button" id="ieExportAllBtn" style="width:100%; margin-top:12px;">Xuất tất cả nền tảng (${state.entries.length})</button>
+    <button type="button" id="ieExportAllBtn" style="width:100%; margin-top:12px;">Xuất toàn bộ dữ liệu (${state.entries.length})</button>
     <button id="ieCloseBtn" style="width:100%; margin-top:10px;">Đóng</button>
   `;
   document.getElementById('ieCloseBtn').onclick = closeModal;
@@ -4145,18 +4428,20 @@ function exportSingleEntry(entry){
 
 async function deleteEntry(id){
   const removed = state.entries.find(e => e.id === id);
+  const isLink = removed && removed.platform === 'link';
   const nextEntries = state.entries.filter(e => e.id !== id);
   if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-  recordLog('info', 'account', `Đã xoá một tài khoản ${removed ? platformMeta(removed.platform).name : ''}`.trim());
+  recordLog('info', isLink ? 'link' : 'account', isLink ? 'Đã xoá một liên kết' : `Đã xoá một tài khoản ${removed ? platformMeta(removed.platform).name : ''}`.trim());
   state.expandedIds.delete(id);
   renderVault();
-  toast('Đã xoá tài khoản');
+  toast(isLink ? 'Đã xoá liên kết' : 'Đã xoá tài khoản');
 }
 
 function confirmDeleteEntry(id, name){
+  const isLink = state.entries.some(entry => entry.id === id && entry.platform === 'link');
   showConfirm(
-    'Xoá tài khoản?',
-    `Bạn có chắc chắn muốn xoá tài khoản "${name}"? Hành động này không thể hoàn tác.`,
+    isLink ? 'Xoá liên kết?' : 'Xoá tài khoản?',
+    `Bạn có chắc chắn muốn xoá ${isLink ? 'liên kết' : 'tài khoản'} "${name}"? Hành động này không thể hoàn tác.`,
     () => deleteEntry(id)
   );
 }
@@ -4182,17 +4467,18 @@ function clearEntrySelection(){
 function confirmDeleteSelected(){
   const count = state.selectedIds.size;
   if(count === 0) return;
+  const isLink = state.activePlatform === 'link';
   showConfirm(
-    'Xoá các tài khoản đã chọn?',
-    `Bạn có chắc chắn muốn xoá ${count} tài khoản đã chọn? Hành động này không thể hoàn tác.`,
+    isLink ? 'Xoá các liên kết đã chọn?' : 'Xoá các tài khoản đã chọn?',
+    `Bạn có chắc chắn muốn xoá ${count} ${isLink ? 'liên kết' : 'tài khoản'} đã chọn? Hành động này không thể hoàn tác.`,
     async () => {
       const nextEntries = state.entries.filter(e => !state.selectedIds.has(e.id));
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-      recordLog('info', 'account', `Đã xoá ${count} tài khoản được chọn`, platformMeta(state.activePlatform).name);
+      recordLog('info', isLink ? 'link' : 'account', `Đã xoá ${count} ${isLink ? 'liên kết' : 'tài khoản'} được chọn`, platformMeta(state.activePlatform).name);
       state.selectedIds = new Set();
       state.selectMode = false;
       renderVault();
-      toast(`Đã xoá ${count} tài khoản`);
+      toast(`Đã xoá ${count} ${isLink ? 'liên kết' : 'tài khoản'}`);
     }
   );
 }
@@ -4592,6 +4878,9 @@ function smartCorrectFacebookFields(fields){
 
 function parseAutoLine(line, platformId){
   const parts = line.split(platformDelimiter(platformId)).map(p => p.trim());
+  if(platformId === 'link'){
+    return { fbName: normalizeHttpLink(parts[0]), other: parts.slice(1).join(' | ').trim() };
+  }
   const obj = {};
   getPlatformInputFields(platformId).forEach((f, i) => { obj[f.key] = parts[i] || ''; });
   if(platformId === 'facebook'){
@@ -4723,7 +5012,7 @@ function folderOptionsHtml(selectedId, platformId){
 }
 
 function platformOptionsHtml(selectedId){
-  return PLATFORMS.filter(p => p.id !== 'log').map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  return PLATFORMS.filter(p => !['home', 'note', 'log', 'other'].includes(p.id)).map(p => `<option value="${p.id}" ${selectedId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
 }
 
 // renders just the platform-specific input/textarea fields (the part that changes when
@@ -4732,8 +5021,11 @@ function dynamicFieldsHtml(platformId, valuesObj){
   return getPlatformInputFields(platformId).map(f => {
     const meta = fieldMeta(f.key);
     const val = (valuesObj && valuesObj[f.key]) || '';
+    const placeholder = platformId === 'link'
+      ? (f.key === 'fbName' ? 'https://example.com' : 'Mô tả ngắn về website')
+      : 'Không bắt buộc';
     if(meta.kind === 'area'){
-      return `<label>${f.label}</label><textarea id="f_${f.key}" placeholder="Không bắt buộc">${escapeHtml(val)}</textarea>`;
+      return `<label>${f.label}</label><textarea id="f_${f.key}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(val)}</textarea>`;
     }
     if(meta.kind === 'date'){
       return `<label>${f.label}</label><input type="text" id="f_${f.key}" placeholder="dd/mm/yyyy" value="${escapeAttr(toDisplayDate(val))}">`;
@@ -4741,26 +5033,27 @@ function dynamicFieldsHtml(platformId, valuesObj){
     if(meta.kind === 'secret'){
       return `<label>${f.label}</label><input type="password" id="f_${f.key}" placeholder="Không bắt buộc" value="${escapeAttr(val)}" autocomplete="off" spellcheck="false">`;
     }
-    return `<label>${f.label}</label><input type="text" id="f_${f.key}" placeholder="Không bắt buộc" value="${escapeAttr(val)}">`;
+    return `<label>${f.label}</label><input type="text" id="f_${f.key}" placeholder="${escapeAttr(placeholder)}" value="${escapeAttr(val)}">`;
   }).join('');
 }
 
 function manualFieldsHtml(entry){
   const currentPlatform = entry ? entry.platform : state.activePlatform;
+  const isLink = currentPlatform === 'link';
   const platformSelect = `<label>Nền tảng</label><select id="f_platform">${platformOptionsHtml(currentPlatform)}</select>`;
   const folderSelect = `<label>Thư mục</label><select id="f_folderId">${folderOptionsHtml(entry ? entry.folderId : '', currentPlatform)}</select>`;
   // "Tên" (display name/nickname) can only be set while editing an existing account
-  const nameField = entry ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
+  const nameField = entry && !isLink ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
   // "Proxy" also only settable while editing — lets you type freely OR quickly
   // pick from the list of IPs already saved in the Proxy tab
   const savedProxies = state.entries.filter(e => e.platform === 'proxy' && e.fbName);
   const proxyDatalistOptions = savedProxies.map(e =>
     `<option value="${escapeAttr(e.fbName)}">${escapeAttr(e.fbName)}${e.username ? ' — ' + escapeAttr(e.username) : ''}</option>`
   ).join('');
-  const proxyField = entry ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
+  const proxyField = entry && !isLink ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
   // "Trạng thái" also only settable while editing
   const currentStatus = entry ? (entry.status || 'unknown') : 'unknown';
-  const statusField = entry ? `<label>Trạng thái tài khoản</label><select id="f_status">
+  const statusField = entry && !isLink ? `<label>Trạng thái tài khoản</label><select id="f_status">
       <option value="unknown" ${currentStatus==='unknown'?'selected':''}>? Chưa xác định</option>
       <option value="active" ${currentStatus==='active'?'selected':''}>✓ Hoạt động</option>
       <option value="inactive" ${currentStatus==='inactive'?'selected':''}>✕ Không hoạt động</option>
@@ -4784,10 +5077,11 @@ function renderModalBody(entry){
   const modalBody = document.getElementById('modalBody');
   const showAutoTab = !entry; // only offer bulk/auto import when adding a new account, not when editing
   const autoPlatform = state.activePlatform;
+  const isLink = (entry ? entry.platform : autoPlatform) === 'link';
   const autoExampleFormat = platformFormatHint(autoPlatform);
   modalBody.innerHTML = `
-    <h2>${entry ? 'Sửa tài khoản' : 'Thêm tài khoản'}</h2>
-    ${entry ? `<div class="row" style="margin:-6px 0 16px;"><button type="button" class="text-btn" id="exportEntryBtn" style="flex:1;"><i class="ti ti-download"></i>Xuất tài khoản này</button></div>` : ''}
+    <h2>${entry ? (isLink ? 'Sửa liên kết' : 'Sửa tài khoản') : (isLink ? 'Thêm liên kết' : 'Thêm tài khoản')}</h2>
+    ${entry ? `<div class="row" style="margin:-6px 0 16px;"><button type="button" class="text-btn" id="exportEntryBtn" style="flex:1;"><i class="ti ti-download"></i>${isLink ? 'Xuất liên kết này' : 'Xuất tài khoản này'}</button></div>` : ''}
     ${showAutoTab ? `
     <div class="tabs">
       <button type="button" class="tab-btn ${state.modalTab==='manual'?'active':''}" id="tabManual">Thủ công</button>
@@ -4802,7 +5096,7 @@ function renderModalBody(entry){
       <select id="f_auto_platform">${platformOptionsHtml(autoPlatform)}</select>
       <label>Thư mục</label>
       <select id="f_auto_folderId">${folderOptionsHtml('', autoPlatform)}</select>
-      <label>Dán dữ liệu theo định dạng (mỗi dòng 1 tài khoản)</label>
+      <label>Dán dữ liệu theo định dạng (mỗi dòng 1 ${isLink ? 'liên kết' : 'tài khoản'})</label>
       <textarea id="fAuto" class="mono-area" style="min-height:180px" placeholder="${escapeAttr(autoExampleFormat)}
 ${escapeAttr(autoExampleFormat)}
 ${escapeAttr(autoExampleFormat)}"></textarea>
@@ -4908,11 +5202,12 @@ function openDuplicateScanModal(){
 function renderDuplicateScanModal(){
   const modalBody = document.getElementById('modalBody');
   const meta = platformMeta(state.activePlatform);
+  const entityName = state.activePlatform === 'link' ? 'liên kết' : 'tài khoản';
   const groups = findAllDuplicateGroups(state.activePlatform);
   modalBody.innerHTML = `
     <h2>Quét trùng lặp — ${escapeHtml(meta.name)}</h2>
     ${groups.length === 0
-      ? `<p style="font-size:14px; color:var(--text-2);">Không tìm thấy tài khoản nào bị trùng định danh trong ${escapeHtml(meta.name)}.</p>`
+      ? `<p style="font-size:14px; color:var(--text-2);">Không tìm thấy ${entityName} nào bị trùng định danh trong ${escapeHtml(meta.name)}.</p>`
       : `<p class="hint" style="margin-top:-4px;">Tìm thấy ${groups.length} định danh bị trùng (tổng ${groups.reduce((s,g)=>s+g.list.length,0)} bản ghi). Chọn bản ghi muốn giữ lại — các bản còn lại trong cùng nhóm sẽ bị xoá.</p>
       <div style="display:flex; flex-direction:column; gap:12px; max-height:360px; overflow-y:auto;">
         ${groups.map((g, gi) => `
@@ -4948,10 +5243,10 @@ function renderDuplicateScanModal(){
         async () => {
           const nextEntries = state.entries.filter(e => !idsToDelete.has(e.id));
           if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-          recordLog('info', 'account', `Đã xoá ${idsToDelete.size} bản ghi trùng lặp`, platformMeta(state.activePlatform).name);
+          recordLog('info', state.activePlatform === 'link' ? 'link' : 'account', `Đã xoá ${idsToDelete.size} bản ghi trùng lặp`, platformMeta(state.activePlatform).name);
           closeModal();
           renderVault();
-          toast(`Đã xoá ${idsToDelete.size} tài khoản trùng lặp`);
+          toast(`Đã xoá ${idsToDelete.size} ${entityName} trùng lặp`);
         }
       );
     };
@@ -4962,16 +5257,17 @@ function showDuplicateChoice(label, platformId, onOverwrite, onSkip){
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
   const identifierLabel = primaryIdentifierLabel(platformId);
+  const entityName = platformId === 'link' ? 'liên kết' : 'tài khoản';
   modalBody.innerHTML = `
-    <h2>Tài khoản đã tồn tại</h2>
-    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 8px;">Đã có tài khoản trùng ${escapeHtml(identifierLabel)} trong hệ thống:</p>
+    <h2>${platformId === 'link' ? 'Liên kết' : 'Tài khoản'} đã tồn tại</h2>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 8px;">Đã có ${entityName} trùng ${escapeHtml(identifierLabel)} trong hệ thống:</p>
     <div class="duplicate-id-list" style="max-height:none;">
       <div class="duplicate-id-row"><span class="duplicate-id-index">1.</span><span class="duplicate-id-value"><span style="color:var(--text-muted)">${escapeHtml(identifierLabel)}:</span> ${escapeHtml(label)}</span><button type="button" class="text-btn duplicate-copy-btn" id="singleDuplicateCopyBtn" title="Sao chép ${escapeAttr(identifierLabel)}"><i class="ti ti-copy"></i>Sao chép</button></div>
     </div>
-    <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 16px;">Bạn muốn xử lý tài khoản này như thế nào?</p>
+    <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 16px;">Bạn muốn xử lý ${entityName} này như thế nào?</p>
     <div style="display:flex; flex-direction:column; gap:8px;">
       <button type="button" id="dupOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè bằng bản mới</button>
-      <button type="button" id="dupSkipBtn" style="width:100%; justify-content:center;">Giữ tài khoản cũ, bỏ qua bản mới</button>
+      <button type="button" id="dupSkipBtn" style="width:100%; justify-content:center;">Giữ ${entityName} cũ, bỏ qua bản mới</button>
     </div>
   `;
   modalBg.classList.add('show');
@@ -4985,18 +5281,19 @@ function showBulkDuplicateChoice(dupPairs, platformId, newAccountCount, onChoice
   const modalBody = document.getElementById('modalBody');
   const count = dupPairs.length;
   const identifierLabel = primaryIdentifierLabel(platformId);
+  const entityName = platformId === 'link' ? 'liên kết' : 'tài khoản';
   const duplicateIds = dupPairs.map(({ fields, existing }) => String(fields.fbName || fields.email || existing.fbName || existing.email || '(trống)'));
   modalBody.innerHTML = `
     <h2>Phát hiện tài khoản trùng</h2>
-    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 6px;">${count} tài khoản trong danh sách vừa dán đã tồn tại sẵn. Danh sách ${escapeHtml(identifierLabel)} bị trùng:</p>
+    <p style="font-size:14px; color:var(--text-2); line-height:1.6; margin:0 0 6px;">${count} ${entityName} trong danh sách vừa dán đã tồn tại sẵn. Danh sách ${escapeHtml(identifierLabel)} bị trùng:</p>
     <div class="duplicate-id-list">
       ${duplicateIds.map((value, index) => `<div class="duplicate-id-row"><span class="duplicate-id-index">${index + 1}.</span><span class="duplicate-id-value"><span style="color:var(--text-muted)">${escapeHtml(identifierLabel)}:</span> ${escapeHtml(value)}</span><button type="button" class="text-btn duplicate-copy-btn" data-copy-duplicate="${index}" title="Sao chép ${escapeAttr(identifierLabel)}"><i class="ti ti-copy"></i>Sao chép</button></div>`).join('')}
     </div>
     <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 8px;">Bạn muốn xử lý các tài khoản trùng này như thế nào?</p>
-    <div class="login-helper-note" style="margin-bottom:14px;"><i class="ti ti-info-circle" style="color:#60a5fa"></i> Dù chọn phương án nào, <b>${newAccountCount}</b> tài khoản mới không trùng vẫn được nhập.</div>
+    <div class="login-helper-note" style="margin-bottom:14px;"><i class="ti ti-info-circle" style="color:#60a5fa"></i> Dù chọn phương án nào, <b>${newAccountCount}</b> ${entityName} mới không trùng vẫn được nhập.</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè ${count} tài khoản trùng</button>
-      <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Giữ bản cũ, bỏ qua ${count} tài khoản trùng</button>
+      <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè ${count} ${entityName} trùng</button>
+      <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Giữ bản cũ, bỏ qua ${count} ${entityName} trùng</button>
     </div>
   `;
   modalBg.classList.add('show');
@@ -5013,6 +5310,7 @@ async function saveModal(entry){
 
   if(state.modalTab === 'manual'){
     const platform = document.getElementById('f_platform').value;
+    const isLinkPlatform = platform === 'link';
     const fields = {};
     getPlatformFields(platform).forEach(f => {
       const el = document.getElementById('f_' + f.key);
@@ -5026,8 +5324,16 @@ async function saveModal(entry){
     if(proxyInput) fields.proxy = proxyInput.value.trim();
     const statusInput = document.getElementById('f_status');
     if(statusInput) fields.status = statusInput.value;
+    if(platform === 'link'){
+      fields.fbName = normalizeHttpLink(fields.fbName);
+      if(!fields.fbName){
+        err.textContent = 'Nhập link website hợp lệ, ví dụ: https://example.com';
+        err.style.display = 'block';
+        return;
+      }
+    }
     if(!fields.fbName && !fields.email){
-      err.textContent = 'Nhập ít nhất UID hoặc Email.';
+      err.textContent = platform === 'link' ? 'Nhập link website.' : 'Nhập ít nhất UID hoặc Email.';
       err.style.display = 'block';
       return;
     }
@@ -5039,7 +5345,7 @@ async function saveModal(entry){
         ? state.entries.map(e => e.id === state.editingId ? { ...e, ...fields } : e)
         : [...state.entries, { id: uid(), createdAt: Date.now(), ...fields }];
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-      recordLog('info', 'account', wasEditing ? 'Đã cập nhật một tài khoản' : 'Đã thêm một tài khoản', platformMeta(platform).name);
+      recordLog('info', isLinkPlatform ? 'link' : 'account', wasEditing ? `Đã cập nhật một ${isLinkPlatform ? 'liên kết' : 'tài khoản'}` : `Đã thêm một ${isLinkPlatform ? 'liên kết' : 'tài khoản'}`, platformMeta(platform).name);
       closeModal();
       renderVault();
       toast('Đã lưu');
@@ -5057,10 +5363,10 @@ async function saveModal(entry){
             .filter(e => !state.editingId || e.id !== state.editingId || e.id === dup.id)
             .map(e => e.id === dup.id ? { ...e, ...fields } : e);
           if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-          recordLog('info', 'account', 'Đã ghi đè một tài khoản trùng', platformMeta(platform).name);
-          closeModal(); renderVault(); toast('Đã ghi đè tài khoản');
+          recordLog('info', isLinkPlatform ? 'link' : 'account', `Đã ghi đè một ${isLinkPlatform ? 'liên kết' : 'tài khoản'} trùng`, platformMeta(platform).name);
+          closeModal(); renderVault(); toast(`Đã ghi đè ${isLinkPlatform ? 'liên kết' : 'tài khoản'}`);
         },
-        () => { closeModal(); toast('Đã giữ tài khoản cũ, bỏ qua bản mới'); }
+        () => { closeModal(); toast(`Đã giữ ${isLinkPlatform ? 'liên kết' : 'tài khoản'} cũ, bỏ qua bản mới`); }
       );
       return;
     }
@@ -5068,6 +5374,7 @@ async function saveModal(entry){
   } else {
     const folderId = document.getElementById('f_auto_folderId').value;
     const platform = document.getElementById('f_auto_platform').value;
+    const isLinkPlatform = platform === 'link';
     const raw = document.getElementById('fAuto').value;
     const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     if(lines.length === 0){
@@ -5096,16 +5403,16 @@ async function saveModal(entry){
               .filter(e => e.id !== state.editingId || e.id === dup.id)
               .map(e => e.id === dup.id ? { ...e, ...fields } : e);
             if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-            recordLog('info', 'account', 'Đã ghi đè một tài khoản trùng', platformMeta(platform).name);
-            closeModal(); renderVault(); toast('Đã ghi đè tài khoản');
+            recordLog('info', isLinkPlatform ? 'link' : 'account', `Đã ghi đè một ${isLinkPlatform ? 'liên kết' : 'tài khoản'} trùng`, platformMeta(platform).name);
+            closeModal(); renderVault(); toast(`Đã ghi đè ${isLinkPlatform ? 'liên kết' : 'tài khoản'}`);
           },
-          () => { closeModal(); toast('Đã giữ tài khoản cũ, bỏ qua bản mới'); }
+          () => { closeModal(); toast(`Đã giữ ${isLinkPlatform ? 'liên kết' : 'tài khoản'} cũ, bỏ qua bản mới`); }
         );
         return;
       }
       const nextEntries = state.entries.map(e => e.id === state.editingId ? { ...e, ...fields } : e);
       if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-      recordLog('info', 'account', 'Đã cập nhật một tài khoản', platformMeta(platform).name);
+      recordLog('info', isLinkPlatform ? 'link' : 'account', `Đã cập nhật một ${isLinkPlatform ? 'liên kết' : 'tài khoản'}`, platformMeta(platform).name);
       closeModal();
       renderVault();
       toast('Đã lưu');
@@ -5122,13 +5429,13 @@ async function saveModal(entry){
 
       const finishBulk = async (overwrittenCount) => {
         if(!await commitCollection('entries', nextEntries, saveEntries)) return;
-        recordLog('info', 'import', `Đã nhập ${newOnes.length} tài khoản mới`, `${platformMeta(platform).name} · ghi đè ${overwrittenCount} · bỏ qua ${dupPairs.length && !overwrittenCount ? dupPairs.length : 0} trùng · ${skippedCount} dòng lỗi`);
+        recordLog('info', 'import', `Đã nhập ${newOnes.length} ${isLinkPlatform ? 'liên kết' : 'tài khoản'} mới`, `${platformMeta(platform).name} · ghi đè ${overwrittenCount} · bỏ qua ${dupPairs.length && !overwrittenCount ? dupPairs.length : 0} trùng · ${skippedCount} dòng lỗi`);
         closeModal();
         renderVault();
         const parts = [];
-        if(newOnes.length > 0) parts.push(`thêm ${newOnes.length} tài khoản mới`);
-        if(overwrittenCount) parts.push(`ghi đè ${overwrittenCount} tài khoản trùng`);
-        if(dupPairs.length && !overwrittenCount) parts.push(`bỏ qua ${dupPairs.length} tài khoản trùng`);
+        if(newOnes.length > 0) parts.push(`thêm ${newOnes.length} ${isLinkPlatform ? 'liên kết' : 'tài khoản'} mới`);
+        if(overwrittenCount) parts.push(`ghi đè ${overwrittenCount} ${isLinkPlatform ? 'liên kết' : 'tài khoản'} trùng`);
+        if(dupPairs.length && !overwrittenCount) parts.push(`bỏ qua ${dupPairs.length} ${isLinkPlatform ? 'liên kết' : 'tài khoản'} trùng`);
         if(skippedCount > 0) parts.push(`bỏ qua ${skippedCount} dòng không hợp lệ`);
         toast(`Đã ${parts.join(', ')}`);
       };
