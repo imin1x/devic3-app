@@ -5,7 +5,6 @@
   "description": "Kho tài khoản mã hoá Devic3 và máy chủ xem trước cục bộ",
   "engines": { "node": ">=18" },
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test"
+    "start": "node server.js"
   }
 }

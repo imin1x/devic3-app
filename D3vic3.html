@@ -190,6 +190,10 @@
   }
   .desktop-login-btn:hover{background:rgba(59,130,246,.16); border-color:#60a5fa; color:#dbeafe;}
   .desktop-login-btn:disabled{opacity:.58; cursor:wait;}
+  .money-private-hint{display:inline-flex;align-items:center;gap:4px;color:#86efac;font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:1px 7px;border:1px solid rgba(34,197,94,.24);border-radius:999px;background:rgba(34,197,94,.07);}
+  .money-private-fields{margin-top:4px;}
+  .money-private-fields .pw-row{flex-wrap:wrap;}
+  @media(max-width:560px){.money-private-fields .pw-val{flex:1 1 calc(100% - 115px);min-width:100px}.money-private-fields .text-btn{padding:5px 8px}}
   .login-helper-steps{margin:10px 0 14px; padding-left:22px; color:var(--text-2); line-height:1.65;}
   .login-helper-note{padding:10px 12px; border:1px solid rgba(96,165,250,.28); border-radius:8px; background:rgba(59,130,246,.07); color:var(--text-2); font-size:12px; line-height:1.55;}
   .log-toolbar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
@@ -733,6 +737,7 @@ const PLATFORMS = [
   { id: 'note',     name: 'Note',     color: '#F5A623' },
   { id: 'log',      name: 'Log',      color: '#22c55e' },
   { id: 'phone',    name: 'Phone',    color: '#9C27B0' },
+  { id: 'money',    name: 'Money',    color: '#22C55E' },
   { id: 'proxy',    name: 'Proxy',    color: '#14b8a6' },
   { id: 'other',    name: 'Công cụ',  color: '#6b6b66' },
 ];
@@ -765,6 +770,7 @@ const PLATFORM_SVG_INNER = {
   note: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M7 3.5h7l3.5 3.5V20.5H7z"/><path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M14 3.5V7h3.5"/><path fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" d="M9.3 11h5.4M9.3 13.7h5.4M9.3 16.4h3.4"/>`,
   log: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 5h14v14H5zM8 9l2 2-2 2M12 14h4"/>`,
   phone: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" d="M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" d="M11 18.3h2"/>`,
+  money: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7zM4 9V6a2 2 0 0 1 2-2h10v3M15 12h5v4h-5a2 2 0 0 1 0-4z"/>`,
   proxy: `<path fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 8h13m0 0-3.2-3.2M17 8l-3.2 3.2M20 16H7m0 0 3.2-3.2M7 16l3.2 3.2"/>`,
 };
 
@@ -796,6 +802,7 @@ const FIELD_META = {
   secondaryEmail:         { icon: 'ti-mail-forward',kind: 'text' },
   secondaryEmailPassword: { icon: 'ti-mail-opened', kind: 'text' },
   phone:                  { icon: 'ti-phone',       kind: 'text' },
+  bankAccount:            { icon: 'ti-building-bank', kind: 'text' },
   expiryDate:             { icon: 'ti-calendar-due', kind: 'date' },
   port:                   { icon: 'ti-plug',        kind: 'text' },
   username:               { icon: 'ti-user',        kind: 'text' },
@@ -819,6 +826,7 @@ function primaryIdentifierLabel(platformId){
   if(platformId === 'gmail' || platformId === 'hotmail') return 'Email';
   if(platformId === 'tiktok' || platformId === 'steam') return 'User';
   if(platformId === 'phone') return 'SĐT';
+  if(platformId === 'money') return 'Name';
   if(platformId === 'proxy') return 'IP';
   if(platformId === 'facebook') return 'UID';
   return 'Định danh';
@@ -947,6 +955,13 @@ const PLATFORM_FIELDS = {
     { key: 'expiryDate', label: 'Ngày hết hạn' },
     { key: 'other',      label: 'Khác' },
   ],
+  money: [
+    { key: 'fbName',      label: 'Name' },
+    { key: 'bankAccount', label: 'STK' },
+    { key: 'password',    label: 'Pass' },
+    { key: 'phone',       label: 'SĐT' },
+    { key: 'email',       label: 'Email' },
+  ],
   proxy: [
     { key: 'fbName',     label: 'IP' },
     { key: 'port',       label: 'Port' },
@@ -968,6 +983,7 @@ const PLATFORM_INPUT_ORDER = {
   hotmail: ['fbName', 'password', 'twoFA', 'secondaryEmail', 'secondaryEmailPassword', 'phone', 'recoveryCode', 'backupCodes', 'cookie', 'token', 'other'],
   tiktok: ['fbName', 'password', 'twoFA', 'email', 'emailPassword', 'phone', 'backupCodes', 'cookie', 'token', 'other'],
   steam: ['fbName', 'password', 'steamId', 'email', 'emailPassword', 'phone', 'twoFA', 'steamGuardRecoveryCode', 'steamSharedSecret', 'steamIdentitySecret', 'cookie', 'token', 'other'],
+  money: ['fbName', 'bankAccount', 'password', 'phone', 'email'],
   link: ['fbName', 'other'],
 };
 
@@ -983,7 +999,7 @@ function platformFormatHint(platformId){
     labels.splice(otherIndex < 0 ? labels.length : otherIndex, 0, 'Proxy');
   }
   const d = platformDelimiter(platformId);
-  if(platformId === 'link') return labels.join(d);
+  if(platformId === 'link' || platformId === 'money') return labels.join(d);
   return d === ':' ? labels.join(d) : labels.join(d) + '|';
 }
 function backupPlatformFormatHint(platformId){
@@ -2947,8 +2963,9 @@ function folderName(id){
 // button or submits a form: the person reviews each screen and continues it.
 const DESKTOP_LOGIN_REQUEST_EVENT = 'devic3-login-request';
 const DESKTOP_LOGIN_RESPONSE_EVENT = 'devic3-login-response';
+const DESKTOP_LOGIN_STATUS_EVENT = 'devic3-login-helper-status';
 const DESKTOP_LOGIN_NODE_ATTR = 'data-devic3-login-request';
-const DESKTOP_LOGIN_HELPER_MIN_VERSION = '1.1.0';
+const DESKTOP_LOGIN_HELPER_MIN_VERSION = '1.2.0';
 
 function versionAtLeast(current, minimum){
   const left = String(current || '').split('.').map(part => Number.parseInt(part, 10) || 0);
@@ -2963,6 +2980,8 @@ function versionAtLeast(current, minimum){
 function desktopLoginHelperStatus(){
   const marker = document.documentElement.getAttribute('data-devic3-login-helper');
   const version = document.documentElement.getAttribute('data-devic3-login-helper-version') || '';
+  if(marker === 'checking') return { ready: false, reason: 'checking', version };
+  if(marker === 'disconnected') return { ready: false, reason: 'disconnected', version };
   if(marker !== 'ready') return { ready: false, reason: 'missing', version };
   if(!versionAtLeast(version, DESKTOP_LOGIN_HELPER_MIN_VERSION)) return { ready: false, reason: 'outdated', version };
   return { ready: true, reason: '', version };
@@ -2972,26 +2991,58 @@ function desktopLoginHelperReady(){
   return desktopLoginHelperStatus().ready;
 }
 
+function waitForDesktopLoginHelper(timeoutMs = 1800){
+  const initial = desktopLoginHelperStatus();
+  if(initial.reason !== 'checking') return Promise.resolve(initial);
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = () => {
+      if(settled) return;
+      const current = desktopLoginHelperStatus();
+      if(current.reason === 'checking') return;
+      settled = true;
+      window.removeEventListener(DESKTOP_LOGIN_STATUS_EVENT, finish);
+      resolve(current);
+    };
+    window.addEventListener(DESKTOP_LOGIN_STATUS_EVENT, finish);
+    setTimeout(() => {
+      if(settled) return;
+      settled = true;
+      window.removeEventListener(DESKTOP_LOGIN_STATUS_EVENT, finish);
+      resolve(desktopLoginHelperStatus());
+    }, timeoutMs);
+  });
+}
+
 function openDesktopLoginHelp(){
   const helper = desktopLoginHelperStatus();
   const outdated = helper.reason === 'outdated';
+  const disconnected = helper.reason === 'disconnected';
+  const checking = helper.reason === 'checking';
   const modalBg = document.getElementById('modalBg');
   const modalBody = document.getElementById('modalBody');
   modalBg.classList.add('show');
   modalBody.innerHTML = `
-    <h2>${outdated ? 'Cập nhật tiện ích Đăng nhập PC' : 'Thiết lập Đăng nhập PC'}</h2>
+    <h2>${outdated ? 'Cập nhật tiện ích Đăng nhập PC' : disconnected ? 'Tiện ích đang bị ngắt kết nối' : checking ? 'Đang kiểm tra tiện ích' : 'Thiết lập Đăng nhập PC'}</h2>
     <p class="hint">${outdated
       ? `Devic3 đã nhận tiện ích cũ${helper.version ? ` (v${escapeHtml(helper.version)})` : ''}. Source hiện tại cần Devic3 Login Helper v${DESKTOP_LOGIN_HELPER_MIN_VERSION} trở lên.`
-      : 'Tính năng này cần tiện ích Devic3 Login Helper trên Chrome hoặc Edge của máy tính.'}</p>
+      : disconnected
+      ? 'File cầu nối đã được nạp nhưng service worker của tiện ích không trả lời. Thường chỉ cần tải lại tiện ích rồi tải lại trang Devic3.'
+      : checking
+      ? 'Devic3 đang chờ service worker của tiện ích phản hồi.'
+      : 'Tính năng này chỉ hoạt động trong Chrome hoặc Edge trên PC khi Devic3 Login Helper đã được cài. Khung trình duyệt bên trong Codex không chạy được extension Chrome.'}</p>
     <ol class="login-helper-steps">
       <li>Mở <code>chrome://extensions</code> hoặc <code>edge://extensions</code>.</li>
-      ${outdated
+      ${outdated || disconnected
         ? '<li>Tìm <b>Devic3 Login Helper</b> và bấm <b>Tải lại</b>.</li>'
         : '<li>Bật <b>Chế độ dành cho nhà phát triển</b>.</li><li>Chọn <b>Tải tiện ích đã giải nén</b> và chọn thư mục <code>extension</code> trong source Devic3.</li>'}
-      <li>Tải lại trang Devic3 rồi mở tài khoản và bấm <b>Đăng nhập PC</b>.</li>
+      <li>Đảm bảo thẻ tiện ích hiển thị phiên bản <b>${DESKTOP_LOGIN_HELPER_MIN_VERSION}</b>.</li>
+      <li>Tải lại trang Devic3, mở tài khoản Hotmail rồi bấm <b>Đăng nhập PC</b>.</li>
     </ol>
     <div class="login-helper-note"><i class="ti ti-shield-check"></i> Tiện ích chỉ điền trường đang hiển thị trên trang đăng nhập chính thức. Bạn vẫn là người bấm “Tiếp theo” hoặc “Đăng nhập”; Devic3 không tự gửi biểu mẫu.</div>
-    <button id="desktopLoginHelpClose" style="width:100%;margin-top:16px;">Đóng</button>`;
+    <button id="desktopLoginReloadPage" class="btn-primary" style="width:100%;margin-top:16px;">Tải lại trang để kiểm tra</button>
+    <button id="desktopLoginHelpClose" style="width:100%;margin-top:8px;">Đóng</button>`;
+  document.getElementById('desktopLoginReloadPage').onclick = () => location.reload();
   document.getElementById('desktopLoginHelpClose').onclick = closeModal;
 }
 
@@ -3045,7 +3096,8 @@ async function startDesktopLogin(entry){
     toast('Tài khoản cần có đủ Email và Pass để tự điền', 3500);
     return;
   }
-  if(!desktopLoginHelperReady()){
+  const helper = await waitForDesktopLoginHelper();
+  if(!helper.ready){
     recordLog('warn', 'login', `Tiện ích đăng nhập PC chưa sẵn sàng cho ${platformMeta(entry.platform).name}`);
     openDesktopLoginHelp();
     return;
@@ -3072,7 +3124,9 @@ async function startDesktopLogin(entry){
     const errorCode = String(error && error.message || 'EXTENSION_ERROR');
     recordLog('warn', 'login', `Không kết nối được tiện ích đăng nhập ${platformMeta(entry.platform).name}`, errorCode);
     if(['EXTENSION_NOT_READY', 'EXTENSION_OUTDATED'].includes(errorCode)) openDesktopLoginHelp();
-    else toast('Không kết nối được tiện ích đăng nhập PC', 4000);
+    else if(errorCode === 'OPEN_TAB_FAILED') toast('Chrome/Edge không mở được tab đăng nhập Microsoft', 4500);
+    else if(errorCode === 'REQUEST_REJECTED') toast('Trang Devic3 hiện tại chưa được tiện ích cho phép', 4500);
+    else toast('Tiện ích đăng nhập PC bị ngắt kết nối — hãy tải lại tiện ích', 4500);
   }finally{
     state.loginLaunchingIds.delete(entry.id);
     renderVault();
@@ -3195,7 +3249,7 @@ function navigateToPlatform(platformId){
 
 function renderHomeVault(){
   const app = document.getElementById('app');
-  const accountPlatformIds = new Set(['facebook', 'gmail', 'hotmail', 'tiktok', 'steam']);
+  const accountPlatformIds = new Set(['facebook', 'gmail', 'hotmail', 'tiktok', 'steam', 'money']);
   const totalAccounts = state.entries.filter(entry => accountPlatformIds.has(entry.platform)).length;
   const linkCount = state.entries.filter(entry => entry.platform === 'link').length;
   const duplicateCount = PLATFORMS
@@ -3216,7 +3270,7 @@ function renderHomeVault(){
   const platformDescriptions = {
     facebook: 'UID và phiên Facebook', gmail: 'Tài khoản Google', hotmail: 'Outlook / Microsoft',
     tiktok: 'Tài khoản TikTok', steam: 'Steam và Guard', link: 'Kho liên kết website',
-    note: 'Ghi chú mã hóa', phone: 'Số điện thoại', proxy: 'Proxy và thời hạn',
+    note: 'Ghi chú mã hóa', phone: 'Số điện thoại', money: 'Tài khoản tài chính', proxy: 'Proxy và thời hạn',
     other: 'Bộ công cụ tiện ích', log: 'Nhật ký hoạt động',
   };
   const recentLogs = state.logs.slice(0, 4);
@@ -3344,7 +3398,7 @@ function renderVault(){
     if(state.hiddenStatuses.has(e.status || 'unknown')) return false;
     const q = state.search.toLowerCase();
     if(!q) return true;
-    return (e.fbName||'').toLowerCase().includes(q) || (e.email||'').toLowerCase().includes(q) || (e.displayName||'').toLowerCase().includes(q) || (e.other||'').toLowerCase().includes(q);
+    return (e.fbName||'').toLowerCase().includes(q) || (e.email||'').toLowerCase().includes(q) || (e.bankAccount||'').toLowerCase().includes(q) || (e.phone||'').toLowerCase().includes(q) || (e.displayName||'').toLowerCase().includes(q) || (e.other||'').toLowerCase().includes(q);
   });
 
   app.innerHTML = `
@@ -3438,10 +3492,12 @@ function renderVault(){
       </div>`;
     }
     const isPhoneOrProxy = e.platform === 'phone' || e.platform === 'proxy';
+    const isMoney = e.platform === 'money';
     const isChecking = state.checkingIds.has(e.id);
     const displayedStatus = isChecking ? 'checking' : (e.status || 'unknown');
-    const display = isPhoneOrProxy ? null : buildEntryDisplayRows(e);
-    const extraFields = isPhoneOrProxy ? [] : getPlatformFields(e.platform).filter(f => {
+    const display = isPhoneOrProxy || isMoney ? null : buildEntryDisplayRows(e);
+    const moneyFields = isMoney ? getPlatformFields('money').filter(f => f.key !== 'fbName' && !!e[f.key]) : [];
+    const extraFields = isPhoneOrProxy || isMoney ? [] : getPlatformFields(e.platform).filter(f => {
       if(f.key === 'fbName' || display.used.has(f.key)) return false;
       return !!e[f.key];
     });
@@ -3449,7 +3505,7 @@ function renderVault(){
     <div class="entry ${state.expandedIds.has(e.id) ? 'expanded' : ''}" data-id="${e.id}">
       <div class="entry-top" data-act="toggle-expand">
         <div class="entry-info">
-          <p class="entry-name"><i class="ti ti-chevron-right chevron"></i><span class="platform-icon" style="width:20px;height:20px;--pcolor:${platformMeta(e.platform).color};">${platformSvg(e.platform)}</span><span class="copy-inline" data-copy-field="fbName" title="Bấm để sao chép ${e.platform==='phone'?'SĐT':(e.platform==='proxy'?'IP':((e.platform==='gmail'||e.platform==='hotmail')?'Email':((e.platform==='tiktok'||e.platform==='steam')?'User':'UID')))}">${escapeHtml(e.fbName || '(Chưa đặt tên)')}</span>${e.displayName ? ` <span style="color:var(--text-muted);">|</span> <span class="copy-inline" data-copy-field="displayName" style="color:var(--text-muted);font-weight:400;" title="Bấm để sao chép tên">${escapeHtml(e.displayName)}</span>` : ''}</p>
+          <p class="entry-name"><i class="ti ti-chevron-right chevron"></i><span class="platform-icon" style="width:20px;height:20px;--pcolor:${platformMeta(e.platform).color};">${platformSvg(e.platform)}</span><span class="copy-inline" data-copy-field="fbName" title="Bấm để sao chép ${primaryIdentifierLabel(e.platform)}">${escapeHtml(e.fbName || '(Chưa đặt tên)')}</span>${isMoney ? '<span class="money-private-hint" title="Thông tin còn lại đang được ẩn"><i class="ti ti-lock" style="font-size:11px;letter-spacing:0"></i>•••</span>' : ''}${e.displayName && !isMoney ? ` <span style="color:var(--text-muted);">|</span> <span class="copy-inline" data-copy-field="displayName" style="color:var(--text-muted);font-weight:400;" title="Bấm để sao chép tên">${escapeHtml(e.displayName)}</span>` : ''}</p>
           ${e.platform === 'phone'
             ? (e.expiryDate ? `<p class="entry-id"><i class="ti ti-calendar-due" style="font-size:13px;vertical-align:-1px"></i> Ngày hết hạn: <span class="copy-inline" data-copy-field="expiryDate" title="Bấm để sao chép">${escapeHtml(toDisplayDate(e.expiryDate))}</span></p>` : '')
             : e.platform === 'proxy'
@@ -3457,7 +3513,7 @@ function renderVault(){
             : ''}
           <div class="entry-meta-row">
             ${folderName(e.folderId) ? `<span class="entry-folder"><i class="ti ti-folder" style="font-size:11px;vertical-align:-1px"></i> ${escapeHtml(folderName(e.folderId))}</span>` : ''}
-            ${isPhoneOrProxy ? phoneExpiryBadgeHtml(e) : `<span class="status-badge" style="color:${statusMeta(displayedStatus).color};background:${statusMeta(displayedStatus).bg};" title="Trạng thái: ${statusMeta(displayedStatus).label}${e.lastCheckedAt ? ` · Kiểm tra lúc ${new Date(e.lastCheckedAt).toLocaleString('vi-VN')}` : ''}">${statusMeta(displayedStatus).symbol} ${statusMeta(displayedStatus).label}</span>`}
+            ${isPhoneOrProxy ? phoneExpiryBadgeHtml(e) : isMoney ? '' : `<span class="status-badge" style="color:${statusMeta(displayedStatus).color};background:${statusMeta(displayedStatus).bg};" title="Trạng thái: ${statusMeta(displayedStatus).label}${e.lastCheckedAt ? ` · Kiểm tra lúc ${new Date(e.lastCheckedAt).toLocaleString('vi-VN')}` : ''}">${statusMeta(displayedStatus).symbol} ${statusMeta(displayedStatus).label}</span>`}
             ${isNewEntry(e) ? `<span class="new-badge" title="Tài khoản mới thêm — tự ẩn sau 24 giờ"><i class="ti ti-sparkles" style="font-size:10px;"></i> MỚI</span>` : ''}
             ${e.platform !== 'phone' ? `<span class="entry-created" title="Ngày nhập tài khoản"><i class="ti ti-calendar-plus" style="font-size:11px;vertical-align:-1px"></i> ${formatDateDMY(new Date(e.createdAt || Date.now()))}</span>` : ''}
           </div>
@@ -3471,7 +3527,15 @@ function renderVault(){
         </div>
       </div>
       <div class="entry-details">
-        ${isPhoneOrProxy ? '' : display.rows.map(row => `
+        ${isPhoneOrProxy ? '' : isMoney ? `<div class="money-private-fields">
+          ${moneyFields.map(f => `<div class="pw-row">
+            <i class="ti ${fieldMeta(f.key).icon}" style="color:var(--text-muted);font-size:15px"></i>
+            <span class="pw-tag">${f.label}:</span>
+            <span class="pw-val" data-pwmask="1" data-field="${f.key}">••••••••</span>
+            <button class="text-btn" data-act="toggle-pw" data-field="${f.key}" title="Hiện/ẩn ${f.label}"><i class="ti ti-eye"></i>Hiện</button>
+            <button class="text-btn" data-act="copy" data-field="${f.key}" title="Sao chép ${f.label}"><i class="ti ti-copy"></i>Sao chép</button>
+          </div>`).join('')}
+        </div>` : display.rows.map(row => `
         <div class="entry-fieldrow">${row.map((f, i) => {
           const sep = i > 0 ? `<span class="field-sep">|</span>` : '';
           if(f.isDesktopLoginAction){
@@ -3577,9 +3641,9 @@ function renderVault(){
         ev.stopPropagation();
         const field = span.dataset.copyField;
         const labels = {
-          fbName: 'UID', displayName: 'tên', email: 'email', proxy: 'proxy', expiryDate: 'ngày hết hạn',
+          fbName: primaryIdentifierLabel(entry.platform).toLowerCase(), displayName: 'tên', email: 'email', proxy: 'proxy', expiryDate: 'ngày hết hạn',
           port: 'port', username: 'user', password: 'mật khẩu', emailPassword: 'mật khẩu email',
-          secondaryEmail: 'email phụ', secondaryEmailPassword: 'mật khẩu email phụ', phone: 'số điện thoại',
+          secondaryEmail: 'email phụ', secondaryEmailPassword: 'mật khẩu email phụ', phone: 'số điện thoại', bankAccount: 'số tài khoản',
         };
         const sensitiveFields = new Set(['password', 'emailPassword', 'secondaryEmailPassword']);
         const value = field === 'expiryDate' ? toDisplayDate(entry[field]) : entry[field];
@@ -3953,12 +4017,9 @@ function buildEntryLine(e){
 }
 
 function getSelectableExportFields(platformId){
-  return [
-    ...getPlatformFields(platformId).map(field => ({ key: field.key, label: field.label })),
-    { key: 'folderId', label: 'Thư mục' },
-    { key: 'displayName', label: 'Tên' },
-    { key: 'proxy', label: 'Proxy' },
-  ];
+  const fields = getPlatformFields(platformId).map(field => ({ key: field.key, label: field.label }));
+  if(platformId === 'money') return [...fields, { key: 'folderId', label: 'Thư mục' }];
+  return [...fields, { key: 'folderId', label: 'Thư mục' }, { key: 'displayName', label: 'Tên' }, { key: 'proxy', label: 'Proxy' }];
 }
 
 function exportFieldValue(entry, key){
@@ -5043,17 +5104,17 @@ function manualFieldsHtml(entry){
   const platformSelect = `<label>Nền tảng</label><select id="f_platform">${platformOptionsHtml(currentPlatform)}</select>`;
   const folderSelect = `<label>Thư mục</label><select id="f_folderId">${folderOptionsHtml(entry ? entry.folderId : '', currentPlatform)}</select>`;
   // "Tên" (display name/nickname) can only be set while editing an existing account
-  const nameField = entry && !isLink ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
+  const nameField = entry && !isLink && currentPlatform !== 'money' ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
   // "Proxy" also only settable while editing — lets you type freely OR quickly
   // pick from the list of IPs already saved in the Proxy tab
   const savedProxies = state.entries.filter(e => e.platform === 'proxy' && e.fbName);
   const proxyDatalistOptions = savedProxies.map(e =>
     `<option value="${escapeAttr(e.fbName)}">${escapeAttr(e.fbName)}${e.username ? ' — ' + escapeAttr(e.username) : ''}</option>`
   ).join('');
-  const proxyField = entry && !isLink ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
+  const proxyField = entry && !isLink && currentPlatform !== 'money' ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
   // "Trạng thái" also only settable while editing
   const currentStatus = entry ? (entry.status || 'unknown') : 'unknown';
-  const statusField = entry && !isLink ? `<label>Trạng thái tài khoản</label><select id="f_status">
+  const statusField = entry && !isLink && currentPlatform !== 'money' ? `<label>Trạng thái tài khoản</label><select id="f_status">
       <option value="unknown" ${currentStatus==='unknown'?'selected':''}>? Chưa xác định</option>
       <option value="active" ${currentStatus==='active'?'selected':''}>✓ Hoạt động</option>
       <option value="inactive" ${currentStatus==='inactive'?'selected':''}>✕ Không hoạt động</option>
@@ -5333,7 +5394,7 @@ async function saveModal(entry){
       }
     }
     if(!fields.fbName && !fields.email){
-      err.textContent = platform === 'link' ? 'Nhập link website.' : 'Nhập ít nhất UID hoặc Email.';
+      err.textContent = platform === 'link' ? 'Nhập link website.' : platform === 'money' ? 'Nhập Name của tài khoản.' : 'Nhập ít nhất UID hoặc Email.';
       err.style.display = 'block';
       return;
     }

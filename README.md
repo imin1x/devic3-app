@@ -123,10 +123,13 @@ Tính năng này chỉ hoạt động trên Chrome hoặc Edge máy tính và c�
 1. Chrome: mở `chrome://extensions`. Edge: mở `edge://extensions`.
 2. Bật **Chế độ dành cho nhà phát triển**.
 3. Chọn **Tải tiện ích đã giải nén** rồi chọn thư mục `extension` của project.
-4. Tải lại Devic3.
-5. Mở tab Gmail hoặc Hotmail, bấm vào thẻ tài khoản để hiện chi tiết.
-6. Trên dòng `Email | Pass`, bấm **Đăng nhập PC**.
-7. Tiện ích điền từng trường đang hiện. Kiểm tra và tự bấm **Tiếp theo/Đăng nhập** ở mỗi bước.
+4. Xác nhận thẻ tiện ích hiển thị **Devic3 Login Helper 1.2.0**. Nếu đã cài
+   bản cũ, bấm **Tải lại** trên chính thẻ tiện ích.
+5. Tải lại Devic3. Nếu đang dùng khung trình duyệt bên trong Codex, hãy mở cùng
+   URL bằng Chrome hoặc Edge vì khung này không nạp extension Chrome.
+6. Mở tab Gmail hoặc Hotmail, bấm vào thẻ tài khoản để hiện chi tiết.
+7. Trên dòng `Email | Pass`, bấm **Đăng nhập PC**.
+8. Tiện ích điền từng trường đang hiện. Kiểm tra và tự bấm **Tiếp theo/Đăng nhập** ở mỗi bước. Nếu Microsoft hiện màn hình chọn tài khoản, bấm **Dùng tài khoản khác** trước.
 
 Devic3 không tự gửi biểu mẫu. Dữ liệu dùng cho lần đăng nhập chỉ nằm trong bộ nhớ phiên của tiện ích tối đa 2 phút, bị xoá khi đóng tab; secret 2FA gốc không được chuyển khỏi app, chỉ mã 2FA hiện tại được chuyển để điền.
 
@@ -142,11 +145,11 @@ Tab **Log** trong thanh nền tảng ghi lại các hoạt động chính như m
 - Không ghi UID, email, mật khẩu, cookie, token, mã OTP hoặc secret 2FA.
 - Có tìm kiếm, lọc Thông tin/Cảnh báo/Lỗi và nút xoá toàn bộ log cục bộ.
 
-## I. Kiểm thử
-
-Chạy `npm test`. Kiểm thử dùng dữ liệu giả, không cần Google token thật.
-
 ## Lưu ý bảo mật
+
+Tab **Money** lưu theo định dạng `Name|STK|Pass|SĐT|Email`. Danh sách chỉ hiện
+Name; bấm mở thẻ tài khoản để dùng nút Hiện/Ẩn hoặc Sao chép các trường còn lại.
+Các trường Money nằm trong cùng kho dữ liệu mã hóa như những tài khoản khác.
 
 - File `.json` đã mã hoá vẫn cần được giữ kín; dùng mật khẩu chính mạnh và riêng biệt.
 - Quên mật khẩu chính đồng nghĩa không thể giải mã bản local hoặc Drive.
