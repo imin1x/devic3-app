@@ -1553,6 +1553,10 @@ function fileSystemAccessSupported(){
   return typeof window.showSaveFilePicker === 'function' && typeof window.showOpenFilePicker === 'function';
 }
 
+function backupLocationPickerSupported(){
+  return typeof window.showSaveFilePicker === 'function';
+}
+
 async function assembleVaultBundle(){
   const configRes = await window.storage.get(STORAGE_CONFIG_KEY);
   const entriesRes = await window.storage.get(STORAGE_DATA_KEY);
@@ -2243,10 +2247,46 @@ async function exportEncryptedBackupUniversal(){
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+    recordLog('info', 'backup', 'Đã tải file sao lưu mã hoá về thiết bị');
     toast('Đã tải file sao lưu mã hoá — dùng được để nhập lại trên mọi thiết bị');
   }catch(e){
     console.error(e);
     toast('Không thể tạo file sao lưu, thử lại');
+  }
+}
+
+// Chrome/Edge: open the native Save As window so the person can choose the
+// destination folder and file name. The picker must be the first awaited call
+// after the click or the browser can reject it for lacking user activation.
+async function backupCurrentVault(){
+  if(!backupLocationPickerSupported()){
+    await exportEncryptedBackupUniversal();
+    return;
+  }
+  let handle;
+  try{
+    handle = await window.showSaveFilePicker({
+      id: 'devic3-encrypted-backup',
+      suggestedName: backupFileName('json'),
+      types: [{ description: 'Devic3 Backup mã hoá', accept: { 'application/json': ['.json'] } }]
+    });
+  }catch(error){
+    if(error && error.name !== 'AbortError'){
+      console.error(error);
+      toast('Không mở được cửa sổ chọn nơi lưu');
+    }
+    return;
+  }
+  try{
+    const bundle = await assembleVaultBundle();
+    const writable = await handle.createWritable();
+    await writable.write(JSON.stringify(bundle));
+    await writable.close();
+    recordLog('info', 'backup', 'Đã lưu file sao lưu mã hoá vào vị trí đã chọn');
+    toast(`Đã lưu ${handle.name || 'file sao lưu'} vào thư mục đã chọn`);
+  }catch(error){
+    console.error(error);
+    toast('Không thể ghi file vào vị trí đã chọn');
   }
 }
 
@@ -2287,6 +2327,7 @@ function openFileBackupModal(){
 async function renderFileBackupModal(){
   const modalBody = document.getElementById('modalBody');
   const supported = fileSystemAccessSupported();
+  const canChooseBackupLocation = backupLocationPickerSupported();
   const linked = !!state.fileHandle;
   const drive = await loadDriveSettings();
   let identityLoadError = '';
@@ -2294,7 +2335,7 @@ async function renderFileBackupModal(){
   catch(error){ identityLoadError = error.message || 'Không tải được dịch vụ đăng nhập Google.'; }
   modalBody.innerHTML = `
     <h2>Sao lưu / Khôi phục</h2>
-    <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File tải ra được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
+    <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File sao lưu được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
 
     <button id="fbCreateNewBtn" style="width:100%;">Tạo kho mới</button>
     <p class="hint" style="margin:4px 0 14px;">Bắt đầu lại từ đầu trên thiết bị này, không giữ dữ liệu cũ</p>
@@ -2302,8 +2343,10 @@ async function renderFileBackupModal(){
     <button id="fbOpenSavedBtn" style="width:100%;">Mở file đã lưu</button>
     <p class="hint" style="margin:4px 0 14px;">Thay dữ liệu hiện tại bằng nội dung trong 1 file sao lưu đã có</p>
 
-    <button id="fbBackupNowBtn" class="primary" style="width:100%;">Backup dữ liệu hiện tại</button>
-    <p class="hint" style="margin:4px 0 4px;">Tải file — chuyển sang thiết bị khác (AirDrop, email, Drive...) rồi bấm "Mở file đã lưu" để khôi phục, dùng đúng mật khẩu chính hiện tại</p>
+    <button id="fbBackupNowBtn" class="primary" style="width:100%;"><i class="ti ${canChooseBackupLocation ? 'ti-folder-down' : 'ti-download'}" style="vertical-align:-2px;font-size:15px;margin-right:4px;"></i>${canChooseBackupLocation ? 'Chọn nơi lưu và backup' : 'Backup dữ liệu hiện tại'}</button>
+    <p class="hint" style="margin:4px 0 4px;">${canChooseBackupLocation
+      ? 'Chrome/Edge sẽ mở cửa sổ để bạn chọn thư mục và tên file .json. Trình duyệt sẽ ghi nhớ thư mục đã chọn gần nhất.'
+      : 'Safari/iPhone chưa hỗ trợ chọn thư mục trực tiếp; file sẽ được tải xuống để bạn lưu hoặc chia sẻ qua AirDrop, Files, email, Drive...'}</p>
 
     <div style="border-top:1px solid var(--border);margin:20px 0 16px;padding-top:16px;">
       <div class="code-comment" style="font-size:12px;margin-bottom:10px;">// Đồng bộ nhiều thiết bị</div>
@@ -2356,7 +2399,7 @@ async function renderFileBackupModal(){
     if(supported) openExistingVaultFileAndSwitch();
     else openImportEncryptedBackupUniversal();
   };
-  document.getElementById('fbBackupNowBtn').onclick = exportEncryptedBackupUniversal;
+  document.getElementById('fbBackupNowBtn').onclick = backupCurrentVault;
 
   document.getElementById('driveSyncNowBtn').onclick = async event => {
     const button = event.currentTarget;
