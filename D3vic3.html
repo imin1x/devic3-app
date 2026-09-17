@@ -6,6 +6,11 @@
 <title>Devic3</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a0a">
+<script>
+// Every page load starts dark, including the lock screen.
+document.documentElement.dataset.theme = 'dark';
+document.querySelector('meta[name="theme-color"]').content = '#0a0a0a';
+</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,13 +27,16 @@
     --success:#3fbf83; --success-bg:#0e2b1e;
     --comment:#6a9955;
     --sidebar-bg:#0a0a0a; --panel-bg:#0a0a0a;
+    --tone-green:#4ade80; --tone-red:#f87171; --tone-yellow:#facc15; --tone-blue:#60a5fa; --tone-gray:#9a9a95;
+    --input-bg:#050505; --surface-low:#090909; --button-bg:#141414;
+    --hover-bg:#1f1f1f; --selected-bg:#2a2a2a; --scroll-thumb:#262626;
     --radius:6px;
     --mono:'JetBrains Mono','Fira Code','Cascadia Code',Consolas,'SF Mono',Menlo,monospace;
   }
   *{
     box-sizing:border-box;
     scrollbar-width:thin;
-    scrollbar-color:#262626 #050505;
+    scrollbar-color:var(--scroll-thumb) var(--input-bg);
   }
   html{overflow-x:hidden; max-width:100vw; color-scheme:dark;}
   body{
@@ -38,11 +46,11 @@
   }
   ::selection{background:var(--accent-bg); color:var(--accent-text);}
   *::-webkit-scrollbar{width:6px; height:6px;}
-  *::-webkit-scrollbar-track{background:#050505;}
-  *::-webkit-scrollbar-thumb{background:#262626; border:1px solid #050505; border-radius:999px; min-height:28px;}
-  *::-webkit-scrollbar-thumb:hover{background:#3a3a3a;}
+  *::-webkit-scrollbar-track{background:var(--input-bg);}
+  *::-webkit-scrollbar-thumb{background:var(--scroll-thumb); border:1px solid var(--input-bg); border-radius:999px; min-height:28px;}
+  *::-webkit-scrollbar-thumb:hover{background:var(--border-strong);}
   *::-webkit-scrollbar-button{display:none; width:0; height:0;}
-  *::-webkit-scrollbar-corner{background:#050505;}
+  *::-webkit-scrollbar-corner{background:var(--input-bg);}
   .code-comment{color:var(--comment);}
   .wrap{width:100%; max-width:640px;}
   h1{font-size:20px; font-weight:500; margin:0 0 4px; color:var(--text); text-align:center;}
@@ -51,16 +59,16 @@
   label{display:block; font-size:13px; color:var(--text-2); margin-bottom:6px; font-weight:500;}
   input[type=text], input[type=password], textarea, select{
     width:100%; padding:9px 12px; border-radius:var(--radius); border:0.5px solid var(--border-strong);
-    background:#050505; font-size:14px; color:var(--text); margin-bottom:14px; font-family:inherit;
+    background:var(--input-bg); font-size:14px; color:var(--text); margin-bottom:14px; font-family:inherit;
   }
   input:focus, textarea:focus, select:focus{outline:none; box-shadow:0 0 0 2px var(--accent-bg); border-color:var(--accent);}
   textarea{resize:vertical; min-height:60px;}
   select{appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:32px;}
   button{
-    border-radius:var(--radius); border:0.5px solid var(--border-strong); background:#141414;
+    border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--button-bg);
     padding:9px 16px; font-size:13px; cursor:pointer; color:var(--text); font-family:inherit;
   }
-  button:hover{background:#1f1f1f;}
+  button:hover{background:var(--hover-bg);}
   button:active{transform:scale(0.98);}
   button.primary{background:var(--accent); color:#001229; border-color:var(--accent); font-weight:600;}
   button.primary:hover{background:#69a6ff;}
@@ -78,26 +86,26 @@
   }
   .folder-panel{border:0.5px solid var(--border); border-radius:12px; margin-bottom:18px; overflow:hidden;}
   .folder-toggle{width:100%; display:flex; align-items:center; justify-content:space-between; background:transparent; border:none; padding:10px 12px; cursor:pointer; color:var(--text); font-size:13px; font-family:inherit;}
-  .folder-toggle:hover{background:#1f1f1f;}
+  .folder-toggle:hover{background:var(--hover-bg);}
   .folder-toggle-right{display:flex; align-items:center; gap:8px;}
-  .folder-toggle-count{font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:999px; padding:1px 8px;}
+  .folder-toggle-count{font-size:11px; color:var(--text-muted); background:var(--hover-bg); border-radius:999px; padding:1px 8px;}
   .folder-toggle .ti-chevron-down{transition:transform .15s; font-size:14px; color:var(--text-muted);}
   .folder-panel.open .folder-toggle .ti-chevron-down{transform:rotate(180deg);}
   .folder-list{max-height:0; overflow:hidden; transition:max-height .2s ease; display:flex; flex-direction:column; gap:4px;}
   .folder-panel.open .folder-list{max-height:220px; overflow-y:auto; padding:0 6px 6px; border-top:0.5px solid var(--border); margin-top:2px; padding-top:6px; scrollbar-width:thin;}
   .folder-list::-webkit-scrollbar{width:5px;}
-  .folder-list::-webkit-scrollbar-thumb{background:#262626; border-radius:999px;}
-  .folder-list::-webkit-scrollbar-track{background:#050505;}
+  .folder-list::-webkit-scrollbar-thumb{background:var(--scroll-thumb); border-radius:999px;}
+  .folder-list::-webkit-scrollbar-track{background:var(--input-bg);}
   .export-platform-list{
     display:flex; flex-direction:column; gap:4px; max-height:240px; overflow-y:auto;
     border:0.5px solid var(--border); border-radius:12px; padding:6px; scrollbar-width:thin;
   }
   .export-platform-list::-webkit-scrollbar{width:5px;}
-  .export-platform-list::-webkit-scrollbar-thumb{background:#262626; border-radius:999px;}
-  .export-platform-list::-webkit-scrollbar-track{background:#050505;}
+  .export-platform-list::-webkit-scrollbar-thumb{background:var(--scroll-thumb); border-radius:999px;}
+  .export-platform-list::-webkit-scrollbar-track{background:var(--input-bg);}
   .export-field-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin:8px 0 14px;}
-  .export-field-option{display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:0.5px solid var(--border); border-radius:8px; background:#090909; color:var(--text-2); font-size:12px; cursor:pointer;}
-  .export-field-option:hover{border-color:var(--border-strong); background:#111; color:var(--text);}
+  .export-field-option{display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:0.5px solid var(--border); border-radius:8px; background:var(--surface-low); color:var(--text-2); font-size:12px; cursor:pointer;}
+  .export-field-option:hover{border-color:var(--border-strong); background:var(--card); color:var(--text);}
   .export-field-option input{margin:0; flex-shrink:0; accent-color:var(--accent);}
   .export-field-option span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   @media (max-width:480px){.export-field-grid{grid-template-columns:1fr;}}
@@ -127,7 +135,7 @@
     100%{ left:130%; }
   }
   .platform-chip .platform-icon{width:20px; height:20px;}
-  .platform-chip:hover{background:#1a1a1a;}
+  .platform-chip:hover{background:var(--hover-bg);}
   .platform-chip:hover .platform-icon{transform:scale(1.12) rotate(-3deg);}
   .platform-bar .platform-chip:nth-child(1) .platform-icon::after{animation-delay:0s;}
   .platform-bar .platform-chip:nth-child(2) .platform-icon::after{animation-delay:0.5s;}
@@ -139,12 +147,12 @@
   .platform-chip-count{margin-left:auto; font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
   .platform-chip.active .platform-chip-count{color:var(--accent-text);}
   .folder-chip{padding:8px 12px; border-radius:8px; border:0.5px solid transparent; background:transparent; font-size:13px; cursor:pointer; color:var(--text-2); white-space:nowrap; width:100%; text-align:left; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;}
-  .folder-chip:hover{background:#1f1f1f;}
+  .folder-chip:hover{background:var(--hover-bg);}
   .folder-chip.active{background:#ffffff; color:#000000; border-color:#ffffff; font-weight:500;}
-  .folder-chip:not(.folder-manage-btn) span:last-child{font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:999px; padding:1px 8px; flex-shrink:0; margin-left:8px;}
+  .folder-chip:not(.folder-manage-btn) span:last-child{font-size:11px; color:var(--text-muted); background:var(--hover-bg); border-radius:999px; padding:1px 8px; flex-shrink:0; margin-left:8px;}
   .folder-chip.active:not(.folder-manage-btn) span:last-child{color:#000; background:rgba(0,0,0,0.1);}
   .folder-manage-btn{padding:8px 12px; border-radius:8px; font-size:13px; color:var(--text); flex-shrink:0; border-style:dashed; border-color:var(--border-strong); justify-content:flex-start; gap:6px;}
-  .folder-manage-btn:hover{background:#1f1f1f; border-color:var(--text-2);}
+  .folder-manage-btn:hover{background:var(--hover-bg); border-color:var(--text-2);}
   .entry{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; min-width:0; overflow:hidden;}
   .entry-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; cursor:pointer; min-width:0;}
   .entry-info{min-width:0; flex:1;}
@@ -157,7 +165,7 @@
   .totp-code{font-family:var(--font-mono, monospace); color:var(--accent-text); font-weight:600; letter-spacing:1.5px; cursor:pointer; padding:1px 4px; border-radius:4px;}
   .totp-code:hover{background:var(--accent-bg);}
   .copy-inline{cursor:pointer; padding:1px 3px; border-radius:4px; overflow-wrap:break-word; word-break:break-word;}
-  .copy-inline:hover{background:#1f1f1f; color:var(--text) !important;}
+  .copy-inline:hover{background:var(--hover-bg); color:var(--text) !important;}
   .status-badge{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap;}
   .status-filter-bar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
   .status-filter-chip{
@@ -172,12 +180,12 @@
   .entry-meta-row{display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap; min-width:0; max-width:100%;}
   .entry-meta-row .entry-folder{margin-top:0;}
   .entry-name .platform-icon svg.pf-svg{width:12px; height:12px;}
-  .entry-folder{display:inline-block; font-size:11px; color:var(--text-muted); background:#1f1f1f; border-radius:5px; padding:2px 7px; margin-top:6px;}
+  .entry-folder{display:inline-block; font-size:11px; color:var(--text-muted); background:var(--hover-bg); border-radius:5px; padding:2px 7px; margin-top:6px;}
   .entry-created{display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--text-muted);}
   .new-badge{display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:700; letter-spacing:0.3px; color:#000; background:#facc15; padding:2px 7px; border-radius:999px; box-shadow:0 0 8px -2px rgba(250,204,21,0.6);}
   .entry-fieldrow{display:flex; align-items:center; flex-wrap:wrap; font-size:13px; margin-top:5px; row-gap:4px; min-width:0;}
   .field-chip{cursor:pointer; padding:2px 5px; border-radius:4px; white-space:normal; overflow-wrap:break-word; color:var(--text-2); display:inline-flex; align-items:baseline; gap:4px; max-width:100%;}
-  .field-chip:hover{background:#1c1c1c; color:var(--text);}
+  .field-chip:hover{background:var(--hover-bg); color:var(--text);}
   .field-chip .field-label{color:var(--text-muted); font-size:11px;}
   .field-chip .field-val{font-family:var(--mono);}
   .field-chip.secret .field-val{letter-spacing:2px;}
@@ -217,7 +225,7 @@
   .home-shell{display:flex; flex-direction:column; gap:18px; max-width:1180px; margin:0 auto;}
   .home-hero{
     position:relative; overflow:hidden; border:1px solid #26374e; border-radius:16px; padding:24px;
-    background:radial-gradient(circle at 88% 4%,rgba(77,148,255,.19),transparent 36%),linear-gradient(145deg,#121a25 0%,#0b0e13 58%,#090909 100%);
+    background:radial-gradient(circle at 88% 4%,rgba(77,148,255,.19),transparent 36%),linear-gradient(145deg,#121a25 0%,#0b0e13 58%,var(--surface-low) 100%);
   }
   .home-hero::after{content:'';position:absolute;right:-62px;bottom:-82px;width:210px;height:210px;border:1px solid rgba(96,165,250,.14);border-radius:50%;box-shadow:0 0 0 28px rgba(96,165,250,.035),0 0 0 58px rgba(96,165,250,.025);pointer-events:none;}
   .home-hero-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;}
@@ -230,30 +238,30 @@
   .home-stat{min-width:0;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(0,0,0,.28);}
   .home-stat-label{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
   .home-stat-value{display:block;font-size:21px;font-weight:700;color:#e5e7eb;font-variant-numeric:tabular-nums;}
-  .home-section{border:1px solid var(--border);border-radius:14px;background:#090909;padding:17px;}
+  .home-section{border:1px solid var(--border);border-radius:14px;background:var(--surface-low);padding:17px;}
   .home-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
   .home-section-title{font-size:13px;font-weight:700;color:var(--text);margin:0;display:flex;align-items:center;gap:7px;}
   .home-section-note{font-size:10px;color:var(--text-muted);}
   .home-quick-actions{display:flex;gap:8px;flex-wrap:wrap;}
   .home-quick-actions button{min-height:32px;}
   .home-nav-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
-  .home-nav-card{display:flex;align-items:center;gap:11px;min-width:0;text-align:left;padding:12px;border:1px solid var(--border);border-radius:10px;background:#101010;transition:transform .15s,border-color .15s,background .15s;}
-  .home-nav-card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--home-color) 58%,#333);background:#151515;}
-  .home-nav-icon{width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--home-color) 20%,#080808);border:1px solid color-mix(in srgb,var(--home-color) 40%,#222);}
+  .home-nav-card{display:flex;align-items:center;gap:11px;min-width:0;text-align:left;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card);transition:transform .15s,border-color .15s,background .15s;}
+  .home-nav-card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--home-color) 58%,var(--border-strong));background:var(--hover-bg);}
+  .home-nav-icon{width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--home-color) 20%,var(--surface-low));border:1px solid color-mix(in srgb,var(--home-color) 40%,var(--border));}
   .home-nav-icon svg{width:18px!important;height:18px!important;}
   .home-nav-copy{min-width:0;flex:1;}
   .home-nav-name{display:block;color:var(--text);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .home-nav-meta{display:block;color:var(--text-muted);font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .home-nav-arrow{font-size:14px;color:var(--text-muted);}
   .home-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
-  .home-health-card{padding:12px;border:1px solid var(--border);border-radius:10px;background:#0f0f0f;min-width:0;}
+  .home-health-card{padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card);min-width:0;}
   .home-health-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
   .home-health-label{font-size:11px;color:var(--text-2);}
   .home-health-icon{font-size:16px;color:var(--health-color);}
   .home-health-number{font-size:19px;font-weight:700;color:var(--health-color);font-variant-numeric:tabular-nums;}
   .home-health-hint{font-size:10px;color:var(--text-muted);line-height:1.45;margin-top:3px;}
   .home-log-list{display:flex;flex-direction:column;gap:7px;}
-  .home-log-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 9px;border-radius:8px;background:#0f0f0f;border:1px solid #1d1d1d;}
+  .home-log-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 9px;border-radius:8px;background:var(--card);border:1px solid var(--border);}
   .home-log-dot{width:6px;height:6px;border-radius:50%;background:var(--log-dot);}
   .home-log-message{font-size:11px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .home-log-time{font-size:9px;color:var(--text-muted);white-space:nowrap;}
@@ -265,7 +273,7 @@
   @media(max-width:600px){.link-entry .entry-top{flex-direction:column}.link-entry .entry-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}}
   @media(max-width:780px){.home-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.home-nav-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.home-hero-head{flex-direction:column;}.home-sync-pill{align-self:flex-start;}}
   @media(max-width:520px){.home-hero{padding:18px}.home-title{font-size:21px}.home-nav-grid,.home-health-grid{grid-template-columns:1fr}.home-section{padding:13px}.home-log-row{grid-template-columns:8px minmax(0,1fr)}.home-log-time{grid-column:2}.home-quick-actions button{flex:1 1 calc(50% - 8px);}}
-  .duplicate-id-list{display:flex; flex-direction:column; gap:6px; max-height:260px; overflow:auto; margin:10px 0 16px; padding:8px; border:1px solid var(--border); border-radius:9px; background:#080808;}
+  .duplicate-id-list{display:flex; flex-direction:column; gap:6px; max-height:260px; overflow:auto; margin:10px 0 16px; padding:8px; border:1px solid var(--border); border-radius:9px; background:var(--surface-low);}
   .duplicate-id-row{display:flex; align-items:center; gap:8px; min-width:0; padding:7px 8px; border-radius:7px; background:var(--card); border:1px solid var(--border);}
   .duplicate-id-index{width:22px; flex:0 0 22px; color:var(--text-muted); font-size:10px; text-align:right;}
   .duplicate-id-value{flex:1; min-width:0; color:var(--text); font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; word-break:break-word;}
@@ -291,7 +299,7 @@
     display:flex; align-items:center; gap:14px; width:100%; text-align:left;
     background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:16px 18px;
   }
-  .tools-card:hover{border-color:var(--border-strong); background:#161616;}
+  .tools-card:hover{border-color:var(--border-strong); background:var(--hover-bg);}
   .tools-card i:first-child{font-size:22px; color:var(--accent-text); flex-shrink:0;}
   .tools-card-title{font-size:14px; font-weight:600; color:var(--text);}
   .tools-card-arrow{margin-left:auto; color:var(--text-muted); flex-shrink:0;}
@@ -308,29 +316,29 @@
   .modal{background:var(--card); border-radius:12px; padding:24px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; border:0.5px solid var(--border);}
   .modal h2{font-size:18px; font-weight:500; margin:0 0 16px; color:var(--text);}
   .hint{font-size:12px; color:var(--text-muted); margin:-10px 0 16px;}
-  .tabs{display:flex; gap:6px; margin-bottom:18px; background:#0a0a0a; border-radius:var(--radius); padding:3px;}
+  .tabs{display:flex; gap:6px; margin-bottom:18px; background:var(--sidebar-bg); border-radius:var(--radius); padding:3px;}
   .tab-btn{flex:1; border:none; background:transparent; padding:7px 10px; font-size:13px; border-radius:7px; cursor:pointer; color:var(--text-2); font-family:inherit;}
-  .tab-btn.active{background:#2a2a2a; color:var(--text); font-weight:500;}
+  .tab-btn.active{background:var(--selected-bg); color:var(--text); font-weight:500;}
   .mono-area{font-family:var(--font-mono, monospace); font-size:13px;}
   .folder-list-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:0.5px solid var(--border);}
   .folder-list-row input[type=text]{margin-bottom:0; flex:1;}
   .folder-list-row:last-child{border-bottom:none;}
-  code{background:#1f1f1f; padding:1px 5px; border-radius:4px; font-size:12px;}
+  code{background:var(--hover-bg); padding:1px 5px; border-radius:4px; font-size:12px;}
 
   /* ---------- IDE-STYLE APP SHELL ---------- */
   .ide-shell{display:flex; flex-direction:column; height:100vh; width:100vw; max-width:100vw; overflow:hidden;}
   .ide-titlebar{
     display:flex; align-items:center; gap:8px; padding:10px 16px; flex-shrink:0;
-    background:#0a0a0a; border-bottom:1px solid var(--border); overflow:hidden; min-width:0;
+    background:var(--sidebar-bg); border-bottom:1px solid var(--border); overflow:hidden; min-width:0;
   }
   .titlebar-clock{display:flex; align-items:baseline; gap:8px; flex-shrink:0; white-space:nowrap;}
   .titlebar-clock-time{font-size:14px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; letter-spacing:0.5px;}
   .titlebar-clock-date{font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
   .titlebar-search{flex:1; min-width:0; max-width:380px; margin-left:auto; position:relative; display:flex; align-items:center;}
   .titlebar-search i{position:absolute; left:10px; color:var(--text-muted); font-size:13px; pointer-events:none;}
-  .titlebar-search input{width:100%; min-width:0; padding:6px 10px 6px 30px; border-radius:6px; border:0.5px solid var(--border-strong); background:#050505; font-size:12px; color:var(--text); font-family:inherit; margin:0; box-sizing:border-box;}
+  .titlebar-search input{width:100%; min-width:0; padding:6px 10px 6px 30px; border-radius:6px; border:0.5px solid var(--border-strong); background:var(--input-bg); font-size:12px; color:var(--text); font-family:inherit; margin:0; box-sizing:border-box;}
   .titlebar-search input:focus{outline:none; border-color:var(--accent);}
-  .ide-lang-switch{display:flex; align-items:center; gap:2px; background:#141414; border:0.5px solid var(--border-strong); border-radius:6px; padding:2px; flex-shrink:0;}
+  .ide-lang-switch{display:flex; align-items:center; gap:2px; background:var(--button-bg); border:0.5px solid var(--border-strong); border-radius:6px; padding:2px; flex-shrink:0;}
   .ide-lang-btn{padding:3px 9px; font-size:11px; font-weight:600; border:none; border-radius:4px; background:transparent; color:var(--text-muted); cursor:pointer; font-family:inherit;}
   .ide-lang-btn.active{background:var(--accent); color:#001229;}
   .ide-sidebar-toggle{margin-left:10px; padding:5px 8px; display:none; flex-shrink:0;}
@@ -352,7 +360,7 @@
     overflow-y:auto; padding:18px 16px;
   }
   .ide-statusbar{
-    display:flex; align-items:center; gap:18px; padding:5px 16px; background:#0a0a0a;
+    display:flex; align-items:center; gap:18px; padding:5px 16px; background:var(--sidebar-bg);
     border-top:1px solid var(--border); font-size:11px; color:var(--text-muted); flex-shrink:0; overflow-x:auto; white-space:nowrap;
   }
   .ide-statusbar .sb-dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; flex-shrink:0;}
@@ -391,7 +399,7 @@
   .network-ip{font-size:11px; color:var(--text-muted); margin-top:6px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; word-break:break-word; line-height:1.45; max-width:100%;}
   .toggle-switch{
     width:38px; height:22px; border-radius:999px; border:none; position:relative;
-    background:#3d3d3d; cursor:pointer; transition:background .2s; padding:0; flex-shrink:0;
+    background:var(--border-strong); cursor:pointer; transition:background .2s; padding:0; flex-shrink:0;
   }
   .toggle-switch::after{
     content:''; position:absolute; top:2px; left:2px; width:18px; height:18px;
@@ -409,6 +417,49 @@
   .proxy-alert.show{display:flex;}
   .proxy-alert button{background:transparent; border:none; color:#facc15; font-size:18px; line-height:1; cursor:pointer; padding:0 2px; flex-shrink:0;}
   .proxy-alert button:hover{opacity:0.7;}
+
+  /* Light palette covers the shell, forms, cards and dialogs. */
+  html[data-theme="light"]{
+    color-scheme:light;
+    --tone-green:#15803d; --tone-red:#b91c1c; --tone-yellow:#8a5700; --tone-blue:#1d4ed8; --tone-gray:#64748b;
+    --bg:#f4f6fa; --card:#ffffff; --border:#d9e0e9; --border-strong:#b5c0cf;
+    --text:#172338; --text-2:#475569; --text-muted:#64748b;
+    --accent:#2563eb; --accent-bg:#e4edff; --accent-text:#1d4ed8;
+    --danger:#dc2626; --danger-bg:#feecec; --danger-text:#b91c1c;
+    --success:#15803d; --success-bg:#e6f5eb; --comment:#497044;
+    --sidebar-bg:#edf1f7; --panel-bg:#edf1f7; --input-bg:#ffffff;
+    --surface-low:#f8fafc; --button-bg:#ffffff; --hover-bg:#e8eef7;
+    --selected-bg:#dce7f8; --scroll-thumb:#bbc6d6;
+  }
+  html[data-theme="light"] button.primary,
+  html[data-theme="light"] .ide-lang-btn.active{color:#fff;}
+  html[data-theme="light"] button.primary:hover{background:#1d4ed8;}
+  html[data-theme="light"] .folder-chip.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-text);}
+  html[data-theme="light"] .folder-chip.active:not(.folder-manage-btn) span:last-child{color:var(--accent-text);background:#d3e2fc;}
+  html[data-theme="light"] .entry-checkbox{accent-color:var(--accent);}
+  html[data-theme="light"] .modal-bg{background:rgba(30,41,59,.38);}
+  html[data-theme="light"] .modal{box-shadow:0 20px 65px rgba(30,41,59,.18);}
+  html[data-theme="light"] .toast{background:#172338;color:#fff;}
+  html[data-theme="light"] .home-hero{border-color:#cbdcf4;background:radial-gradient(circle at 88% 4%,#dbeafe,transparent 48%),linear-gradient(145deg,#fff,#eef4ff);}
+  html[data-theme="light"] .home-title,
+  html[data-theme="light"] .home-stat-value{color:var(--text);}
+  html[data-theme="light"] .home-kicker{color:var(--accent-text);}
+  html[data-theme="light"] .home-stat{border-color:var(--border);background:rgba(255,255,255,.8);}
+  html[data-theme="light"] .home-sync-pill{background:var(--card);color:var(--text-2);}
+  html[data-theme="light"] .home-nav-icon{background:#334155;}
+  html[data-theme="light"] .desktop-login-btn{color:#1d4ed8;}
+  html[data-theme="light"] .money-private-hint{color:#166534;}
+  html[data-theme="light"] .link-entry-url{color:#6d28d9;}
+  html[data-theme="light"] .proxy-alert{background:#fff8db;border-color:#b77900;color:#854d0e;}
+  html[data-theme="light"] .proxy-alert button,
+  html[data-theme="light"] .ide-statusbar .sb-warn{color:#854d0e;}
+  .theme-panel{border:1px solid var(--border);border-radius:10px;padding:16px 18px;background:var(--card);}
+  .theme-panel-title{font-size:14px;font-weight:600;margin-bottom:6px;}
+  .theme-panel-hint{font-size:12px;color:var(--text-muted);line-height:1.5;margin:0 0 14px;}
+  .theme-options{display:flex;gap:10px;}
+  .theme-option{flex:1;display:flex;justify-content:center;align-items:center;gap:8px;min-height:42px;}
+  .theme-option[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .theme-option i{font-size:18px;}
 </style>
 </head>
 <body>
@@ -686,6 +737,10 @@ const I18N = {
   comment_tools:            { vi: '// Công cụ',                    en: '// Tools' },
   tool_pwgen_title:         { vi: 'Tạo mật khẩu ngẫu nhiên',        en: 'Generate random password' },
   tool_2fa_title:           { vi: 'Giải mã mã 2FA',                 en: 'Decode 2FA code' },
+  theme_title:             { vi: 'Giao diện',                     en: 'Appearance' },
+  theme_hint:              { vi: 'Mặc định luôn là Tối khi mở hoặc tải lại trang. Chế độ Sáng chỉ áp dụng trong phiên hiện tại.', en: 'Always starts in Dark when opened or reloaded. Light applies only to the current session.' },
+  theme_light:             { vi: 'Sáng',                          en: 'Light' },
+  theme_dark:              { vi: 'Tối',                           en: 'Dark' },
 };
 function t(key){
   const entry = I18N[key];
@@ -780,10 +835,10 @@ function platformSvg(id){
 
 // account status: whether the account is currently active/working
 const STATUS_META = {
-  active:   { symbol: '✓', color: '#4ade80', bg: 'rgba(74,222,128,0.14)' },
-  inactive: { symbol: '✕', color: '#f87171', bg: 'rgba(248,113,113,0.14)' },
-  unknown:  { symbol: '?', color: '#9a9a95', bg: 'rgba(154,154,149,0.14)' },
-  checking: { symbol: '…', color: '#60a5fa', bg: 'rgba(96,165,250,0.14)' },
+  active:   { symbol: '✓', color: 'var(--tone-green)', bg: 'rgba(74,222,128,0.14)' },
+  inactive: { symbol: '✕', color: 'var(--tone-red)', bg: 'rgba(248,113,113,0.14)' },
+  unknown:  { symbol: '?', color: 'var(--tone-gray)', bg: 'rgba(154,154,149,0.14)' },
+  checking: { symbol: '…', color: 'var(--tone-blue)', bg: 'rgba(96,165,250,0.14)' },
 };
 function statusMeta(status){
   const key = STATUS_META[status] ? status : 'unknown';
@@ -1068,10 +1123,10 @@ function phoneExpiryInfo(expiryDateStr){
   now.setHours(0,0,0,0);
   exp.setHours(0,0,0,0);
   const diffDays = Math.round((exp - now) / 86400000);
-  if(diffDays < 0) return { label: `Hết hạn ${Math.abs(diffDays)} ngày trước`, color: '#f87171', bg: 'rgba(248,113,113,0.16)', diffDays };
-  if(diffDays === 0) return { label: 'Hết hạn hôm nay', color: '#f87171', bg: 'rgba(248,113,113,0.16)', diffDays };
-  if(diffDays === 1) return { label: 'Còn 1 ngày', color: '#facc15', bg: 'rgba(250,204,21,0.16)', diffDays };
-  return { label: `Còn ${diffDays} ngày`, color: '#4ade80', bg: 'rgba(74,222,128,0.14)', diffDays };
+  if(diffDays < 0) return { label: `Hết hạn ${Math.abs(diffDays)} ngày trước`, color: 'var(--tone-red)', bg: 'rgba(248,113,113,0.16)', diffDays };
+  if(diffDays === 0) return { label: 'Hết hạn hôm nay', color: 'var(--tone-red)', bg: 'rgba(248,113,113,0.16)', diffDays };
+  if(diffDays === 1) return { label: 'Còn 1 ngày', color: 'var(--tone-yellow)', bg: 'rgba(250,204,21,0.16)', diffDays };
+  return { label: `Còn ${diffDays} ngày`, color: 'var(--tone-green)', bg: 'rgba(74,222,128,0.14)', diffDays };
 }
 function phoneExpiryBadgeHtml(e){
   if((e.platform !== 'phone' && e.platform !== 'proxy') || !e.expiryDate) return '';
@@ -2334,7 +2389,7 @@ async function renderFileBackupModal(){
   catch(error){ identityLoadError = error.message || 'Không tải được dịch vụ đăng nhập Google.'; }
   modalBody.innerHTML = `
     <h2>Sao lưu / Khôi phục</h2>
-    <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:#4ade80;"></i> File sao lưu được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
+    <p class="hint" style="margin-top:-4px; margin-bottom:18px;"><i class="ti ti-shield-lock" style="vertical-align:-2px;font-size:14px;color:var(--tone-green);"></i> File sao lưu được <b style="color:var(--text);">mã hoá AES-256</b> — không lộ nội dung tài khoản, dùng được để khôi phục trên bất kỳ thiết bị nào (Windows, iPhone/Safari...).</p>
 
     <button id="fbCreateNewBtn" style="width:100%;">Tạo kho mới</button>
     <p class="hint" style="margin:4px 0 14px;">Bắt đầu lại từ đầu trên thiết bị này, không giữ dữ liệu cũ</p>
@@ -2351,8 +2406,8 @@ async function renderFileBackupModal(){
       <div class="code-comment" style="font-size:12px;margin-bottom:10px;">// Đồng bộ nhiều thiết bị</div>
       <label>Google OAuth Client ID</label>
       <input id="driveClientIdInput" autocomplete="off" placeholder="123456789-abc.apps.googleusercontent.com">
-      <p class="hint" style="margin:5px 0 10px;line-height:1.55;"><i class="ti ti-shield-lock" style="vertical-align:-2px;color:#4ade80;"></i> Chỉ dùng quyền <code>drive.appdata</code>. File trên Drive là JSON đã mã hoá AES-256; access token chỉ giữ trong bộ nhớ của tab.</p>
-      <p class="hint" style="margin:0 0 10px;line-height:1.55;"><i class="ti ti-refresh" style="vertical-align:-2px;color:#60a5fa;"></i> Khi hai thiết bị đang mở và đã kết nối, thay đổi được đẩy ngay và thiết bị kia tự cập nhật trong tối đa khoảng 5 giây.</p>
+      <p class="hint" style="margin:5px 0 10px;line-height:1.55;"><i class="ti ti-shield-lock" style="vertical-align:-2px;color:var(--tone-green);"></i> Chỉ dùng quyền <code>drive.appdata</code>. File trên Drive là JSON đã mã hoá AES-256; access token chỉ giữ trong bộ nhớ của tab.</p>
+      <p class="hint" style="margin:0 0 10px;line-height:1.55;"><i class="ti ti-refresh" style="vertical-align:-2px;color:var(--tone-blue);"></i> Khi hai thiết bị đang mở và đã kết nối, thay đổi được đẩy ngay và thiết bị kia tự cập nhật trong tối đa khoảng 5 giây.</p>
       <p style="font-size:12px;color:var(--text-2);margin:0 0 10px;"><i class="ti ti-cloud" style="vertical-align:-2px;"></i> ${escapeHtml(driveStatusText(drive))}${drive.lastSyncedAt ? ` · ${escapeHtml(new Date(drive.lastSyncedAt).toLocaleString('vi-VN'))}` : ''}</p>
       <div class="row" style="gap:8px;flex-wrap:wrap;">
         <button class="primary" id="driveSyncNowBtn" style="flex:1 1 190px;"><i class="ti ti-brand-google-drive" style="vertical-align:-2px;margin-right:4px;"></i>Kết nối / Đồng bộ ngay</button>
@@ -3176,9 +3231,9 @@ async function startDesktopLogin(entry){
 }
 
 const LOG_LEVEL_META = {
-  info:  { label: 'Thông tin', color: '#60a5fa', icon: 'ti-info-circle' },
-  warn:  { label: 'Cảnh báo',  color: '#facc15', icon: 'ti-alert-triangle' },
-  error: { label: 'Lỗi',       color: '#f87171', icon: 'ti-bug' }
+  info:  { label: 'Thông tin', color: 'var(--tone-blue)', icon: 'ti-info-circle' },
+  warn:  { label: 'Cảnh báo',  color: 'var(--tone-yellow)', icon: 'ti-alert-triangle' },
+  error: { label: 'Lỗi',       color: 'var(--tone-red)', icon: 'ti-bug' }
 };
 
 function renderLogVault(){
@@ -3201,7 +3256,7 @@ function renderLogVault(){
     </div>
     <div class="log-summary">
       <div class="log-summary-card"><span class="log-summary-label">Tổng sự kiện</span><span class="log-summary-value">${state.logs.length}</span></div>
-      <div class="log-summary-card"><span class="log-summary-label">Cảnh báo</span><span class="log-summary-value" style="color:#facc15">${warnCount}</span></div>
+      <div class="log-summary-card"><span class="log-summary-label">Cảnh báo</span><span class="log-summary-value" style="color:var(--tone-yellow)">${warnCount}</span></div>
       <div class="log-summary-card"><span class="log-summary-label">Lỗi source</span><span class="log-summary-value" style="color:${sourceErrorCount ? '#f87171' : '#4ade80'}">${sourceErrorCount}</span></div>
     </div>
     <div class="login-helper-note" style="border-color:${sourceErrorCount ? 'rgba(248,113,113,.35)' : 'rgba(74,222,128,.28)'};background:${sourceErrorCount ? 'rgba(248,113,113,.06)' : 'rgba(74,222,128,.06)'};margin-bottom:14px;">
@@ -3341,7 +3396,7 @@ function renderHomeVault(){
 
       <section class="home-section">
         <div class="home-section-head">
-          <h2 class="home-section-title"><i class="ti ti-bolt" style="color:#facc15"></i> Thao tác nhanh</h2>
+          <h2 class="home-section-title"><i class="ti ti-bolt" style="color:var(--tone-yellow)"></i> Thao tác nhanh</h2>
           <span class="home-section-note">Các lệnh dùng thường xuyên</span>
         </div>
         <div class="home-quick-actions">
@@ -3355,7 +3410,7 @@ function renderHomeVault(){
 
       <section class="home-section">
         <div class="home-section-head">
-          <h2 class="home-section-title"><i class="ti ti-apps" style="color:#60a5fa"></i> Không gian làm việc</h2>
+          <h2 class="home-section-title"><i class="ti ti-apps" style="color:var(--tone-blue)"></i> Không gian làm việc</h2>
           <span class="home-section-note">Mở nhanh từng khu vực</span>
         </div>
         <div class="home-nav-grid">
@@ -3373,7 +3428,7 @@ function renderHomeVault(){
 
       <section class="home-section">
         <div class="home-section-head">
-          <h2 class="home-section-title"><i class="ti ti-activity-heartbeat" style="color:#4ade80"></i> Sức khỏe dữ liệu</h2>
+          <h2 class="home-section-title"><i class="ti ti-activity-heartbeat" style="color:var(--tone-green)"></i> Sức khỏe dữ liệu</h2>
           <span class="home-section-note">Ưu tiên những mục cần kiểm tra</span>
         </div>
         <div class="home-health-grid">
@@ -3456,7 +3511,7 @@ function proxyFacebookUsageHtml(entry, usageByHost){
   const legacyNote = withoutPort
     ? (english ? `${withoutPort} matched by IP only (no port saved)` : `${withoutPort} tài khoản khớp theo IP, chưa lưu port`)
     : '';
-  return `<span class="status-badge" style="color:${count ? '#93c5fd' : 'var(--text-muted)'};background:${count ? 'rgba(59,130,246,.12)' : 'rgba(128,128,128,.1)'};" title="${escapeAttr(title)}">Facebook: ${count} ${english ? 'accounts' : 'tài khoản'}</span>${legacyNote ? `<span class="entry-created" title="${english ? 'IP-only assignments also count for other proxies with the same IP.' : 'Tài khoản chỉ lưu IP cũng được tính ở các proxy khác có cùng IP.'}">${legacyNote}</span>` : ''}`;
+  return `<span class="status-badge" style="color:${count ? 'var(--accent-text)' : 'var(--text-muted)'};background:${count ? 'rgba(59,130,246,.12)' : 'rgba(128,128,128,.1)'};" title="${escapeAttr(title)}">Facebook: ${count} ${english ? 'accounts' : 'tài khoản'}</span>${legacyNote ? `<span class="entry-created" title="${english ? 'IP-only assignments also count for other proxies with the same IP.' : 'Tài khoản chỉ lưu IP cũng được tính ở các proxy khác có cùng IP.'}">${legacyNote}</span>` : ''}`;
 }
 
 function renderVault(){
@@ -4271,7 +4326,35 @@ function renderImportExportModal(){
   });
 }
 
-// ---------- TOOLS: password generator + Facebook ID extractor ----------
+function themeControlsHtml(){
+  const current = document.documentElement.dataset.theme || 'dark';
+  return `<div class="theme-panel">
+    <div class="theme-panel-title">${t('theme_title')}</div>
+    <p class="theme-panel-hint">${t('theme_hint')}</p>
+    <div class="theme-options" role="group" aria-label="${t('theme_title')}">
+      <button type="button" class="theme-option" data-theme-choice="light" aria-pressed="${current === 'light'}"><i class="ti ti-sun" aria-hidden="true"></i>${t('theme_light')}</button>
+      <button type="button" class="theme-option" data-theme-choice="dark" aria-pressed="${current === 'dark'}"><i class="ti ti-moon" aria-hidden="true"></i>${t('theme_dark')}</button>
+    </div>
+  </div>`;
+}
+
+function applyTheme(theme){
+  const next = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  document.querySelector('meta[name="theme-color"]').content = next === 'light' ? '#f4f6fa' : '#0a0a0a';
+  document.querySelectorAll('[data-theme-choice]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.themeChoice === next)));
+}
+
+function bindThemeControls(container){
+  container.querySelectorAll('[data-theme-choice]').forEach(button => {
+    button.onclick = () => {
+      const theme = button.dataset.themeChoice;
+      applyTheme(theme);
+    };
+  });
+}
+
+// ---------- TOOLS: password generator, 2FA and appearance ----------
 // ---------- TOOLS TAB PAGE (the renamed "Khác" platform) ----------
 // A dedicated landing page for the tools, instead of a generic account list —
 // each card opens the same underlying tool already built for the topbar
@@ -4284,6 +4367,7 @@ function renderToolsVault(){
       <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:12px; max-width:560px;">
+      ${themeControlsHtml()}
       <button type="button" class="tools-card" id="toolsPage2faBtn">
         <i class="ti ti-shield-lock"></i>
         <div>
@@ -4313,6 +4397,9 @@ function renderToolsVault(){
   };
   document.getElementById('toolsPage2faBtn').onclick = () => openTool(renderTotpDecoderTool);
   document.getElementById('toolsPagePwGenBtn').onclick = () => openTool(renderPasswordGeneratorTool);
+  bindThemeControls(app);
+  renderPlatformBar();
+  updateIdeChrome();
 }
 
 function openToolsModal(){
@@ -4326,6 +4413,7 @@ function renderToolsChooser(){
   modalBody.innerHTML = `
     <h2>${t('btn_tools')}</h2>
     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+      ${themeControlsHtml()}
       <button type="button" id="toolPwGenBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-key" style="margin-right:8px;"></i>${t('tool_pwgen_title')}</button>
       <button type="button" id="tool2faBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-shield-lock" style="margin-right:8px;"></i>${t('tool_2fa_title')}</button>
     </div>
@@ -4334,6 +4422,7 @@ function renderToolsChooser(){
   document.getElementById('toolsCloseBtn').onclick = closeModal;
   document.getElementById('toolPwGenBtn').onclick = renderPasswordGeneratorTool;
   document.getElementById('tool2faBtn').onclick = renderTotpDecoderTool;
+  bindThemeControls(modalBody);
 }
 
 // --- secure random password generator (crypto.getRandomValues, not Math.random) ---
@@ -4376,10 +4465,10 @@ function estimatePasswordStrength(length, sets){
   if(sets.symbols) poolSize += PW_POOLS.symbols.length;
   if(poolSize === 0) poolSize = 26;
   const bits = Math.round(Math.log2(poolSize) * length);
-  if(bits >= 100) return { label: 'Rất mạnh', color: '#4ade80', bits };
-  if(bits >= 70) return { label: 'Mạnh', color: '#4ade80', bits };
-  if(bits >= 50) return { label: 'Khá', color: '#facc15', bits };
-  return { label: 'Yếu — nên tăng độ dài hoặc thêm loại ký tự', color: '#f87171', bits };
+  if(bits >= 100) return { label: 'Rất mạnh', color: 'var(--tone-green)', bits };
+  if(bits >= 70) return { label: 'Mạnh', color: 'var(--tone-green)', bits };
+  if(bits >= 50) return { label: 'Khá', color: 'var(--tone-yellow)', bits };
+  return { label: 'Yếu — nên tăng độ dài hoặc thêm loại ký tự', color: 'var(--tone-red)', bits };
 }
 
 function renderPasswordGeneratorTool(){
@@ -4393,7 +4482,7 @@ function renderPasswordGeneratorTool(){
       <h2>Tạo mật khẩu ngẫu nhiên</h2>
       <p class="hint" style="margin-top:-4px;">Dùng bộ sinh số ngẫu nhiên mật mã học của trình duyệt (Web Crypto API) — không dùng Math.random() vốn không đủ an toàn cho mật khẩu.</p>
       <div class="pw-row" style="margin-bottom:14px;">
-        <span class="pw-val" id="pwGenResult" style="font-family:monospace; font-size:16px; letter-spacing:0.5px; color:#facc15; font-weight:600;">${escapeHtml(state_.current)}</span>
+        <span class="pw-val" id="pwGenResult" style="font-family:monospace; font-size:16px; letter-spacing:0.5px; color:var(--tone-yellow); font-weight:600;">${escapeHtml(state_.current)}</span>
         <button class="text-btn" id="pwCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
       </div>
       <p style="font-size:12px; color:${strength.color}; margin:-8px 0 16px; font-weight:500;">Độ mạnh: ${strength.label} (~${strength.bits} bit)</p>
@@ -4445,7 +4534,7 @@ function renderTotpDecoderTool(){
     <input type="text" id="totpSecretInput" placeholder="VD: GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" style="font-family:var(--mono);" autocomplete="off">
     <p class="err" id="totpErr"></p>
     <div class="pw-row" id="totpResultRow" style="display:none; margin-bottom:10px;">
-      <span class="pw-val" id="totpResultCode" data-totp-val style="font-family:var(--mono); font-size:26px; letter-spacing:4px; font-weight:700; color:#facc15; transition:color .3s ease;"></span>
+      <span class="pw-val" id="totpResultCode" data-totp-val style="font-family:var(--mono); font-size:26px; letter-spacing:4px; font-weight:700; color:var(--tone-yellow); transition:color .3s ease;"></span>
       <button class="text-btn" id="totpCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
     </div>
     <div id="totpCountdownWrap" style="display:none; margin-bottom:16px;">
@@ -5385,7 +5474,7 @@ function showBulkDuplicateChoice(dupPairs, platformId, newAccountCount, onChoice
       ${duplicateIds.map((value, index) => `<div class="duplicate-id-row"><span class="duplicate-id-index">${index + 1}.</span><span class="duplicate-id-value"><span style="color:var(--text-muted)">${escapeHtml(identifierLabel)}:</span> ${escapeHtml(value)}</span><button type="button" class="text-btn duplicate-copy-btn" data-copy-duplicate="${index}" title="Sao chép ${escapeAttr(identifierLabel)}"><i class="ti ti-copy"></i>Sao chép</button></div>`).join('')}
     </div>
     <p style="font-size:13px; color:var(--text-2); line-height:1.55; margin:0 0 8px;">Bạn muốn xử lý các tài khoản trùng này như thế nào?</p>
-    <div class="login-helper-note" style="margin-bottom:14px;"><i class="ti ti-info-circle" style="color:#60a5fa"></i> Dù chọn phương án nào, <b>${newAccountCount}</b> ${entityName} mới không trùng vẫn được nhập.</div>
+    <div class="login-helper-note" style="margin-bottom:14px;"><i class="ti ti-info-circle" style="color:var(--tone-blue)"></i> Dù chọn phương án nào, <b>${newAccountCount}</b> ${entityName} mới không trùng vẫn được nhập.</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
       <button type="button" id="bulkOverwriteBtn" class="text-btn danger" style="width:100%; justify-content:center;">Ghi đè ${count} ${entityName} trùng</button>
       <button type="button" id="bulkSkipBtn" style="width:100%; justify-content:center;">Giữ bản cũ, bỏ qua ${count} ${entityName} trùng</button>
@@ -5624,10 +5713,10 @@ async function computeTotp(secretRaw, period = 30, digits = 6){
 // every place in the app that shows a live 2FA code, so they all behave
 // exactly the same way.
 function totpColorForSecondsLeft(secsLeft){
-  if(secsLeft > 22) return '#60a5fa'; // blue — just refreshed
-  if(secsLeft > 15) return '#4ade80'; // green — plenty of time
-  if(secsLeft > 7) return '#facc15';  // yellow — starting to run low
-  return '#f87171';                    // red — about to expire
+  if(secsLeft > 22) return 'var(--tone-blue)'; // blue — just refreshed
+  if(secsLeft > 15) return 'var(--tone-green)'; // green — plenty of time
+  if(secsLeft > 7) return 'var(--tone-yellow)';  // yellow — starting to run low
+  return 'var(--tone-red)';                    // red — about to expire
 }
 function currentTotpSecondsLeft(){
   return 30 - (Math.floor(Date.now() / 1000) % 30);
