@@ -679,13 +679,12 @@ const I18N = {
   title_lock:               { vi: 'Khoá lại',                     en: 'Lock' },
   title_select_many:        { vi: 'Chọn nhiều tài khoản để xoá cùng lúc', en: 'Select multiple accounts to delete at once' },
   title_file_backup:        { vi: 'Sao lưu file và đồng bộ Google Drive', en: 'File backup and Google Drive sync' },
-  title_tools:              { vi: 'Công cụ: tạo mật khẩu, lấy ID Facebook', en: 'Tools: password generator, Facebook ID lookup' },
+  title_tools:              { vi: 'Công cụ: tạo mật khẩu, mã 2FA', en: 'Tools: password generator, 2FA codes' },
   status_filter_hidden:     { vi: 'Đang ẩn — bấm để hiện lại',      en: 'Hidden — click to show' },
   status_filter_shown:      { vi: 'Đang hiện — bấm để ẩn',          en: 'Shown — click to hide' },
   platform_tools:           { vi: 'Công cụ',                       en: 'Tools' },
   comment_tools:            { vi: '// Công cụ',                    en: '// Tools' },
   tool_pwgen_title:         { vi: 'Tạo mật khẩu ngẫu nhiên',        en: 'Generate random password' },
-  tool_fbid_title:          { vi: 'Lấy ID Facebook từ link',        en: 'Get Facebook ID from link' },
   tool_2fa_title:           { vi: 'Giải mã mã 2FA',                 en: 'Decode 2FA code' },
 };
 function t(key){
@@ -2343,7 +2342,7 @@ async function renderFileBackupModal(){
     <button id="fbOpenSavedBtn" style="width:100%;">Mở file đã lưu</button>
     <p class="hint" style="margin:4px 0 14px;">Thay dữ liệu hiện tại bằng nội dung trong 1 file sao lưu đã có</p>
 
-    <button id="fbBackupNowBtn" class="primary" style="width:100%;"><i class="ti ${canChooseBackupLocation ? 'ti-folder-down' : 'ti-download'}" style="vertical-align:-2px;font-size:15px;margin-right:4px;"></i>${canChooseBackupLocation ? 'Chọn nơi lưu và backup' : 'Backup dữ liệu hiện tại'}</button>
+    <button id="fbBackupNowBtn" class="primary" style="width:100%;"><i class="ti ${canChooseBackupLocation ? 'ti-folder-down' : 'ti-download'}" style="vertical-align:-2px;font-size:15px;margin-right:4px;"></i>Backup</button>
     <p class="hint" style="margin:4px 0 4px;">${canChooseBackupLocation
       ? 'Chrome/Edge sẽ mở cửa sổ để bạn chọn thư mục và tên file .json. Trình duyệt sẽ ghi nhớ thư mục đã chọn gần nhất.'
       : 'Safari/iPhone chưa hỗ trợ chọn thư mục trực tiếp; file sẽ được tải xuống để bạn lưu hoặc chia sẻ qua AirDrop, Files, email, Drive...'}</p>
@@ -3415,6 +3414,51 @@ function renderHomeVault(){
 }
 
 // ---------- RENDER: VAULT ----------
+// Older Facebook records contain only the proxy IP selected by the datalist.
+// Keep those links readable; use the port when the account supplies one.
+function proxyUsageEndpoint(value){
+  let raw = String(value || '').trim().replace(/^(?:https?|socks[45]?):\/\//i, '');
+  if(raw.includes('@')) raw = raw.slice(raw.lastIndexOf('@') + 1);
+  raw = raw.replace(/\/$/, '');
+  const bracketed = raw.match(/^\[([^\]]+)\](?::(\d+))?(?::.*)?$/);
+  if(bracketed) return { host: bracketed[1].toLowerCase(), port: bracketed[2] ? String(Number(bracketed[2])) : '' };
+  // Unbracketed IPv6 is an address, not a host:port pair.
+  if((raw.match(/:/g) || []).length > 1 && /^[0-9a-f:]+$/i.test(raw)) return { host: raw.toLowerCase(), port: '' };
+  const parts = raw.split(':');
+  return { host: parts[0].trim().toLowerCase(), port: /^\d+$/.test(parts[1] || '') ? String(Number(parts[1])) : '' };
+}
+
+function facebookProxyUsage(entries){
+  const byHost = new Map();
+  for(const entry of entries){
+    if(entry.platform !== 'facebook' || !entry.proxy) continue;
+    const endpoint = proxyUsageEndpoint(entry.proxy);
+    if(!endpoint.host) continue;
+    if(!byHost.has(endpoint.host)) byHost.set(endpoint.host, { withoutPort: 0, ports: new Map() });
+    const usage = byHost.get(endpoint.host);
+    if(endpoint.port) usage.ports.set(endpoint.port, (usage.ports.get(endpoint.port) || 0) + 1);
+    else usage.withoutPort += 1;
+  }
+  return byHost;
+}
+
+function proxyFacebookUsageHtml(entry, usageByHost){
+  const endpoint = proxyUsageEndpoint(entry.fbName);
+  const port = String(entry.port || endpoint.port || '').trim();
+  const usage = usageByHost.get(endpoint.host);
+  const withoutPort = usage ? usage.withoutPort : 0;
+  const withPort = usage ? (port ? (usage.ports.get(String(Number(port))) || 0) : [...usage.ports.values()].reduce((sum, count) => sum + count, 0)) : 0;
+  const count = withoutPort + withPort;
+  const english = state.lang === 'en';
+  const title = english
+    ? 'Facebook accounts assigned to this proxy across the entire vault, regardless of account status.'
+    : 'Số tài khoản Facebook được gán proxy này trong toàn bộ kho, không phụ thuộc trạng thái tài khoản.';
+  const legacyNote = withoutPort
+    ? (english ? `${withoutPort} matched by IP only (no port saved)` : `${withoutPort} tài khoản khớp theo IP, chưa lưu port`)
+    : '';
+  return `<span class="status-badge" style="color:${count ? '#93c5fd' : 'var(--text-muted)'};background:${count ? 'rgba(59,130,246,.12)' : 'rgba(128,128,128,.1)'};" title="${escapeAttr(title)}">Facebook: ${count} ${english ? 'accounts' : 'tài khoản'}</span>${legacyNote ? `<span class="entry-created" title="${english ? 'IP-only assignments also count for other proxies with the same IP.' : 'Tài khoản chỉ lưu IP cũng được tính ở các proxy khác có cùng IP.'}">${legacyNote}</span>` : ''}`;
+}
+
 function renderVault(){
   updateTotalBadge();
   if(state.activePlatform === 'home'){
@@ -3508,6 +3552,7 @@ function renderVault(){
     return;
   }
 
+  const proxyUsage = state.activePlatform === 'proxy' ? facebookProxyUsage(state.entries) : null;
   list.innerHTML = filtered.map(e => {
     if(e.platform === 'link'){
       const href = normalizeHttpLink(e.fbName);
@@ -3557,6 +3602,7 @@ function renderVault(){
           <div class="entry-meta-row">
             ${folderName(e.folderId) ? `<span class="entry-folder"><i class="ti ti-folder" style="font-size:11px;vertical-align:-1px"></i> ${escapeHtml(folderName(e.folderId))}</span>` : ''}
             ${isPhoneOrProxy ? phoneExpiryBadgeHtml(e) : isMoney ? '' : `<span class="status-badge" style="color:${statusMeta(displayedStatus).color};background:${statusMeta(displayedStatus).bg};" title="Trạng thái: ${statusMeta(displayedStatus).label}${e.lastCheckedAt ? ` · Kiểm tra lúc ${new Date(e.lastCheckedAt).toLocaleString('vi-VN')}` : ''}">${statusMeta(displayedStatus).symbol} ${statusMeta(displayedStatus).label}</span>`}
+            ${e.platform === 'proxy' ? proxyFacebookUsageHtml(e, proxyUsage) : ''}
             ${isNewEntry(e) ? `<span class="new-badge" title="Tài khoản mới thêm — tự ẩn sau 24 giờ"><i class="ti ti-sparkles" style="font-size:10px;"></i> MỚI</span>` : ''}
             ${e.platform !== 'phone' ? `<span class="entry-created" title="Ngày nhập tài khoản"><i class="ti ti-calendar-plus" style="font-size:11px;vertical-align:-1px"></i> ${formatDateDMY(new Date(e.createdAt || Date.now()))}</span>` : ''}
           </div>
@@ -4238,13 +4284,6 @@ function renderToolsVault(){
       <button class="text-btn" id="lockBtn" title="${t('title_lock')}"><i class="ti ti-lock"></i>${t('btn_lock')}</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:12px; max-width:560px;">
-      <button type="button" class="tools-card" id="toolsPageFbIdBtn">
-        <i class="ti ti-id"></i>
-        <div>
-          <div class="tools-card-title">${t('tool_fbid_title')}</div>
-        </div>
-        <i class="ti ti-chevron-right tools-card-arrow"></i>
-      </button>
       <button type="button" class="tools-card" id="toolsPage2faBtn">
         <i class="ti ti-shield-lock"></i>
         <div>
@@ -4272,7 +4311,6 @@ function renderToolsVault(){
     document.getElementById('modalBg').classList.add('show');
     renderFn();
   };
-  document.getElementById('toolsPageFbIdBtn').onclick = () => openTool(renderFacebookIdTool);
   document.getElementById('toolsPage2faBtn').onclick = () => openTool(renderTotpDecoderTool);
   document.getElementById('toolsPagePwGenBtn').onclick = () => openTool(renderPasswordGeneratorTool);
 }
@@ -4289,14 +4327,12 @@ function renderToolsChooser(){
     <h2>${t('btn_tools')}</h2>
     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
       <button type="button" id="toolPwGenBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-key" style="margin-right:8px;"></i>${t('tool_pwgen_title')}</button>
-      <button type="button" id="toolFbIdBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-id" style="margin-right:8px;"></i>${t('tool_fbid_title')}</button>
       <button type="button" id="tool2faBtn" style="width:100%; justify-content:flex-start; text-align:left;"><i class="ti ti-shield-lock" style="margin-right:8px;"></i>${t('tool_2fa_title')}</button>
     </div>
     <button id="toolsCloseBtn" style="width:100%;">${t('btn_close')}</button>
   `;
   document.getElementById('toolsCloseBtn').onclick = closeModal;
   document.getElementById('toolPwGenBtn').onclick = renderPasswordGeneratorTool;
-  document.getElementById('toolFbIdBtn').onclick = renderFacebookIdTool;
   document.getElementById('tool2faBtn').onclick = renderTotpDecoderTool;
 }
 
@@ -4395,55 +4431,6 @@ function renderPasswordGeneratorTool(){
     };
   };
   draw();
-}
-
-// --- Facebook ID extractor: 100% client-side URL parsing, no network requests ---
-function extractFacebookId(input){
-  const raw = (input || '').trim();
-  if(!raw) return null;
-  if(/^\d{5,20}$/.test(raw)) return raw; // already a raw numeric UID
-  let m = raw.match(/[?&]id=(\d{5,20})/);
-  if(m) return m[1]; // profile.php?id=...
-  m = raw.match(/facebook\.com\/(\d{5,20})(?:[/?]|$)/i);
-  if(m) return m[1]; // facebook.com/100012345678
-  return null; // vanity username link — can't be resolved without contacting Facebook's servers
-}
-
-function renderFacebookIdTool(){
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <h2>Lấy ID Facebook từ link</h2>
-    <p class="hint" style="margin-top:-4px;">Xử lý hoàn toàn trong trình duyệt của bạn — không gửi link đi đâu cả.</p>
-    <label>Dán link hoặc UID</label>
-    <input type="text" id="fbLinkInput" placeholder="https://www.facebook.com/profile.php?id=100012345678">
-    <div class="pw-row" id="fbIdResultRow" style="display:none; margin-bottom:14px;">
-      <span class="pw-val" id="fbIdResult" style="font-family:monospace; font-size:16px; font-weight:600; color:#facc15;"></span>
-      <button class="text-btn" id="fbIdCopyBtn" title="Sao chép"><i class="ti ti-copy"></i>Sao chép</button>
-    </div>
-    <p class="err" id="fbIdErr"></p>
-    <button id="fbIdExtractBtn" class="primary" data-primary-action style="width:100%; margin-bottom:10px;">Trích xuất ID</button>
-    <button id="fbIdBackBtn" style="width:100%; margin-bottom:14px;">Quay lại</button>
-    <p class="hint">Chỉ lấy được ID trực tiếp nếu link có dạng <code>profile.php?id=...</code> hoặc đường dẫn toàn số (VD: <code>facebook.com/100012345678</code>). Với link dạng tên riêng (VD: facebook.com/nguyenvana), trình duyệt không thể tự tra cứu được vì bị chặn truy cập chéo domain (CORS) — hãy mở link đó, bấm chuột phải → "Xem mã nguồn trang" (View Page Source), tìm chữ "profile_id" hoặc "userID" trong đó.</p>
-  `;
-  document.getElementById('fbIdBackBtn').onclick = renderToolsChooser;
-  const doExtract = () => {
-    const err = document.getElementById('fbIdErr');
-    const resultRow = document.getElementById('fbIdResultRow');
-    err.style.display = 'none';
-    resultRow.style.display = 'none';
-    const input = document.getElementById('fbLinkInput').value;
-    const id = extractFacebookId(input);
-    if(id){
-      document.getElementById('fbIdResult').textContent = id;
-      resultRow.style.display = 'flex';
-      document.getElementById('fbIdCopyBtn').onclick = () => copyText(id, 'Đã sao chép ID Facebook');
-    } else {
-      err.textContent = 'Không tìm thấy ID trực tiếp trong link này — xem gợi ý bên dưới.';
-      err.style.display = 'block';
-    }
-  };
-  document.getElementById('fbIdExtractBtn').onclick = doExtract;
-  document.getElementById('fbLinkInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') doExtract(); });
 }
 
 // --- 2FA decoder: paste a base32 TOTP secret, get the live 6-digit code ---
@@ -5149,11 +5136,15 @@ function manualFieldsHtml(entry){
   // "Tên" (display name/nickname) can only be set while editing an existing account
   const nameField = entry && !isLink && currentPlatform !== 'money' ? `<label>Tên</label><input type="text" id="f_displayName" placeholder="Không bắt buộc" value="${escapeAttr(entry.displayName)}">` : '';
   // "Proxy" also only settable while editing — lets you type freely OR quickly
-  // pick from the list of IPs already saved in the Proxy tab
+  // pick a saved proxy with its port so same-IP proxies remain distinguishable.
   const savedProxies = state.entries.filter(e => e.platform === 'proxy' && e.fbName);
-  const proxyDatalistOptions = savedProxies.map(e =>
-    `<option value="${escapeAttr(e.fbName)}">${escapeAttr(e.fbName)}${e.username ? ' — ' + escapeAttr(e.username) : ''}</option>`
-  ).join('');
+  const proxyDatalistOptions = savedProxies.map(e => {
+    const endpoint = proxyUsageEndpoint(e.fbName);
+    const host = endpoint.host.includes(':') ? `[${endpoint.host}]` : endpoint.host;
+    const port = String(e.port || endpoint.port || '').trim();
+    const value = port ? `${host}:${port}` : e.fbName;
+    return `<option value="${escapeAttr(value)}">${escapeAttr(value)}${e.username ? ' — ' + escapeAttr(e.username) : ''}</option>`;
+  }).join('');
   const proxyField = entry && !isLink && currentPlatform !== 'money' ? `<label>Proxy</label><input type="text" id="f_proxy" list="proxyDatalist" placeholder="${savedProxies.length ? 'Gõ hoặc chọn từ danh sách Proxy đã lưu' : 'Không bắt buộc'}" value="${escapeAttr(entry.proxy)}"><datalist id="proxyDatalist">${proxyDatalistOptions}</datalist>` : '';
   // "Trạng thái" also only settable while editing
   const currentStatus = entry ? (entry.status || 'unknown') : 'unknown';

@@ -8,7 +8,7 @@ Google Drive chỉ nhận một file JSON đã mã hoá trong thư mục ẩn ri
 
 - Dùng **GitHub Pages** để mở cùng một địa chỉ HTTPS trên PC, iPhone và iPad.
 - Dùng **Google Drive Sync** trong Devic3 để chuyển kho mã hoá giữa các thiết bị.
-- Định kỳ bấm **Chọn nơi lưu và backup** để chọn thư mục và tạo file `.json` mã hoá dự phòng trên Chrome/Edge. Safari/iPhone sẽ dùng cách tải xuống tương thích.
+- Định kỳ bấm **Backup** để chọn thư mục và tạo file `.json` mã hoá dự phòng trên Chrome/Edge. Safari/iPhone sẽ dùng cách tải xuống tương thích.
 - Server Node.js cục bộ chỉ dùng để xem trước ứng dụng trên PC và lấy địa chỉ IP mạng; không cần triển khai server này lên Internet.
 
 ## A. Đưa giao diện lên GitHub Pages
@@ -63,7 +63,7 @@ Devic3 chỉ yêu cầu scope `https://www.googleapis.com/auth/drive.appdata`. Q
 3. Tại **Đồng bộ nhiều thiết bị**, dán Google OAuth Client ID.
 4. Bấm **Kết nối / Đồng bộ ngay**, đăng nhập đúng tài khoản Google và chấp nhận quyền.
 5. Devic3 tạo `devic3-vault-sync.json` đã mã hoá trong `appDataFolder`.
-6. Trên Chrome/Edge, bấm **Chọn nơi lưu và backup**, chọn thư mục và cất file `.json` ở nơi an toàn. Trên Safari/iPhone, nút backup tải file xuống để lưu bằng ứng dụng Files hoặc chia sẻ sang Drive.
+6. Trên Chrome/Edge, bấm **Backup**, chọn thư mục và cất file `.json` ở nơi an toàn. Trên Safari/iPhone, nút backup tải file xuống để lưu bằng ứng dụng Files hoặc chia sẻ sang Drive.
 
 Trong phiên đang kết nối, mỗi thay đổi được đẩy lên Drive gần như ngay sau khi lưu. Các thiết bị khác đang mở, đã kết nối và không có biểu mẫu chưa lưu sẽ tự kiểm tra rồi cập nhật giao diện trong tối đa khoảng 5 giây. Khi đưa ứng dụng từ nền trở lại, Devic3 cũng kiểm tra bản mới ngay. Access token Google chỉ nằm trong RAM của tab; sau khi đóng hoặc tải lại trang, bấm **Kết nối / Đồng bộ ngay** để cấp lại phiên. Devic3 không lưu refresh token Google.
 
